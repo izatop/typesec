@@ -1,18 +1,18 @@
 import type {Rec} from "@typesec/the";
 import {error, log} from "@typesec/tracer";
 import {isAsyncDisposable} from "../lib/index.mjs";
-import {MainFunction, type ImmediateReturns} from "./interfaces.mjs";
+import {MainFunction} from "./interfaces.mjs";
 
 const reasons: Rec = {0: "No errors"};
 
-function exit(code: number, reason: unknown = null): ImmediateReturns {
+function exit(code: number, reason: unknown = null): NodeJS.Immediate {
     const fn = code > 0 ? error : log;
     fn("exit(%d): %o", code, reason ?? reasons[code]);
 
     return setImmediate(() => process.exit(code));
 }
 
-export async function watch(main: MainFunction): Promise<ImmediateReturns> {
+export async function watch(main: MainFunction): Promise<NodeJS.Immediate> {
     log("main.lock()");
     const tick = setInterval(() => void 0, 1_000_000);
 

@@ -3,8 +3,8 @@ import {AsyncLock} from "../lib/index.mjs";
 import {runtime} from "./runtime.mjs";
 
 export function heartbeat(ctrl: AbortController = runtime): Promise<void> {
+    log("heartbeat(%s)", ctrl.constructor.name);
     const {signal} = ctrl;
-    log("acquire(): {exists: %s}", AsyncLock.has(signal));
 
     return AsyncLock.acquire(
         signal,
