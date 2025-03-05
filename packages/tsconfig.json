@@ -1,0 +1,24 @@
+{
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./the"
+    },
+    {
+      "path": "./tracer"
+    },
+    {
+      "path": "./core"
+    },
+    {
+      "path": "./serve"
+    },
+    {
+      "path": "./cli"
+    },
+    {
+      "path": "./spec"
+    }
+  ]
+}

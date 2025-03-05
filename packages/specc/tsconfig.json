@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "references": [
+    {
+      "path": "../tracer"
+    },
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../spec"
+    }
+  ],
+  "include": [
+    "src"
+  ]
+}

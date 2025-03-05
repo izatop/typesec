@@ -1,0 +1,30 @@
+{
+  "name": "@typesec/specc",
+  "version": "0.1.0",
+  "bin": "bin",
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
+  "dependencies": {
+    "@commander-js/extra-typings": "^13.0.0",
+    "@types/node": "^22.10.5",
+    "@typesec/core": "workspace:*",
+    "@typesec/spec": "workspace:*",
+    "@typesec/specd": "workspace:*",
+    "@typesec/the": "workspace:*",
+    "@typesec/tracer": "workspace:*",
+    "commander": "^13.0.0",
+    "radash": "^12.1.0"
+  },
+  "engines": {
+    "node": ">=23.9"
+  },
+  "license": "MIT"
+}

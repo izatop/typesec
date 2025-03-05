@@ -1,0 +1,15 @@
+{
+  "bracketSpacing": false,
+  "arrowParens": "always",
+  "bracketSameLine": true,
+  "endOfLine": "lf",
+  "semi": true,
+  "overrides": [
+    {
+      "files": "*.mts",
+      "options": {
+        "parser": "typescript"
+      }
+    }
+  ]
+}

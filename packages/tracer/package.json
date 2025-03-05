@@ -1,0 +1,25 @@
+{
+  "name": "@typesec/tracer",
+  "version": "0.1.0",
+  "type": "module",
+  "types": "dist/index.d.mts",
+  "module": "dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
+  "dependencies": {
+    "@types/chalk": "^2.2.4",
+    "@types/node": "^22.10.5",
+    "@typesec/the": "workspace:*",
+    "@typesec/tracer": "workspace:*",
+    "chalk": "^5.4.1",
+    "radash": "^12.1.0"
+  },
+  "engines": {
+    "node": ">=23.9"
+  },
+  "license": "MIT"
+}

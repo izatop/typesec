@@ -1,0 +1,152 @@
+exports[`Compiler > Reflection 1`] = `
+{
+  "name": "TUserSpec",
+  "members": [
+    {
+      "name": "id",
+      "flags": 0,
+      "kind": "number"
+    },
+    {
+      "name": "name",
+      "flags": 0,
+      "kind": "string"
+    }
+  ]
+}
+`;
+
+exports[`Compiler > Reflection 2`] = `
+{
+  "name": "TCheckListSpec",
+  "members": [
+    {
+      "name": "id",
+      "flags": 0,
+      "reference": "ID",
+      "kind": "reference"
+    },
+    {
+      "name": "description",
+      "flags": 0,
+      "kind": "string"
+    },
+    {
+      "name": "done",
+      "flags": 0,
+      "kind": "boolean"
+    }
+  ]
+}
+`;
+
+exports[`Compiler > Reflection 3`] = `
+{
+  "name": "TTodoSpecChecklistInput",
+  "members": [
+    {
+      "name": "done",
+      "flags": 1,
+      "kind": "boolean"
+    }
+  ]
+}
+`;
+
+exports[`Compiler > Reflection 4`] = `
+{
+  "name": "TTodoSpec",
+  "members": [
+    {
+      "name": "id",
+      "flags": 0,
+      "reference": "ID",
+      "kind": "reference"
+    },
+    {
+      "name": "title",
+      "flags": 0,
+      "kind": "string"
+    },
+    {
+      "name": "status",
+      "flags": 0,
+      "reference": "TodoStatus",
+      "kind": "reference"
+    },
+    {
+      "name": "user",
+      "flags": 0,
+      "reference": "TUserSpec",
+      "kind": "reference"
+    },
+    {
+      "name": "checklist",
+      "flags": 0,
+      "args": [
+        {
+          "reference": "TTodoSpecChecklistInput",
+          "name": "<TInput>",
+          "kind": "reference",
+          "flags": 0
+        },
+        {
+          "name": "TValue",
+          "flags": 0,
+          "args": [
+            {
+              "name": "<T>",
+              "flags": 0,
+              "reference": "TCheckListSpec",
+              "kind": "reference"
+            }
+          ],
+          "kind": "Array<T>"
+        }
+      ],
+      "kind": "Input<TInput, TValue>"
+    },
+    {
+      "name": "attachments",
+      "flags": 0,
+      "args": [
+        {
+          "name": "<T>",
+          "flags": 0,
+          "args": [
+            {
+              "name": "<T>",
+              "flags": 0,
+              "kind": "string"
+            }
+          ],
+          "kind": "Array<T>"
+        }
+      ],
+      "kind": "Mutator<T>"
+    },
+    {
+      "name": "description",
+      "flags": 0,
+      "kind": "string"
+    },
+    {
+      "name": "updatedAt",
+      "flags": 0,
+      "args": [
+        {
+          "name": "<T>",
+          "flags": 0,
+          "kind": "number"
+        }
+      ],
+      "kind": "Mutator<T>"
+    },
+    {
+      "name": "elapsedMs",
+      "flags": 0,
+      "kind": "number"
+    }
+  ]
+}
+`;
