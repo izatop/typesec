@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import response from "../../../../../src/response/index.mjs";
+import {response} from "../../../../../src/index.mjs";
 import {route} from "../../../../../src/router/route.mjs";
 import app from "../../index.mjs";
 
@@ -10,6 +10,7 @@ const params = v.strictObject({
         v.number(),
     ),
 });
+
 const query = v.strictObject({fields: v.optional(v.array(v.string()))});
 
 export default route({app, name: "Get"})
@@ -17,6 +18,6 @@ export default route({app, name: "Get"})
     .as(response.json)
     .get(function handle({proto}) {
         return {
-            id: proto.params().id,
+            id: proto.params.id,
         };
     });

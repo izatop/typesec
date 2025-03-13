@@ -4,6 +4,9 @@
   "type": "module",
   "types": "./dist/index.d.mts",
   "module": "./dist/index.mjs",
+  "bin": {
+    "typesec-cli": "bin"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
@@ -15,7 +18,9 @@
     "@typesec/the": "workspace:*",
     "@typesec/core": "workspace:*",
     "@typesec/unit": "workspace:*",
-    "@typesec/tracer": "workspace:*"
+    "@typesec/tracer": "workspace:*",
+    "@commander-js/extra-typings": "^13.0.0",
+    "commander": "^13.0.0"
   },
   "engines": {
     "node": ">=23.9"

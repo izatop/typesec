@@ -21,7 +21,7 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
             const router = new FileSystemRouter({
                 dir: path.resolve(args.path),
                 style: "nextjs",
-                fileExtensions: [".mts"],
+                fileExtensions: [".mts", ".mjs"],
             });
 
             const server = Bun.serve({

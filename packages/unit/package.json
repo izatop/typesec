@@ -4,6 +4,7 @@
   "type": "module",
   "types": "./dist/index.d.mts",
   "module": "./dist/index.mjs",
+  "bin": "bin",
   "exports": {
     ".": {
       "import": "./dist/index.mjs",

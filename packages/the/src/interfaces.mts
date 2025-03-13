@@ -6,6 +6,7 @@ export type Prop<T extends Rec, K extends keyof T> = T[K];
 export type ReMap<T extends Rec, V> = {[K in keyof T]: V};
 export type Entries<T extends Rec> = [keyof T, T[keyof T]][];
 export type FromEntries<T extends Entries<any>> = T extends Entries<infer S> ? S : never;
+export type StrictRec<T extends Rec> = {[K in keyof T as T[K] extends undefined ? never : K]: T[K]};
 
 export type Arrayify<T> = T | T[];
 export type DeArrayify<T> = T extends Array<infer A> ? A : T;

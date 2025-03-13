@@ -16,12 +16,17 @@
     "packages/cli": {
       "name": "@typesec/cli",
       "version": "0.1.0",
+      "bin": {
+        "typesec-cli": "bin/typesec-cli.mjs",
+      },
       "dependencies": {
+        "@commander-js/extra-typings": "^13.0.0",
         "@types/node": "^22.13.9",
         "@typesec/core": "workspace:*",
         "@typesec/the": "workspace:*",
         "@typesec/tracer": "workspace:*",
         "@typesec/unit": "workspace:*",
+        "commander": "^13.0.0",
       },
     },
     "packages/core": {
@@ -99,6 +104,7 @@
     "packages/unit": {
       "name": "@typesec/unit",
       "version": "0.1.0",
+      "bin": "bin",
       "dependencies": {
         "@types/bun": "^1.2.4",
         "@typesec/the": "workspace:*",

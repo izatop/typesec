@@ -17,7 +17,7 @@ export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
         const router = new FileSystemRouter({
             dir: path.resolve(args.path),
             style: "nextjs",
-            fileExtensions: [".mts"],
+            fileExtensions: [".mts", ".mjs"],
         });
 
         const [p = "/"] = process.argv.slice(2);
