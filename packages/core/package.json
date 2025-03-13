@@ -11,7 +11,7 @@
     }
   },
   "dependencies": {
-    "@types/node": "^22.10.5",
+    "@types/bun": "^1.2.4",
     "@typesec/the": "workspace:*",
     "@typesec/tracer": "workspace:*",
     "radash": "^12.1.0"

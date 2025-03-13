@@ -1,4 +1,4 @@
-import {Promisify} from "@typesec/the";
+import {type Promisify} from "@typesec/the";
 
 export type MainFunctionReturns = Disposable | AsyncDisposable | undefined | null | void;
 

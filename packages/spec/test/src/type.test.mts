@@ -1,6 +1,6 @@
 import {isXEqualToY, type Arrayify, type Nullable} from "@typesec/the";
+import {describe, test} from "bun:test";
 import assert from "node:assert";
-import test, {describe} from "node:test";
 import type {ANT, ComplexType, ID, NANT, Primitive, Resolver, SimpleType, TypeList} from "../../src/spec.mjs";
 
 // type T1 = Expect<Equal<A, B>>;

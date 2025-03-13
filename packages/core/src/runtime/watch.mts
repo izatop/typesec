@@ -1,18 +1,18 @@
 import type {Rec} from "@typesec/the";
 import {error, log} from "@typesec/tracer";
-import {isAsyncDisposable} from "../lib/index.mjs";
-import {MainFunction} from "./interfaces.mjs";
+import {dispose} from "./dispose.mjs";
+import {type MainFunction} from "./interfaces.mjs";
 
 const reasons: Rec = {0: "No errors"};
 
-function exit(code: number, reason: unknown = null): NodeJS.Immediate {
+function exit(code: number, reason: unknown = null): Timer {
     const fn = code > 0 ? error : log;
     fn("exit(%d): %o", code, reason ?? reasons[code]);
 
     return setImmediate(() => process.exit(code));
 }
 
-export async function watch(main: MainFunction): Promise<NodeJS.Immediate> {
+export async function watch(main: MainFunction): Promise<Timer> {
     log("main.lock()");
     const tick = setInterval(() => void 0, 1_000_000);
 
@@ -20,10 +20,7 @@ export async function watch(main: MainFunction): Promise<NodeJS.Immediate> {
         const fn = main.name || "fn";
         log("%s(): *res", fn);
         const res = await main();
-        if (isAsyncDisposable(res)) {
-            log("dispose( <%s> *res )", fn);
-            await using dispose = res;
-        }
+        await dispose(res);
 
         return exit(0);
     } catch (reason) {

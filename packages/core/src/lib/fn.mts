@@ -1,4 +1,5 @@
-import {isObject, partial} from "radash";
+import {isInstance} from "@typesec/the";
+import {partial} from "radash";
 
 export function ensure<T>(store: Map<any, T> | WeakMap<WeakKey, T>, key: WeakKey, factory: () => T): T {
     const value = store.get(key) ?? factory();
@@ -22,5 +23,9 @@ export function xmap(map: any): any {
 }
 
 export function isAsyncDisposable(res: unknown): res is AsyncDisposable {
-    return isObject(res) && Reflect.has(res, Symbol.asyncDispose);
+    return isInstance(res) && Reflect.has(res, Symbol.asyncDispose);
+}
+
+export function isDisposable(res: unknown): res is Disposable {
+    return isInstance(res) && Reflect.has(res, Symbol.dispose);
 }

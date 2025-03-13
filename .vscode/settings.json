@@ -35,5 +35,7 @@
     "**/dist/**": true,
     "**/.yarn/**": true,
     "**/.pnp.*": true
-  }
+  },
+  "npm.packageManager": "bun",
+  "npm.scriptRunner": "bun"
 }

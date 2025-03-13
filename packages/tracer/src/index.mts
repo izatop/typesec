@@ -1,8 +1,8 @@
 import type {Rec} from "@typesec/the";
-import chalk, {ChalkInstance} from "chalk";
+import chalk, {type ChalkInstance} from "chalk";
 import {Console} from "console";
 import {formatWithOptions} from "util";
-import {LogVerbosity, TracerOptions} from "./interfaces.mjs";
+import type {LogVerbosity, TracerLevel, TracerOptions} from "./interfaces.mts";
 import {options} from "./options.mjs";
 import {getCallStack} from "./parser.mjs";
 
@@ -13,15 +13,14 @@ type LogArgs = [label: string, ...args: unknown[]];
 
 const v = (level: LogVerbosity) => options.verbose >= level;
 
-type LevelStr = "warn" | "error" | "log" | "info";
-const bgs: Rec<LevelStr, Color> = {
+const bgs: Rec<TracerLevel, Color> = {
     warn: chalk.bgYellow,
     error: chalk.bgRed,
     info: chalk.bgGreen,
     log: chalk.bgBlue,
 };
 
-function getLogArgs(label: LevelStr, ...args: LogArgs): LogArgs {
+function getLogArgs(label: TracerLevel, ...args: LogArgs): LogArgs {
     const labels = [];
 
     if (options.trace) {
@@ -53,10 +52,10 @@ export function error(...args: LogArgs): void {
     v(0) && instance.error(...getLogArgs("error", ...args));
 }
 
+export function format(...args: LogArgs): string {
+    return formatWithOptions({colors: false, compact: true}, ...args);
+}
+
 export function setTracerOptions(setters: Partial<TracerOptions>) {
     Object.assign(options, setters);
 }
-
-export const format = (...args: LogArgs) => {
-    return formatWithOptions({colors: false, compact: true}, ...args);
-};

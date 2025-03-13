@@ -1,3 +1,1 @@
-export default function run(): Promise<void> {
-    return Promise.resolve();
-}
+export * from "./proto/CommandLineInterfaceProto.mjs";

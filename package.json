@@ -2,9 +2,6 @@
   "name": "typesec",
   "scripts": {
     "clean": "rimraf packages/*/{dist,tsconfig.tsbuildinfo}",
-    "test": "yarn tsx --experimental-test-snapshots --test-update-snapshots --test packages/*/test/src/**/*.test.mts",
-    "test:watch": "yarn tsx --experimental-test-snapshots --test-update-snapshots --watch --test packages/*/test/src/**/*.test.mts",
-    "coverage": "yarn dlx c8 --clean -e mts -- tsx --test 'packages/*/test/src/**/*.test.mts'",
     "build": "tsc -b packages",
     "build:watch": "tsc -b packages -w"
   },
@@ -12,7 +9,6 @@
     "packages/*"
   ],
   "devDependencies": {
-    "@types/node": "^22.13.9",
     "prettier": "3.5.3",
     "rimraf": "^6.0.1",
     "tsx": "^4.19.3",
@@ -21,5 +17,8 @@
   "engines": {
     "node": ">=23.9"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@types/bun": "^1.2.5"
+  }
 }

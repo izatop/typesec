@@ -1,3 +1,4 @@
+export * from "./dispose.mjs";
 export * from "./heartbeat.mjs";
 export * from "./interfaces.mjs";
 export * from "./run.mjs";

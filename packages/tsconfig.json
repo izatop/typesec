@@ -12,13 +12,13 @@
       "path": "./core"
     },
     {
+      "path": "./unit"
+    },
+    {
       "path": "./serve"
     },
     {
       "path": "./cli"
-    },
-    {
-      "path": "./spec"
     }
   ]
 }

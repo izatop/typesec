@@ -1,5 +1,5 @@
+import {describe, test} from "bun:test";
 import assert from "node:assert";
-import test, {describe} from "node:test";
 import MySpec, {TEST_VERSION} from "./main.spec.mjs";
 
 // type T1 = Expect<Equal<A, B>>;

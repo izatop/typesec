@@ -1,3 +1,5 @@
+export type TracerLevel = "warn" | "error" | "log" | "info";
+
 export type TracerStackLine = {
     name: string;
     file: string;
@@ -12,3 +14,10 @@ export type TracerOptions = {
 };
 
 export type LogVerbosity = 0 | 1 | 2 | 3;
+
+declare module "bun" {
+    interface Env {
+        TRACE: string;
+        VERBOSE: string;
+    }
+}

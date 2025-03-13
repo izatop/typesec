@@ -1,5 +1,5 @@
 import {relative} from "node:path/posix";
-import {TracerStackLine} from "./interfaces.mjs";
+import {type TracerStackLine} from "./interfaces.mjs";
 
 const lineMatch = /([^\s]+)\s\((.+):(\d+):(\d+)\)/;
 const {pathname} = new URL(import.meta.url);

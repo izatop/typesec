@@ -1,6 +1,6 @@
 import {isXEqualToY, isXExtendsOfY} from "@typesec/the";
+import {describe, test} from "bun:test";
 import assert from "node:assert";
-import test, {describe} from "node:test";
 import type {Box, Input, Mutator, Spec, SpecOf} from "../../src/spec.mjs";
 
 // type T1 = Expect<Equal<A, B>>;

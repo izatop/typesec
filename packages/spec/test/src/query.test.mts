@@ -1,6 +1,6 @@
 import {isXEqualToY, type Fn} from "@typesec/the";
+import {describe, test} from "bun:test";
 import assert from "node:assert";
-import test, {describe} from "node:test";
 import type {Query} from "../../src/query.mjs";
 import type {Spec} from "../../src/spec.mjs";
 

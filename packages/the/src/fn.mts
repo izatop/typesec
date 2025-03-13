@@ -1,7 +1,11 @@
-import type {Fn, Fnify} from "./interfaces.mjs";
+import type {Fn, Fnify, Rec} from "./interfaces.mjs";
 
 export function isFunction<T extends Fn>(value: unknown): value is T {
     return typeof value === "function";
+}
+
+export function isInstance<T extends Rec>(value: unknown): value is T {
+    return typeof value === "object" && value !== null;
 }
 
 export function when<T, R1>(value: T, then: Fn<[T], R1>): R1 | void;

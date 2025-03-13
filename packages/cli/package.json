@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@types/node": "^22.13.9",
+    "@typesec/the": "workspace:*",
     "@typesec/core": "workspace:*",
+    "@typesec/unit": "workspace:*",
     "@typesec/tracer": "workspace:*"
   },
   "engines": {
