@@ -16,13 +16,17 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
         return value instanceof Response;
     }
 
+    public static createRouter(args: MainArgs): FileSystemRouter {
+        return new FileSystemRouter({
+            dir: path.resolve(args.path),
+            style: "nextjs",
+            fileExtensions: [".mts", ".mjs"],
+        });
+    }
+
     public static async run(args: MainArgs): Promise<void> {
         await watch(async () => {
-            const router = new FileSystemRouter({
-                dir: path.resolve(args.path),
-                style: "nextjs",
-                fileExtensions: [".mts", ".mjs"],
-            });
+            const router = this.createRouter(args);
 
             const server = Bun.serve({
                 port: 3000,

@@ -1,7 +1,18 @@
 import {isFunction, type Rec} from "@typesec/the";
+import {log} from "@typesec/tracer";
+import {resolveSync} from "bun";
 import {ok} from "node:assert";
 import type Module from "node:module";
+import path from "node:path";
 import type {Application, HandleEntry, IProto, Proto} from "./interfaces.mjs";
+
+export async function runApplication(location: string) {
+    log("try( location: %s )", location);
+
+    const realPath = resolveSync(location, process.cwd());
+    const app = getApplication(await import(realPath));
+    await app.proto.run({path: path.resolve(path.dirname(realPath), "app")});
+}
 
 export function getApplication<TContext, TProto extends IProto<TIn>, TIn, TRet>(
     module: Rec,

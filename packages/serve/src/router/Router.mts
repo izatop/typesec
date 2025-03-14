@@ -22,10 +22,14 @@ export class Router<TContext, TRest extends RestSchema, TRet extends RestRespons
     }
 
     public use<S extends Partial<RestSchema>>(rest: S): Router<TContext, ExtendSchema<TRest, S>, TRet> {
-        return new Router<TContext, ExtendSchema<TRest, S>, TRet>({app: this.#app, ...this.#meta}, {
-            ...this.#map,
-            ...rest,
-        } as ExtendSchema<TRest, S>);
+        return new Router<TContext, ExtendSchema<TRest, S>, TRet>(
+            {app: this.#app, ...this.#meta},
+            {
+                ...this.#map,
+                ...rest,
+            } as ExtendSchema<TRest, S>,
+            this.#as,
+        );
     }
 
     public as<S extends BaseSchema<any, any, any>>(as: S): Router<TContext, TRest, InferInput<S>> {
@@ -60,8 +64,6 @@ export class Router<TContext, TRest extends RestSchema, TRet extends RestRespons
                     request,
                     proto,
                 });
-
-                if (this.#as) console.log(parse(this.#as, response));
 
                 return this.#as ? parse(this.#as, response) : new Response(`${response}`);
             },
