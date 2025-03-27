@@ -1,9 +1,10 @@
 import {dispose, locator, resolve, service} from "@typesec/core";
 import {log} from "@typesec/tracer";
 import {ContextResolver} from "./ContextResolver.mjs";
-import type {Application, Factory, IProto, SetupOptions} from "./interfaces.mjs";
+import type {Application, Factory, SetupOptions} from "./interfaces.mjs";
+import type {ProtoAbstract} from "./ProtoAbstract.mjs";
 
-export function context<TProto extends IProto<TIn>, TIn, TRet, TContext = null>(
+export function context<TProto extends ProtoAbstract<TIn>, TIn, TRet, TContext = null>(
     args: SetupOptions<TContext, TProto, TIn, TRet>,
 ): Application<TContext, TProto, TIn, TRet> {
     const {proto, context = null, ...meta} = args;

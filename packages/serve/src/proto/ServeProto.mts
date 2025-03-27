@@ -3,6 +3,7 @@ import {warn} from "@typesec/tracer";
 import {getHandle, ProtoAbstract, type MainArgs} from "@typesec/unit";
 import {FileSystemRouter, type MatchedRoute, type Server} from "bun";
 import path from "node:path";
+import {ServeError} from "./ServeError.mjs";
 
 export type ServeInput = {
     request: Request;
@@ -40,6 +41,12 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
                             return await handle({request, route});
                         }
                     } catch (reason) {
+                        if (reason instanceof ServeError) {
+                            warn("Server error", reason);
+
+                            return new Response(reason.message, {status: reason.code});
+                        }
+
                         if (reason instanceof Error) {
                             warn("Server error", reason);
 

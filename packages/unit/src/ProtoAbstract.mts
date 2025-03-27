@@ -1,6 +1,4 @@
-import type {IProto} from "./interfaces.mjs";
-
-export abstract class ProtoAbstract<TIn> implements IProto<TIn> {
+export abstract class ProtoAbstract<TIn> {
     readonly #input: TIn;
 
     constructor(input: TIn) {

@@ -1,11 +1,11 @@
-import type {Application, Handle, HandleEntry, IProto, Meta} from "@typesec/unit";
+import type {Application, Handle, HandleEntry, Meta, ProtoAbstract} from "@typesec/unit";
 import {parse, type BaseSchema, type InferInput} from "valibot";
-import {type ServeInput} from "../index.mjs";
+import {type ServeInput, type ServeProto} from "../index.mjs";
 import {RestProto} from "./RestProto.mjs";
 import type {ExtendSchema, RestResponse, RestSchema, RouteArgs} from "./interfaces.mjs";
 
 export class Router<TContext, TRest extends RestSchema, TRet extends RestResponse> {
-    readonly #app: Application<TContext, IProto<ServeInput>, ServeInput, Response>;
+    readonly #app: Application<TContext, ProtoAbstract<ServeInput>, ServeInput, Response>;
     readonly #meta: Meta;
     readonly #map: TRest;
     readonly #as?: BaseSchema<any, any, any>;
@@ -36,11 +36,13 @@ export class Router<TContext, TRest extends RestSchema, TRet extends RestRespons
         return new Router<TContext, TRest, InferInput<S>>({app: this.#app, ...this.#meta}, this.#map, as);
     }
 
-    public get(handle: Handle<TContext, RestProto<TRest>, ServeInput, TRet>): HandleEntry<ServeInput, Response> {
+    public get<TProto extends RestProto<TRest>>(
+        handle: Handle<TContext, TProto, ServeInput, TRet>,
+    ): HandleEntry<ServeProto, ServeInput, Response> {
         return this.#app({
             ...this.#meta,
             handle: async ({context, request}) => {
-                const proto = new RestProto<TRest>(request, this.#map);
+                const proto = new RestProto<TRest>(request, this.#map) as TProto;
 
                 const response = await handle({
                     context,
@@ -53,11 +55,13 @@ export class Router<TContext, TRest extends RestSchema, TRet extends RestRespons
         });
     }
 
-    public post(handle: Handle<TContext, RestProto<TRest>, ServeInput, TRet>): HandleEntry<ServeInput, Response> {
+    public post<TProto extends RestProto<TRest>>(
+        handle: Handle<TContext, TProto, ServeInput, TRet>,
+    ): HandleEntry<ServeProto, ServeInput, Response> {
         return this.#app({
             ...this.#meta,
             handle: async ({context, request}) => {
-                const proto = new RestProto<TRest>(request, this.#map);
+                const proto = new RestProto<TRest>(request, this.#map) as TProto;
 
                 const response = await handle({
                     context,
