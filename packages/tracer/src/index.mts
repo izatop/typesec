@@ -9,7 +9,7 @@ import {getCallStack} from "./parser.mjs";
 const instance = new Console({stdout: process.stdout, stderr: process.stderr, colorMode: "auto"});
 
 type Color = ChalkInstance;
-type LogArgs = [label: string, ...args: unknown[]];
+type LogArgs = [...args: unknown[]];
 
 const v = (level: LogVerbosity) => options.verbose >= level;
 
