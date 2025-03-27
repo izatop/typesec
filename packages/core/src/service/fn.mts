@@ -1,15 +1,17 @@
 import type {Fn, Promisify} from "@typesec/the";
+import {log} from "@typesec/tracer";
 import assert from "node:assert";
 import {isFunction} from "radash";
 import {isAsyncDisposable, isDisposable} from "../index.mjs";
 import {PendingService} from "./PendingService.mjs";
 import type {Service, ServiceCtor, ServiceFactory, ServiceState} from "./interfaces.mjs";
 
-const store = new WeakMap();
+const store = new WeakMap<ServiceCtor<any>, any>();
 const registry = new Map<ServiceCtor<any>, ServiceFactory<any>>();
-const identify = (ctor: ServiceCtor<any>) => ctor.name;
+const pendings = new WeakMap<ServiceCtor<any>, Promisify<Service>>();
+export const identify = (ctor: ServiceCtor<any>) => ctor.name;
 
-export function service<T extends Service>(ctor: ServiceCtor<T>, factory: Fn<[], Promisify<T>>) {
+export function service<T extends Service>(ctor: ServiceCtor<T>, factory: ServiceFactory<T>) {
     registry.set(ctor, factory);
 }
 
@@ -48,27 +50,42 @@ export function state<T extends Service>(ctor: ServiceCtor<T>): ServiceState<T> 
 }
 
 export function sync<T extends Service>(ctor: ServiceCtor<T>): T {
+    const name = identify(ctor);
+    log("[service] sync(%s)", name);
+
     const known = store.get(ctor);
     if (!known) {
+        log("[service] try(PendingService(%s))", name);
         throw new PendingService(ctor, resolve(ctor));
     }
 
     return known;
 }
 
-export async function resolve<T extends Service>(ctor: ServiceCtor<T>): Promise<T> {
+export function resolve<T extends Service>(ctor: ServiceCtor<T>): Promise<T> {
+    const name = identify(ctor);
+    log("[service] resolve(%s)", name);
     const known = store.get(ctor);
     if (known) {
         return known;
     }
 
     const factory = registry.get(ctor);
-    assert(isFunction(factory), `Unknown service ${identify(ctor)}`);
+    assert(isFunction(factory), `Unknown service ${name}`);
 
-    const instance = await factory();
-    store.set(ctor, instance);
+    log("[service] factory(%s)", name);
+    const pending = Promise.resolve(pendings.get(ctor) ?? factory());
+    pendings.set(ctor, pending);
 
-    return instance;
+    log("[resolve] register(%s)", name);
+    pending.then((instance) => {
+        pendings.delete(ctor);
+        store.set(ctor, instance);
+
+        return instance;
+    });
+
+    return pending;
 }
 
 export async function locator<R>(fn: Fn<[], Promisify<R>>): Promise<R> {

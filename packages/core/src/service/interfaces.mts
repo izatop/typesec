@@ -1,3 +1,5 @@
+import type {Fn, Promisify} from "@typesec/the";
+
 export interface IService {}
 
 export type Service = IService | AsyncDisposable | Disposable;
@@ -7,7 +9,7 @@ export type ServiceCtor<T extends Service> = {
     name: string;
 };
 
-export type ServiceFactory<T extends Service> = T;
+export type ServiceFactory<T extends Service> = Fn<[], Promisify<T>>;
 
 export type ServiceStateKnonwn = {
     known: boolean;
