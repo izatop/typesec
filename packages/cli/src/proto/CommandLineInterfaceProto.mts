@@ -13,6 +13,10 @@ export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
         return typeof value === "undefined";
     }
 
+    public get argv(): string[] {
+        return process.argv.slice(1);
+    }
+
     public static async run(args: MainArgs): Promise<void> {
         const router = new FileSystemRouter({
             dir: path.resolve(args.path),

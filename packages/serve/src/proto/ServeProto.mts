@@ -1,4 +1,4 @@
-import {heartbeat, watch} from "@typesec/core";
+import {heartbeat, runtime, watch} from "@typesec/core";
 import {warn} from "@typesec/tracer";
 import {getHandle, ProtoAbstract, type MainArgs} from "@typesec/unit";
 import {FileSystemRouter, type MatchedRoute, type Server} from "bun";
@@ -31,7 +31,7 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
 
             const server = Bun.serve({
                 port: 3000,
-                development: process.env.NODE_ENV === "development",
+                development: runtime.isDevelopment(),
                 fetch: async (request) => {
                     try {
                         const route = router.match(request);

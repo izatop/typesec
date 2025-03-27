@@ -14,7 +14,7 @@
     }
   },
   "dependencies": {
-    "@types/node": "^22.13.9",
+    "@types/bun": "^1.2.4",
     "@typesec/the": "workspace:*",
     "@typesec/core": "workspace:*",
     "@typesec/unit": "workspace:*",

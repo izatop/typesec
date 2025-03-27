@@ -7,18 +7,18 @@ const reasons: Rec = {0: "No errors"};
 
 function exit(code: number, reason: unknown = null): Timer {
     const fn = code > 0 ? error : log;
-    fn("exit(%d): %o", code, reason ?? reasons[code]);
+    fn("[main] exit(%d): %o", code, reason ? `${reason}` : reasons[code]);
 
     return setImmediate(() => process.exit(code));
 }
 
 export async function watch(main: MainFunction): Promise<Timer> {
-    log("main.lock()");
+    log("[main] lock()");
     const tick = setInterval(() => void 0, 1_000_000);
 
     try {
         const fn = main.name || "fn";
-        log("%s(): *res", fn);
+        log("[main] %s(): *res", fn);
         const res = await main();
         await dispose(res);
 
@@ -26,7 +26,7 @@ export async function watch(main: MainFunction): Promise<Timer> {
     } catch (reason) {
         return exit(1, reason);
     } finally {
-        log("main.release()");
+        log("[main] release()");
         clearInterval(tick);
     }
 }

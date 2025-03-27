@@ -19,6 +19,6 @@
   },
   "private": true,
   "dependencies": {
-    "@types/bun": "^1.2.5"
+    "@types/bun": "^1.2.8"
   }
 }
