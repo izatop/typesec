@@ -1,7 +1,9 @@
 import * as v from "valibot";
 
+const preflight = v.pipeAsync(v.instance(Request));
+
 const json = v.pipeAsync(
-    v.instance(Request),
+    preflight,
     v.check(({headers}) => headers.get("content-type")?.startsWith("application/json") === true),
     v.transformAsync((v) => v.json()),
     v.any(),
@@ -9,4 +11,5 @@ const json = v.pipeAsync(
 
 export const request = {
     json,
+    preflight,
 };
