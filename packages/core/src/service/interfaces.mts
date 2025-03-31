@@ -1,4 +1,4 @@
-import type {Fn, Promisify} from "@typesec/the";
+import type {Fnify, Promisify} from "@typesec/the";
 
 export interface IService {}
 
@@ -9,7 +9,7 @@ export type ServiceCtor<T extends Service> = {
     name: string;
 };
 
-export type ServiceFactory<T extends Service> = Fn<[], Promisify<T>>;
+export type ServiceFactory<T extends Service> = Fnify<Promisify<T>>;
 
 export type ServiceStateKnonwn = {
     known: boolean;

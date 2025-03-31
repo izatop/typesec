@@ -1,6 +1,7 @@
 import type {Fn, Promisify} from "@typesec/the";
 import {log} from "@typesec/tracer";
 import assert from "node:assert";
+import {isPromise} from "node:util/types";
 import {isFunction} from "radash";
 import {isAsyncDisposable, isDisposable} from "../index.mjs";
 import {PendingService} from "./PendingService.mjs";
@@ -11,8 +12,21 @@ const registry = new Map<ServiceCtor<any>, ServiceFactory<any>>();
 const pendings = new WeakMap<ServiceCtor<any>, Promisify<Service>>();
 export const identify = (ctor: ServiceCtor<any>) => ctor.name;
 
-export function service<T extends Service>(ctor: ServiceCtor<T>, factory: ServiceFactory<T>) {
-    registry.set(ctor, factory);
+export function service<T extends Service>(ctor: ServiceCtor<T>, value: ServiceFactory<T>, lazy = false) {
+    registry.set(ctor, value);
+    if (isFunction(value)) {
+        !lazy && resolve(ctor);
+
+        return;
+    }
+
+    if (isPromise(value)) {
+        resolve(ctor);
+
+        return;
+    }
+
+    store.set(ctor, value);
 }
 
 export function unload<T extends Service>(ctor: ServiceCtor<T>): void {
