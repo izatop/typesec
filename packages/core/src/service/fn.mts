@@ -84,8 +84,9 @@ export function resolve<T extends Service>(ctor: ServiceCtor<T>): Promise<T> {
         return known;
     }
 
-    const factory = registry.get(ctor);
-    assert(isFunction(factory), `Unknown service ${name}`);
+    const value = registry.get(ctor);
+    const factory = isPromise(value) ? () => value : value;
+    assert(isFunction(factory) || isPromise(value), `Unknown service ${name}`);
 
     log("[service] factory(%s)", name);
     const pending = Promise.resolve(pendings.get(ctor) ?? factory());
