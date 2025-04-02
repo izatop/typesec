@@ -1,24 +1,28 @@
-import {parseAsync, type BaseSchemaAsync, type InferOutput} from "valibot";
+import {isFunction} from "@typesec/the";
+import {parse, parseAsync, type BaseSchema, type BaseSchemaAsync, type InferOutput} from "valibot";
 import type {Fn, Rec} from "../../../the/src/interfaces.mjs";
 import type {ServeInput} from "../index.mjs";
 
-export function useQuery<R>(fn: Fn<[Rec], R>): Fn<[ServeInput], R> {
+export type ServeInputTransform<I = Rec, R = unknown> = Fn<[I], R> | BaseSchema<I, any, any>;
+
+export function useQuery<R>(transform: ServeInputTransform<Rec, R>): Fn<[ServeInput], R> {
     return ({request}) => {
         const {searchParams} = new URL(request.url);
+        const rec = Object.fromEntries(searchParams.entries());
 
-        return fn(Object.fromEntries(searchParams.entries()));
+        return isFunction(transform) ? transform(rec) : parse(transform, rec);
     };
 }
 
-export function useParams<R>(fn: Fn<[Rec], R>): Fn<[ServeInput], R> {
+export function useParams<R>(transform: ServeInputTransform<Rec, R>): Fn<[ServeInput], R> {
     return ({route}) => {
-        return fn(route.params);
+        return isFunction(transform) ? transform(route.params) : parse(transform, route.params);
     };
 }
 
-export function useRequest<R>(fn: Fn<[Request], R>): Fn<[ServeInput], R> {
+export function useRequest<R>(transform: ServeInputTransform<Request, R>): Fn<[ServeInput], R> {
     return ({request}) => {
-        return fn(request);
+        return isFunction(transform) ? transform(request) : parse(transform, request);
     };
 }
 
