@@ -1,5 +1,5 @@
 declare module "bun" {
-    interface Env {
+    export interface Env {
         NODE_ENV?: string;
     }
 }

@@ -20,5 +20,8 @@
   "private": true,
   "dependencies": {
     "@types/bun": "^1.2.8"
+  },
+  "resolutions": {
+    "bun-types": "canary"
   }
 }

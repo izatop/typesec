@@ -5,11 +5,11 @@ const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"];
 
 class Runtime extends AbortController {
     public isProduction(): boolean {
-        return process.env.NODE_ENV === "production";
+        return process.env["NODE_ENV"] === "production";
     }
 
     public isDevelopment(): boolean {
-        return process.env.NODE_ENV !== "production";
+        return process.env["NODE_ENV"] !== "production";
     }
 
     public trap = () => {

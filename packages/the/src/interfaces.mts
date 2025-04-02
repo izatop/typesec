@@ -8,6 +8,7 @@ export type Entries<T extends Rec> = [keyof T, T[keyof T]][];
 export type FromEntries<T extends Entries<any>> = T extends Entries<infer S> ? S : never;
 export type StrictRec<T extends Rec> = {[K in keyof T as T[K] extends undefined ? never : K]: T[K]};
 export type Override<I extends Rec, O extends Rec> = Expand<Omit<I, keyof O> & O>;
+export type Expand<T> = T extends infer O ? {[K in keyof O]: O[K]} : never;
 
 export type Arrayify<T> = T | T[];
 export type DeArrayify<T> = T extends Array<infer A> ? A : T;
@@ -39,5 +40,3 @@ export type IfTrue<TCond, TThen, TElse = never> = Equal<TCond, true> extends tru
 export type IsArray<T> = T extends any[] ? true : false;
 
 export type LikeString = {toString(): string};
-
-export type Expand<T> = T extends infer O ? {[K in keyof O]: O[K]} : never;

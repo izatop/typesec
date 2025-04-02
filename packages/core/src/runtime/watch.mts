@@ -9,7 +9,8 @@ function exit(code: number, reason: unknown = null): Timer {
     const fn = code > 0 ? error : log;
     fn("[main] exit(%d): %o", code, reason ? `${reason}` : reasons[code]);
 
-    return setImmediate(() => process.exit(code));
+    // @TODO bun's types are conflicting with node's
+    return setImmediate(() => process.exit(code)) as unknown as Timer;
 }
 
 export async function watch(main: MainFunction): Promise<Timer> {

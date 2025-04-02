@@ -23,7 +23,18 @@ describe("Main", () => {
 
         const userId = await server.fetch(new Request("http://localhost:3000/user/1"));
         expect(userId.status).toBe(200);
-        expect(await userId.json()).toEqual({id: 1});
+        expect(await userId.json()).toEqual({id: 1, name: "Dave"});
+
+        const userUpdate = await server.fetch(
+            new Request("http://localhost:3000/user/1/update", {
+                method: "post",
+                body: JSON.stringify({name: "Mike"}),
+                headers: {"content-type": "application/json"},
+            }),
+        );
+
+        expect(userUpdate.status).toBe(200);
+        expect(await userUpdate.json()).toEqual({id: 1, name: "Mike"});
 
         runtime.abort();
         await pending;

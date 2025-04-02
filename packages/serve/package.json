@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@types/bun": "^1.2.4",
+    "@typesec/the": "workspace:*",
     "@typesec/core": "workspace:*",
     "@typesec/tracer": "workspace:*",
     "@typesec/unit": "workspace:*",

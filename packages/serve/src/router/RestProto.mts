@@ -1,26 +1,16 @@
-import {parse, parseAsync, type InferOutput} from "valibot";
+import type {KeyOf} from "../../../the/src/interfaces.mjs";
 import {ServeProto, type ServeInput} from "../index.mjs";
-import type {RestSchema} from "./interfaces.mjs";
+import type {RestTransforms} from "./interfaces.mjs";
 
-export class RestProto<TRest extends RestSchema> extends ServeProto {
-    readonly #schema: TRest;
+export class RestProto<TTransform extends RestTransforms> extends ServeProto {
+    readonly #transforms: TTransform;
 
-    constructor(input: ServeInput, schema: TRest) {
+    constructor(input: ServeInput, schema: TTransform) {
         super(input);
-        this.#schema = schema;
+        this.#transforms = schema;
     }
 
-    public get params(): InferOutput<TRest["params"]> {
-        return parse(this.#schema.params, this.input.route.params);
-    }
-
-    public get query(): InferOutput<TRest["query"]> {
-        const url = new URL(this.input.request.url);
-
-        return parse(this.#schema.query, Object.fromEntries(url.searchParams.entries()));
-    }
-
-    public body(): Promise<InferOutput<TRest["body"]>> {
-        return parseAsync(this.#schema.body, this.input.request);
+    public parse<K extends KeyOf<TTransform, string>>(key: K): ReturnType<TTransform[K]> {
+        return this.#transforms[key](this.input);
     }
 }
