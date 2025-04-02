@@ -6,7 +6,7 @@ import {ParamsWithId} from "../../../schema/ParamsWithId.mjs";
 import {UserType} from "../../../schema/UserType.mjs";
 import {UserUpdateType} from "../../../schema/UserUpdateType.mjs";
 
-const body = useBody(v.pipeAsync(request.json, UserUpdateType));
+const body = useBody(v.pipeAsync(request.Json, UserUpdateType));
 
 export default route({app, name: "Update a User"})
     .use({body, args: useParams((rec) => v.parse(ParamsWithId, rec))})
