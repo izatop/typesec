@@ -1,5 +1,5 @@
 import {heartbeat, runtime, watch} from "@typesec/core";
-import {warn} from "@typesec/tracer";
+import {log, warn} from "@typesec/tracer";
 import {getHandle, ProtoAbstract, type MainArgs} from "@typesec/unit";
 import {FileSystemRouter, type MatchedRoute, type Server} from "bun";
 import path from "node:path";
@@ -35,6 +35,7 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
                 fetch: async (request) => {
                     try {
                         const route = router.match(request);
+                        log("[ServeProto] fetch(%s): %o", request.url, route);
                         if (route) {
                             const handle = getHandle(ServeProto, await import(route.filePath));
 
@@ -42,13 +43,13 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
                         }
                     } catch (reason) {
                         if (reason instanceof ServeError) {
-                            warn("Server error", reason);
+                            warn("[ServeProto] Server error", reason);
 
                             return new Response(reason.message, {status: reason.code});
                         }
 
                         if (reason instanceof Error) {
-                            warn("Server error", reason);
+                            warn("[ServeProto] Server error", reason);
 
                             return new Response(reason.message, {status: 500});
                         }

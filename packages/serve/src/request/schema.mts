@@ -3,7 +3,7 @@ import {ReuseRequest} from "./ReuseRequest.mjs";
 
 const Preflight = v.pipe(
     v.instance(Request),
-    v.transform((request) => new ReuseRequest(request)),
+    v.transform((request) => ReuseRequest.factory(request)),
 );
 
 const PreflightJson = v.pipe(

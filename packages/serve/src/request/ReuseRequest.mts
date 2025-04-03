@@ -1,10 +1,18 @@
+import {xmap} from "@typesec/core";
+
+const cache = xmap(new WeakMap<Request, ReuseRequest>());
+
 export class ReuseRequest {
-    #text: string | null = null;
+    #text: Promise<string> | null = null;
 
     readonly #request: Request;
 
     constructor(request: Request) {
         this.#request = request;
+    }
+
+    public static factory(req: Request) {
+        return cache.ensure(req, () => new this(req));
     }
 
     public get request(): Request {
@@ -19,19 +27,19 @@ export class ReuseRequest {
         return this.#request.url;
     }
 
-    public async text(): Promise<string> {
+    public get method(): string {
+        return this.#request.method;
+    }
+
+    public text(): Promise<string> {
         return this.#text === null ? this.#reuseText() : this.#text;
     }
 
-    public async json(): Promise<unknown> {
-        const text = await this.text();
-
-        return JSON.parse(text);
+    public json(): Promise<unknown> {
+        return this.text().then((res) => JSON.parse(res));
     }
 
-    async #reuseText(): Promise<string> {
-        this.#text = await this.#request.text();
-
-        return this.#text;
+    #reuseText(): Promise<string> {
+        return (this.#text = this.#request.text());
     }
 }
