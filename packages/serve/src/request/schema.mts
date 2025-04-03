@@ -1,12 +1,12 @@
 import * as v from "valibot";
 import {ReuseRequest} from "./ReuseRequest.mjs";
 
-const Preflight = v.pipeAsync(
+const Preflight = v.pipe(
     v.instance(Request),
     v.transform((request) => new ReuseRequest(request)),
 );
 
-const PreflightJson = v.pipeAsync(
+const PreflightJson = v.pipe(
     Preflight,
     v.check(({request: {headers}}) => headers.get("content-type")?.startsWith("application/json") === true),
 );

@@ -9,8 +9,8 @@ import {UserUpdateType} from "../../../schema/UserUpdateType.mjs";
 const body = useBody(v.pipeAsync(request.Json, UserUpdateType));
 
 export default route({app, name: "Update a User"})
-    .use({body, args: useParams((rec) => v.parse(ParamsWithId, rec))})
-    .as(v.pipe(UserType, response.json))
+    .use({body, args: useParams(ParamsWithId)})
+    .as(v.pipe(UserType, response.Json))
     .get(async function update({proto}) {
         const body = await proto.parse("body");
 

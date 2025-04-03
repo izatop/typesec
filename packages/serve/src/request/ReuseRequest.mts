@@ -11,6 +11,14 @@ export class ReuseRequest {
         return this.#request;
     }
 
+    public get headers(): Headers {
+        return this.#request.headers;
+    }
+
+    public get url(): string {
+        return this.#request.url;
+    }
+
     public async text(): Promise<string> {
         return this.#text === null ? this.#reuseText() : this.#text;
     }

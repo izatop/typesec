@@ -6,8 +6,8 @@ import {ParamsWithId} from "../../schema/ParamsWithId.mjs";
 import {UserType} from "../../schema/UserType.mjs";
 
 export default route({app, name: "Get a User"})
-    .use({args: useParams((rec) => v.parse(ParamsWithId, rec))})
-    .as(v.pipe(UserType, response.json))
+    .use({args: useParams(ParamsWithId)})
+    .as(v.pipe(UserType, response.Json))
     .get(function get({proto}) {
         const {id} = proto.parse("args");
 

@@ -41,7 +41,7 @@ describe("Main", () => {
     });
 
     test("Response", async () => {
-        const resp = parse(response.json, 1);
+        const resp = parse(response.Json, 1);
         expect(resp.headers.has("content-type")).toBeTrue();
         expect(resp.headers.get("content-type")).toBe("application/json");
         expect(await resp.json()).toBe(1);
