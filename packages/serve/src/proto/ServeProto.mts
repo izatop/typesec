@@ -35,7 +35,7 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
                 fetch: async (request) => {
                     try {
                         const route = router.match(request);
-                        log("[ServeProto] fetch(%s): %o", request.url, route);
+                        log("[ServeProto] fetch(%s): %s", request.url, Boolean(route));
                         if (route) {
                             const handle = getHandle(ServeProto, await import(route.filePath));
 

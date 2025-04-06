@@ -16,7 +16,7 @@ export function context<TProto extends ProtoAbstract<TIn>, TIn, TRet, TContext =
 
                 try {
                     const instance = new proto(request);
-                    log("%s( %s, %o ): *resource", args.name, instance, request);
+                    log("%s ( %s ): *resource", args.name, request);
 
                     const response = await locator(() =>
                         args.handle.call(instance, {proto: instance, request, context}),

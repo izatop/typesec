@@ -1,9 +1,14 @@
 import {log, warn} from "@typesec/tracer";
 import assert from "node:assert";
+import timers from "node:timers/promises";
 
 const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"];
 
 class Runtime extends AbortController {
+    public isRunning = (): boolean => {
+        return !this.signal.aborted;
+    };
+
     public isProduction(): boolean {
         return process.env["NODE_ENV"] === "production";
     }
@@ -40,11 +45,15 @@ class Runtime extends AbortController {
         super.abort();
     };
 
-    public enqueue(ctrl: AbortController) {
+    public enqueue = (ctrl: AbortController) => {
         assert(!this.signal.aborted || !ctrl.signal.aborted, "Already aborted");
 
         this.signal.addEventListener("abort", () => ctrl.abort(), {once: true});
-    }
+    };
+
+    public wait = (timer: number): Promise<void> => {
+        return timers.setTimeout(timer, void 0, {signal: this.signal});
+    };
 }
 
 export const runtime = new Runtime();
