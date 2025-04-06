@@ -84,6 +84,8 @@ export function syncArray<T extends Service>(...ctors: ServiceCtor<T>[]): T[] {
         } catch (reason) {
             if (reason instanceof PendingService) {
                 catches.push(reason);
+            } else {
+                throw reason;
             }
         }
     }
@@ -158,7 +160,7 @@ export async function locator<R>(fn: Fn<[], Promisify<R>>): Promise<R> {
     try {
         return await fn();
     } catch (reason) {
-        if (reason instanceof PendingService) {
+        if (reason instanceof PendingService || reason instanceof PendingServiceList) {
             await reason;
 
             return await fn();

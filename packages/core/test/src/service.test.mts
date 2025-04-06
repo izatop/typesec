@@ -1,12 +1,15 @@
 import {beforeEach, describe, test} from "bun:test";
 import assert from "node:assert";
-import {locator, resolve, service, state, sync, unload} from "../../src/service/fn.mjs";
+import {locator, resolve, service, state, sync, syncArray, unload} from "../../src/service/fn.mjs";
 import {TestService} from "./service/TestService.mjs";
+import {TestService2} from "./service/TestService2.mjs";
 
 service(TestService, () => new TestService());
+service(TestService2, () => new TestService2());
 
 describe("Service", () => {
     beforeEach(() => unload(TestService));
+    beforeEach(() => unload(TestService2));
 
     test("state", async () => {
         const stage1 = state(TestService);
@@ -39,5 +42,13 @@ describe("Service", () => {
 
         const instance = await resolve(TestService);
         assert.ok(instance instanceof TestService);
+    });
+
+    test("syncArray", async () => {
+        await locator(() => {
+            const [s1, s2] = syncArray(TestService, TestService2);
+            assert.ok(s1 instanceof TestService);
+            assert.ok(s2 instanceof TestService2);
+        });
     });
 });
