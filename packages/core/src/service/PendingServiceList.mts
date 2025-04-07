@@ -1,9 +1,12 @@
 import type {Promisify} from "@typesec/the";
 import {log} from "@typesec/tracer";
+import {PendingError} from "./PendingError.mjs";
 import type {PendingService} from "./PendingService.mjs";
 
-export class PendingServiceList<T extends PendingService<any>> implements PromiseLike<T[]> {
-    constructor(readonly pendings: Promisify<T>[]) {}
+export class PendingServiceList<T extends PendingService<any>> extends PendingError<T[]> {
+    constructor(readonly pendings: Promisify<T>[]) {
+        super();
+    }
 
     public then<TResult1 = T[], TResult2 = never>(
         onfulfilled?: ((value: T[]) => TResult1 | PromiseLike<TResult1>) | null | undefined,

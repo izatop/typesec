@@ -4,8 +4,8 @@ import {locator, resolve, service, state, sync, syncArray, unload} from "../../s
 import {TestService} from "./service/TestService.mjs";
 import {TestService2} from "./service/TestService2.mjs";
 
-service(TestService, () => new TestService());
-service(TestService2, () => new TestService2());
+service(TestService, async () => new TestService());
+service(TestService2, async () => new TestService2());
 
 describe("Service", () => {
     beforeEach(() => unload(TestService));
@@ -26,7 +26,7 @@ describe("Service", () => {
     test("sync", async () => {
         assert.ok(state(TestService).resolved === false);
 
-        const instance = await locator(() => {
+        const instance = await locator(function serviceLocate() {
             const service = sync(TestService);
 
             return service;
@@ -45,7 +45,7 @@ describe("Service", () => {
     });
 
     test("syncArray", async () => {
-        await locator(() => {
+        await locator(function serviceLocate() {
             const [s1, s2] = syncArray(TestService, TestService2);
             assert.ok(s1 instanceof TestService);
             assert.ok(s2 instanceof TestService2);

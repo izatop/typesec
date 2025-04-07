@@ -13,3 +13,7 @@ export function when<T, R1, R2>(value: T, then: Fn<[T], R1>, fallback: Fnify<R2>
 export function when<T, R1, R2>(value: T, then: Fn<[T], R1>, fallback?: Fnify<R2>): R1 | R2 | void {
     return value ? then(value) : isFunction(fallback) ? fallback() : fallback;
 }
+
+export function fnfy<R>(value: Fnify<R>): R {
+    return isFunction(value) ? value() : value;
+}

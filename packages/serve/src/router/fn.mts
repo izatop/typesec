@@ -1,9 +1,29 @@
+import type {Meta, ProtoAbstract} from "@typesec/unit";
 import {parse, parseAsync, type BaseSchema, type BaseSchemaAsync, type InferOutput} from "valibot";
 import type {Fn, Rec} from "../../../the/src/interfaces.mjs";
 import type {ServeInput} from "../index.mjs";
+import {Router} from "./Router.mjs";
+import type {
+    RestArgs,
+    RestHandle,
+    RestResponse,
+    RestTransforms,
+    RouteArgs,
+    UseTransform,
+    UseTransformAsync,
+} from "./interfaces.mjs";
 
-export type UseTransform<S extends BaseSchema<any, any, any>> = Fn<[ServeInput], InferOutput<S>>;
-export type UseTransformAsync<S extends BaseSchemaAsync<any, any, any>> = Fn<[ServeInput], Promise<InferOutput<S>>>;
+export function route<TContext, TProto extends ProtoAbstract<ServeInput>>(
+    args: RouteArgs<TContext, TProto>,
+): Router<TContext, {}, RestResponse> {
+    return new Router<TContext, RestTransforms, RestResponse>(args, {});
+}
+
+export function rest<TContext, TProto extends ProtoAbstract<ServeInput>>(
+    args: RestArgs<TContext, TProto>,
+): RestHandle<TContext> {
+    return (meta: Meta): Router<TContext, {}, RestResponse> => route({...args, ...meta});
+}
 
 export function useQuery<S extends BaseSchema<Rec, any, any>>(transform: S): UseTransform<S> {
     return ({request}) => {

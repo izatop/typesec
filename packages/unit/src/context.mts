@@ -11,16 +11,16 @@ export function context<TProto extends ProtoAbstract<TIn>, TIn, TRet, TContext =
     class ThisContextResolver extends ContextResolver<TContext> {}
     const factory: Factory<TContext, TProto, TIn, TRet> = (args) => {
         return Object.assign(
-            async (request: TIn) => {
+            async function run(request: TIn) {
                 const {context} = await resolve(ThisContextResolver);
 
                 try {
                     const instance = new proto(request);
                     log("%s ( %s ): *resource", args.name, request);
 
-                    const response = await locator(() =>
-                        args.handle.call(instance, {proto: instance, request, context}),
-                    );
+                    const response = await locator(function locateService() {
+                        return args.handle.call(instance, {proto: instance, request, context});
+                    });
 
                     proto.validate(response);
 
@@ -38,7 +38,9 @@ export function context<TProto extends ProtoAbstract<TIn>, TIn, TRet, TContext =
         );
     };
 
-    service(ThisContextResolver, () => ThisContextResolver.from(context));
+    service(ThisContextResolver, ThisContextResolver.from(context));
+
+    factory.name;
 
     return Object.assign(factory, {meta, proto, context}) as Application<TContext, TProto, TIn, TRet>;
 }
