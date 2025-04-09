@@ -3,6 +3,8 @@ import {getHandle, ProtoAbstract, type MainArgs} from "@typesec/unit";
 import {FileSystemRouter, type MatchedRoute} from "bun";
 import {ok} from "node:assert";
 import path from "node:path";
+import {crush} from "radash";
+import {ArgvParser, type ArgvOption, type OptionPattern} from "../index.mjs";
 
 export type CLIInput = {
     request: string[];
@@ -10,12 +12,30 @@ export type CLIInput = {
 };
 
 export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
+    readonly #argv = new ArgvParser({});
+
     public static validate(value: unknown): value is void {
         return typeof value === "undefined";
     }
 
     public get argv(): string[] {
         return process.argv.slice(1);
+    }
+
+    public option<T extends string>(pattern: OptionPattern<T>): ArgvParser<Rec<T, ArgvOption<T, false>>>;
+    public option<T extends string>(
+        pattern: OptionPattern<T>,
+        required: false,
+    ): ArgvParser<Rec<T, ArgvOption<T, false>>>;
+    public option<T extends string, R extends boolean>(
+        pattern: OptionPattern<T>,
+        required: R,
+    ): ArgvParser<Rec<T, ArgvOption<T, R>>>;
+    public option<T extends string>(
+        pattern: OptionPattern<T>,
+        required = false,
+    ): ArgvParser<Rec<T, ArgvOption<T, boolean>>> {
+        return this.#argv.option(pattern, required);
     }
 
     public static async run(args: MainArgs): Promise<void> {
@@ -35,7 +55,16 @@ export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
     }
 
     public table<T extends Rec>(name: string, table: T[], pick?: StringKeyOf<T>[]) {
-        process.stdout.write(name + "\n" + Bun.inspect.table(table, pick, {colors: true}) + "\n");
+        process.stdout.write(
+            name +
+                "\n" +
+                Bun.inspect.table(
+                    table.map((t) => crush(t)),
+                    pick,
+                    {colors: true},
+                ) +
+                "\n",
+        );
     }
 
     public verticalTable<T extends Rec, K extends keyof T>(name: string, data: T[], id?: K) {
@@ -47,7 +76,7 @@ export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
 
             id && table.push({key: "row", value: row[id]});
             table.push(
-                ...Object.entries(row)
+                ...Object.entries(crush(row))
                     .filter(([key]) => key !== id)
                     .map(([key, value]) => ({key, value})),
             );

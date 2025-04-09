@@ -1,1 +1,2 @@
-export * from "./proto/CommandLineInterfaceProto.mjs";
+export * from "./argv/index.mjs";
+export * from "./proto/index.mjs";

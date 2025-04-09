@@ -14,13 +14,14 @@
     }
   },
   "dependencies": {
-    "@types/bun": "^1.2.4",
-    "@typesec/the": "workspace:*",
-    "@typesec/core": "workspace:*",
-    "@typesec/unit": "workspace:*",
-    "@typesec/tracer": "workspace:*",
     "@commander-js/extra-typings": "^13.0.0",
-    "commander": "^13.0.0"
+    "@types/bun": "^1.2.4",
+    "@typesec/core": "workspace:*",
+    "@typesec/the": "workspace:*",
+    "@typesec/tracer": "workspace:*",
+    "@typesec/unit": "workspace:*",
+    "commander": "^13.0.0",
+    "radash": "^12.1.0"
   },
   "engines": {
     "node": ">=23.9"

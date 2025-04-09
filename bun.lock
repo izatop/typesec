@@ -27,6 +27,7 @@
         "@typesec/tracer": "workspace:*",
         "@typesec/unit": "workspace:*",
         "commander": "^13.0.0",
+        "radash": "^12.1.0",
       },
     },
     "packages/core": {

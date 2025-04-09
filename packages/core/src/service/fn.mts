@@ -104,7 +104,6 @@ export function sync<T extends Service>(ctor: ServiceCtor<T>): T {
 
     const known = store.get(ctor);
     if (!known) {
-        console.trace("sync", name);
         log("[service] throw ( <PendingService ( <%s> )> )", name);
         throw new PendingService(ctor, resolve(ctor));
     }
