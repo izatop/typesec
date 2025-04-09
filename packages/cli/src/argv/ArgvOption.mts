@@ -28,7 +28,6 @@ export class ArgvOption<T, R extends boolean> {
     }
 
     public validate(value: string | undefined): string | undefined {
-        console.log(value);
         assert(value || !this.#required, `The option ${this.#pattern} is required`);
 
         return value;
