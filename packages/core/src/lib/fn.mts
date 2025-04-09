@@ -1,4 +1,5 @@
 import {isInstance} from "@typesec/the";
+import {AssertionError} from "node:assert";
 import {partial} from "radash";
 
 export function ensure<T>(store: Map<any, T> | WeakMap<WeakKey, T>, key: WeakKey, factory: () => T): T {
@@ -28,4 +29,12 @@ export function isAsyncDisposable(res: unknown): res is AsyncDisposable {
 
 export function isDisposable(res: unknown): res is Disposable {
     return isInstance(res) && Reflect.has(res, Symbol.dispose);
+}
+
+export function assert(value: unknown, message: string | Error): asserts value {
+    if (value) {
+        return;
+    }
+
+    throw new AssertionError({message: message instanceof Error ? message.message : message});
 }

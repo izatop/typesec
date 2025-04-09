@@ -1,6 +1,7 @@
 import {log, warn} from "@typesec/tracer";
 import assert from "node:assert";
 import timers from "node:timers/promises";
+import {type EnvModeType} from "../env.mjs";
 
 const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"];
 
@@ -9,12 +10,22 @@ class Runtime extends AbortController {
         return !this.signal.aborted;
     };
 
+    public get mode(): EnvModeType | string {
+        return process.env["NODE_ENV"] ?? "development";
+    }
+
     public isProduction(): boolean {
-        return process.env["NODE_ENV"] === "production";
+        return this.mode === "production";
     }
 
     public isDevelopment(): boolean {
-        return process.env["NODE_ENV"] !== "production";
+        return this.mode !== "production";
+    }
+
+    public only(mode?: EnvModeType, message?: string) {
+        if (mode) {
+            assert(mode === this.mode, message ?? `Available in ${mode} mode only`);
+        }
     }
 
     public trap = () => {

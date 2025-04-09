@@ -11,6 +11,10 @@ export class ArgvParser<O extends Rec<string, ArgvOption<string, boolean>>> {
         this.#defaultArgv = argv ?? process.argv;
     }
 
+    public require<T extends string>(pattern: OptionPattern<T>): ArgvParser<O & Rec<T, ArgvOption<T, true>>> {
+        return this.option(pattern, true);
+    }
+
     public option<T extends string>(pattern: OptionPattern<T>): ArgvParser<O & Rec<T, ArgvOption<T, false>>>;
     public option<T extends string>(
         pattern: OptionPattern<T>,
@@ -41,8 +45,12 @@ export class ArgvParser<O extends Rec<string, ArgvOption<string, boolean>>> {
             const arg = args.shift();
             const matched = options.find((option) => option.match(arg));
             if (matched) {
-                result[matched.name] = matched.validate(args.shift());
+                result[matched.name] = args.shift();
             }
+        }
+
+        for (const option of options) {
+            option.validate(result[option.name]);
         }
 
         return result as Expand<ParseOptions<O>>;

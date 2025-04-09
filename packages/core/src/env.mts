@@ -1,5 +1,7 @@
+export type EnvModeType = "production" | "development" | "stage" | "test";
+
 declare module "bun" {
     export interface Env {
-        NODE_ENV?: string;
+        NODE_ENV?: EnvModeType | string;
     }
 }

@@ -1,4 +1,4 @@
-import {dispose, locator, resolve, service} from "@typesec/core";
+import {dispose, locator, resolve, runtime, service} from "@typesec/core";
 import {log} from "@typesec/tracer";
 import {ContextResolver} from "./ContextResolver.mjs";
 import type {Application, Factory, SetupOptions} from "./interfaces.mjs";
@@ -12,6 +12,8 @@ export function context<TProto extends ProtoAbstract<TIn>, TIn, TRet, TContext =
     const factory: Factory<TContext, TProto, TIn, TRet> = (args) => {
         return Object.assign(
             async function run(request: TIn) {
+                runtime.only(meta.only);
+
                 const {context} = await resolve(ThisContextResolver);
 
                 try {
