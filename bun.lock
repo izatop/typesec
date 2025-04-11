@@ -4,13 +4,13 @@
     "": {
       "name": "typesec",
       "dependencies": {
-        "@types/bun": "latest",
+        "@types/bun": "^1.2.8",
       },
       "devDependencies": {
-        "prettier": "latest",
-        "rimraf": "latest",
-        "tsx": "latest",
-        "typescript": "latest",
+        "prettier": "3.5.3",
+        "rimraf": "^6.0.1",
+        "tsx": "^4.19.3",
+        "typescript": "^5.8.3",
       },
     },
     "packages/cli": {
