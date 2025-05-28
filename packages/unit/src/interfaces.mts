@@ -4,6 +4,7 @@ import type {ProtoAbstract} from "./ProtoAbstract.mjs";
 
 export type MainArgs = {
     path: string;
+    ready?: Fn<[], Promisify<void | AsyncDisposable | Disposable>>;
 };
 
 export type Proto<T extends ProtoAbstract<TIn>, TIn, TRet> = {

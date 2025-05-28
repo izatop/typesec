@@ -1,3 +1,4 @@
+import {dispose} from "@typesec/core";
 import type {Rec, StringKeyOf} from "@typesec/the";
 import {getHandle, ProtoAbstract, type MainArgs} from "@typesec/unit";
 import {FileSystemRouter, type MatchedRoute} from "bun";
@@ -51,7 +52,9 @@ export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
 
         const module = await import(route.filePath);
         const handle = getHandle(this, module);
+        const res = await args.ready?.();
         await handle({request: process.argv, route});
+        await dispose(res);
     }
 
     public table<T extends Rec>(name: string, table: T[], pick?: StringKeyOf<T>[]) {

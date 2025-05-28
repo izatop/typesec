@@ -42,7 +42,5 @@ export function context<TProto extends ProtoAbstract<TIn>, TIn, TRet, TContext =
 
     service(ThisContextResolver, ThisContextResolver.from(context));
 
-    factory.name;
-
     return Object.assign(factory, {meta, proto, context}) as Application<TContext, TProto, TIn, TRet>;
 }

@@ -1,4 +1,4 @@
-import {heartbeat, runtime, watch} from "@typesec/core";
+import {dispose, heartbeat, runtime, watch} from "@typesec/core";
 import {log, warn} from "@typesec/tracer";
 import {getHandle, ProtoAbstract, type MainArgs} from "@typesec/unit";
 import {FileSystemRouter, type MatchedRoute, type Server} from "bun";
@@ -63,7 +63,9 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
 
             this.instances.push(server);
 
+            const res = await args.ready?.();
             await heartbeat();
+            await dispose(res);
 
             return {
                 [Symbol.asyncDispose]: async () => {
