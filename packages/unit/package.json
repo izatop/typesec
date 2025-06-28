@@ -2,13 +2,10 @@
   "name": "@typesec/unit",
   "version": "0.1.0",
   "type": "module",
-  "types": "./dist/index.d.mts",
-  "module": "./dist/index.mjs",
-  "bin": "bin",
+  "module": "./src/index.mts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.mts"
+      "import": "./src/index.mts"
     }
   },
   "dependencies": {

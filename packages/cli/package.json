@@ -2,15 +2,13 @@
   "name": "@typesec/cli",
   "version": "0.1.0",
   "type": "module",
-  "types": "./dist/index.d.mts",
-  "module": "./dist/index.mjs",
+  "module": "./src/index.mts",
   "bin": {
     "typesec-cli": "bin"
   },
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.mts"
+      "import": "./src/index.mts"
     }
   },
   "dependencies": {

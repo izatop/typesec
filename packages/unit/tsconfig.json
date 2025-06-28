@@ -1,20 +1,5 @@
 {
   "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist"
-  },
-  "references": [
-    {
-      "path": "../tracer"
-    },
-    {
-      "path": "../core"
-    },
-    {
-      "path": "../the"
-    }
-  ],
   "include": [
     "src"
   ]

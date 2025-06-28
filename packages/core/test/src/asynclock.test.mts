@@ -1,12 +1,12 @@
-import {describe, mock, test} from "bun:test";
+import {describe, expect, mock, test} from "bun:test";
 import assert from "node:assert/strict";
 import {AsyncLock} from "../../src/index.mjs";
 
 describe("AsyncLock", () => {
     test("acquire", async () => {
         const [t1, f1] = [{n: 1}, mock(() => Promise.resolve({t: Math.random()}))];
-        assert.strictEqual(AsyncLock.acquire(t1, f1), AsyncLock.acquire(t1, f1));
-        assert.equal(f1.mock.calls.length, 1);
+        expect(AsyncLock.acquire(t1, f1)).toBe(AsyncLock.acquire(t1, f1));
+        expect(f1.mock.calls.length).toBe(1);
     });
 
     test("release", async () => {

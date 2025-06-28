@@ -1,4 +1,4 @@
-import type {KeyOf} from "../../../the/src/interfaces.mjs";
+import type {KeyOf} from "@typesec/the";
 import {ServeProto, type ServeInput} from "../index.mjs";
 import type {RestTransforms} from "./interfaces.mjs";
 
@@ -11,6 +11,6 @@ export class RestProto<TTransform extends RestTransforms> extends ServeProto {
     }
 
     public parse<K extends KeyOf<TTransform, string>>(key: K): ReturnType<TTransform[K]> {
-        return this.#transforms[key](this.input);
+        return this.#transforms[key]?.(this.input);
     }
 }
