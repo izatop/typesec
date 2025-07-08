@@ -18,7 +18,7 @@ function exit(code: number, reason: unknown = null): Timer {
 
 export async function watch(main: MainFunction): Promise<Timer> {
     log("[main] lock()");
-    const tick = setInterval(() => void 0, 1_000_000);
+    const tick = setInterval(() => log("[main] tick()"), runtime.isProduction() ? 10_000_000 : 10_000);
 
     try {
         const fn = main.name || "fn";
