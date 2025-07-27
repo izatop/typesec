@@ -1,6 +1,6 @@
+import type {Fn, Rec} from "@typesec/the";
 import type {Meta, ProtoAbstract} from "@typesec/unit";
 import {parse, parseAsync, type BaseSchema, type BaseSchemaAsync, type InferOutput} from "valibot";
-import type {Fn, Rec} from "../../../the/src/interfaces.mjs";
 import type {ServeInput} from "../index.mjs";
 import {Router} from "./Router.mjs";
 import type {

@@ -1,13 +1,63 @@
-import type {Entries, Override, Rec} from "./interfaces.mjs";
+import {is} from "./fn.mts";
+import type {Entries, KeyOf, Override, Rec} from "./interfaces.mjs";
 
-export function toEntries<T extends Rec>(value: T): Entries<T> {
+export function toEntries<T extends Rec>(value: T): Entries<T>[] {
     return Object.entries(value);
 }
 
-export function fromEntries<T extends Rec>(value: Entries<T>): T {
-    return Object.fromEntries(value) as T;
+export function fromEntries<K extends PropertyKey, V>(value: [K, V][]): Rec<K, V> {
+    return Object.fromEntries(value) as Rec<K, V>;
+}
+
+export async function fromAsyncEntries<K extends PropertyKey, V>(value: [K, Promise<V>][]): Promise<Rec<K, V>> {
+    const entries = await Promise.all(value.map(([key, entry]) => entry.then((value) => [key, value])));
+
+    return Object.fromEntries(entries) as Rec<K, V>;
 }
 
 export function override<A extends Rec, B extends Rec>(a: A, b: B): Override<A, B> {
     return {...a, ...b} as unknown as Override<A, B>;
 }
+
+export function isNull(value: unknown): value is null {
+    return value === null;
+}
+
+export function isObject<T extends Rec>(value: unknown): value is T {
+    return is(value, "object") && value !== null && !Array.isArray(value);
+}
+
+export function has<T extends Rec, K extends string>(value: T, ...keys: K[]): value is T & Rec<K, unknown> {
+    return keys.every((key) => Object.hasOwn(value, key));
+}
+
+export function hasKeyOf<T extends Rec>(value: T, key: string): key is KeyOf<T, string> {
+    return Object.hasOwn(value, key);
+}
+
+export function hasKeyListOf<T extends Rec>(value: T, keys: string[]): keys is KeyOf<T, string>[] {
+    return keys.every((key) => Object.hasOwn(value, key));
+}
+
+export function keys<T extends Rec>(value: T): KeyOf<T>[];
+export function keys<T extends Rec>(value: T, type: "string"): KeyOf<T, string>[];
+export function keys<T extends Rec>(value: T, type: "symbol"): KeyOf<T, symbol>[];
+export function keys<T extends Rec>(value: T, type?: any): KeyOf<T, any>[] {
+    const keys = Reflect.ownKeys(value);
+
+    return type ? keys.filter((key) => is(key, type)) : keys;
+}
+
+export const object = {
+    toEntries,
+    fromEntries,
+    override,
+    isObject,
+    isNull,
+    has,
+    hasKeyOf,
+    hasKeyListOf,
+    keys,
+};
+
+export default object;

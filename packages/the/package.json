@@ -2,13 +2,17 @@
   "name": "@typesec/the",
   "version": "0.1.0",
   "type": "module",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
-  "main": "./dist/index.mjs",
+  "module": "./src/index.mts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.mts"
+      "import": "./src/index.mts"
+    },
+    "./object": {
+      "import": "./src/object.mts"
     }
-  }
+  },
+  "scripts": {
+    "upgrade": "bun update --latest"
+  },
+  "license": "MIT"
 }

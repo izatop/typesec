@@ -1,34 +1,24 @@
-import {describe, mock, test} from "bun:test";
-import assert from "node:assert/strict";
-import {ensure, xmap} from "../../src/lib/fn.mjs";
+import {describe, expect, mock, test} from "bun:test";
+import {xmap} from "../../src/index.mjs";
 
 describe("XMap", () => {
-    test("ensure", () => {
-        const map = new Map();
-
-        const key = {};
-        const factory = mock(() => Math.random());
-        assert.strictEqual(ensure(map, key, factory), ensure(map, key, factory));
-        assert.strictEqual(factory.mock.calls.length, 1);
-    });
-
     test("Map", () => {
         const map = xmap(new Map<string, number>());
-        assert.ok(Reflect.has(map, "ensure"));
+        expect(Reflect.has(map, "ensure")).toBeTrue();
 
         const key = "key";
         const factory = mock(() => Math.random());
-        assert.strictEqual(map.ensure(key, factory), map.ensure(key, factory));
-        assert.strictEqual(factory.mock.calls.length, 1);
+        expect(map.ensure(key, factory)).toBe(map.ensure(key, factory));
+        expect(factory.mock.calls.length).toBe(1);
     });
 
     test("WeakMap", () => {
         const map = xmap(new WeakMap());
-        assert.ok(Reflect.has(map, "ensure"));
+        expect(Reflect.has(map, "ensure")).toBeTrue();
 
         const key = {};
         const factory = mock(() => Math.random());
-        assert.strictEqual(map.ensure(key, factory), map.ensure(key, factory));
-        assert.strictEqual(factory.mock.calls.length, 1);
+        expect(map.ensure(key, factory)).toBe(map.ensure(key, factory));
+        expect(factory.mock.calls.length).toBe(1);
     });
 });

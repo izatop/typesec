@@ -14,6 +14,10 @@ class Runtime extends AbortController {
         return process.env["NODE_ENV"] ?? "development";
     }
 
+    public isTest(): boolean {
+        return this.mode === "test";
+    }
+
     public isProduction(): boolean {
         return this.mode === "production";
     }
@@ -45,7 +49,7 @@ class Runtime extends AbortController {
         signals.forEach((s) => process.once(s, this.abort));
     };
 
-    public abort = () => {
+    public override abort = () => {
         if (this.signal.aborted) {
             warn("abort(): Already aborted");
 

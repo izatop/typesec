@@ -3,13 +3,10 @@
   "version": "0.1.0",
   "bin": "bin",
   "type": "module",
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
-  "module": "./dist/index.mjs",
+  "module": "./src/index.mts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.mts"
+      "import": "./src/index.mts"
     }
   },
   "dependencies": {

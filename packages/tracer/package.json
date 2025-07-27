@@ -2,24 +2,22 @@
   "name": "@typesec/tracer",
   "version": "0.1.0",
   "type": "module",
-  "types": "dist/index.d.mts",
-  "module": "dist/index.mjs",
+  "module": "./src/index.mts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.mts"
+      "import": "./src/index.mts"
     }
+  },
+  "scripts": {
+    "upgrade": "bun update --latest"
   },
   "dependencies": {
     "@types/chalk": "^2.2.4",
-    "@types/bun": "^1.2.4",
+    "@types/bun": "^1.2.19",
     "@typesec/the": "workspace:*",
     "@typesec/tracer": "workspace:*",
     "chalk": "^5.4.1",
-    "radash": "^12.1.0"
-  },
-  "engines": {
-    "node": ">=23.9"
+    "radash": "^12.1.1"
   },
   "license": "MIT"
 }

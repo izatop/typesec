@@ -1,0 +1,22 @@
+{
+  "name": "@typesec/util",
+  "version": "0.1.0",
+  "type": "module",
+  "module": "./src/index.mts",
+  "exports": {
+    ".": {
+      "import": "./src/index.mts"
+    }
+  },
+  "scripts": {
+    "upgrade": "bun update --latest"
+  },
+  "dependencies": {
+    "@types/bun": "^1.2.19",
+    "@typesec/core": "workspace:*",
+    "@typesec/the": "workspace:*",
+    "@typesec/tracer": "workspace:*",
+    "radash": "^12.1.1"
+  },
+  "license": "MIT"
+}

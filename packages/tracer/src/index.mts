@@ -26,7 +26,7 @@ function getLogArgs(label: TracerLevel, ...args: LogArgs): LogArgs {
     if (options.trace) {
         const [caller] = getCallStack();
         labels.unshift(
-            chalk.gray(`@ ${bgs[label].white(caller.name)} at ${caller.relative}:${caller.line}`),
+            chalk.gray(`@ ${bgs[label].white(caller?.name)} at ${caller?.relative}:${caller?.line}`),
             chalk.gray(`\n>`),
         );
     } else {

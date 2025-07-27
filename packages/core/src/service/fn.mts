@@ -1,4 +1,4 @@
-import {fnfy, type Fn, type Promisify} from "@typesec/the";
+import {defnify, type Fn, type Promisify} from "@typesec/the";
 import {log} from "@typesec/tracer";
 import assert from "node:assert";
 import {isPromise} from "node:util/types";
@@ -142,7 +142,7 @@ export function resolve<T extends Service>(ctor: ServiceCtor<T>): Promise<T> {
     assert(isFunction(value) || isPromise(value), `Unknown service ${name}`);
 
     log("[service] factory ( <%s>, <reuse=%s> )", name, pendings.has(ctor));
-    const pending = Promise.resolve(pendings.get(ctor) ?? fnfy(value));
+    const pending = Promise.resolve(pendings.get(ctor) ?? defnify(value));
     pendings.set(ctor, pending);
 
     pending.then((instance) => {

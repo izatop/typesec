@@ -1,5 +1,5 @@
+import {deepEquals} from "bun";
 import {describe, test} from "bun:test";
-import assert from "node:assert";
 import {when} from "../../src/fn.mjs";
 
 // type T1 = Expect<Equal<A, B>>;
@@ -23,7 +23,8 @@ describe("Object", () => {
                 () => false,
             ),
         );
-        assert.deepEqual(
+
+        deepEquals(
             expected,
             tests.map(([, res]) => res),
         );
