@@ -11,18 +11,18 @@
       "import": "./src/index.mts"
     }
   },
+  "scripts": {
+    "upgrade": "bun update --latest"
+  },
   "dependencies": {
-    "@commander-js/extra-typings": "^13.0.0",
-    "@types/bun": "^1.2.4",
+    "@commander-js/extra-typings": "^14.0.0",
+    "@types/bun": "^1.2.19",
     "@typesec/core": "workspace:*",
     "@typesec/the": "workspace:*",
     "@typesec/tracer": "workspace:*",
     "@typesec/unit": "workspace:*",
-    "commander": "^13.0.0",
-    "radash": "^12.1.0"
-  },
-  "engines": {
-    "node": ">=23.9"
+    "commander": "^14.0.0",
+    "radash": "^12.1.1"
   },
   "license": "MIT"
 }

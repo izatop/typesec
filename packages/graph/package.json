@@ -1,5 +1,5 @@
 {
-  "name": "@typesec/tracer",
+  "name": "@typesec/graph",
   "version": "0.1.0",
   "type": "module",
   "module": "./src/index.mts",
@@ -12,12 +12,10 @@
     "upgrade": "bun update --latest"
   },
   "dependencies": {
-    "@types/chalk": "^2.2.4",
     "@types/bun": "^1.2.19",
     "@typesec/the": "workspace:*",
-    "@typesec/tracer": "workspace:*",
-    "chalk": "^5.4.1",
-    "radash": "^12.1.1"
+    "@typesec/core": "workspace:*",
+    "@typesec/tracer": "workspace:*"
   },
   "license": "MIT"
 }

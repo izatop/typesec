@@ -8,14 +8,14 @@
       "import": "./src/index.mts"
     }
   },
+  "scripts": {
+    "upgrade": "bun update --latest"
+  },
   "dependencies": {
-    "@types/bun": "^1.2.4",
+    "@types/bun": "^1.2.19",
     "@typesec/the": "workspace:*",
     "@typesec/tracer": "workspace:*",
-    "radash": "^12.1.0"
-  },
-  "engines": {
-    "node": ">=23.9"
+    "radash": "^12.1.1"
   },
   "license": "MIT"
 }
