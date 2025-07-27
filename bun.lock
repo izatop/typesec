@@ -40,7 +40,7 @@
       "name": "@typesec/graph",
       "version": "0.1.0",
       "dependencies": {
-        "@types/bun": "latest",
+        "@types/bun": "^1.2.19",
         "@typesec/core": "workspace:*",
         "@typesec/the": "workspace:*",
         "@typesec/tracer": "workspace:*",
