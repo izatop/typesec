@@ -4,7 +4,7 @@ import type {Proto} from "./interfaces.mts";
 import {array, getProtoOf, isProto, nullable} from "./proto.mts";
 import {scalars} from "./scalars.mts";
 
-describe("proto", () => {
+describe("proto(schema)", () => {
     test("nullable(type) should work", () => {
         const nullableString = nullable(scalars.string());
         expect(nullableString.validate(null)).toBeTrue();
@@ -37,6 +37,10 @@ describe("proto", () => {
         expect(type.validate([[]])).toBeTrue();
         expect(type.validate([[1, 2]])).toBeTrue();
         expect(type.validate([1])).toBeFalse();
+    });
+
+    test("getProtoOf(proto) should work", () => {
+        expect(getProtoOf(scalars.string)).toBe(scalars.string.type);
     });
 
     test("isProto(value) should work", () => {

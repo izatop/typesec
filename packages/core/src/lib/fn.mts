@@ -1,13 +1,18 @@
 import {isInstance, type Fn} from "@typesec/the";
 import {AssertionError} from "node:assert";
 
-export type XMap<K, V, M extends Map<K, V>> = M & XMapEnsure<K, V>;
-export type XWeakMap<K extends WeakKey, V, M extends WeakMap<K, V>> = M & XMapEnsure<K, V>;
-export type XMapEnsure<K, V> = {ensure: (key: K, factory?: () => V) => V};
+export type XMap<K, V, M, W extends boolean> = M & XMapEnsure<K, V, W>;
+export type XMapEnsure<K, V, W extends boolean> = W extends true
+    ? {ensure: (key: K, factory: () => V) => V}
+    : {ensure: (key: K, factory?: () => V) => V};
 
-export function xmap<K, V>(map: Map<K, V>): XMap<K, V, Map<K, V>>;
-export function xmap<K, V>(map: Map<K, V>, ensure: <K>(key: K) => V): XMap<K, V, Map<K, V>>;
-export function xmap<K extends WeakKey, V, M extends WeakMap<K, V>>(map: M): XWeakMap<K, V, M>;
+export function xmap<K, V>(map: Map<K, V>): XMap<K, V, Map<K, V>, true>;
+export function xmap<K, V>(map: Map<K, V>, ensure: <K>(key: K) => V): XMap<K, V, Map<K, V>, false>;
+export function xmap<K extends WeakKey, V>(map: WeakMap<K, V>): XMap<K, V, WeakMap<K, V>, true>;
+export function xmap<K extends WeakKey, V>(
+    map: WeakMap<K, V>,
+    ensure: <K>(key: K) => V,
+): XMap<K, V, WeakMap<K, V>, false>;
 export function xmap(map: any, defaultEnsure?: Fn): any {
     Reflect.defineProperty(map, "ensure", {
         value: (key: any, ensure?: Fn) => {

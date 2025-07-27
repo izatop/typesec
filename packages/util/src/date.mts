@@ -24,7 +24,7 @@ const regex = /^([+-]\d+)([smhdMY])$/;
 const isPart = (value: string): value is DatePart => "smhdMY".includes(value);
 
 function exprToTime(date: Date, expr: DateExpr): number {
-    const [, valueStr, part] = expr.match(regex) ?? [];
+    const [, valueStr = "", part = ""] = expr.match(regex) ?? [];
     const value = parseInt(valueStr, 10);
     if (isNaN(value) || !isPart(part)) {
         throw new RangeError(`Wrong the date expression format: ${expr}`);

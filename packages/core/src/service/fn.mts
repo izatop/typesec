@@ -156,7 +156,7 @@ export function resolve<T extends Service>(ctor: ServiceCtor<T>): Promise<T> {
     return pending;
 }
 
-export async function locator<R>(fn: Fn<[], Promisify<R>>): Promise<R> {
+export async function locator<F extends Fn<[], any>>(fn: F): Promise<ReturnType<F>> {
     const name = fn.name ?? "fn";
     log("[service] locator ( <%s()> )", name);
 

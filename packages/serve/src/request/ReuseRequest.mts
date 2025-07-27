@@ -11,7 +11,7 @@ export class ReuseRequest {
         this.#request = request;
     }
 
-    public static factory(req: Request) {
+    public static factory(req: Request): ReuseRequest {
         return cache.ensure(req, () => new this(req));
     }
 
