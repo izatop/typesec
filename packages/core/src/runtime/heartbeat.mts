@@ -1,6 +1,6 @@
 import {log} from "@typesec/tracer";
 import {AsyncLock} from "../lib/index.mjs";
-import {runtime} from "./runtime.mjs";
+import {runtime} from "./runtime.mts";
 
 export function heartbeat(ctrl: AbortController = runtime): Promise<void> {
     log("heartbeat(%s)", ctrl.constructor.name);

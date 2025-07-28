@@ -1,5 +1,5 @@
-import {isInstance, type Fn} from "@typesec/the";
-import {AssertionError} from "node:assert";
+import {type Fn} from "@typesec/the";
+import {assert} from "./assert.mts";
 
 export type XMap<K, V, M, W extends boolean> = M & XMapEnsure<K, V, W>;
 export type XMapEnsure<K, V, W extends boolean> = W extends true
@@ -27,24 +27,4 @@ export function xmap(map: any, defaultEnsure?: Fn): any {
     });
 
     return map;
-}
-
-export function isAsyncDisposable(res: unknown): res is AsyncDisposable {
-    return isInstance(res) && Reflect.has(res, Symbol.asyncDispose);
-}
-
-export function isDisposable(res: unknown): res is Disposable {
-    return isInstance(res) && Reflect.has(res, Symbol.dispose);
-}
-
-export function assert(value: unknown, message: string | Error): asserts value {
-    if (value) {
-        return;
-    }
-
-    console.trace(message);
-    throw new AssertionError({
-        message: message instanceof Error ? message.message : message,
-        stackStartFn: assert,
-    });
 }

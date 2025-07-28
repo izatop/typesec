@@ -1,4 +1,4 @@
-import {xmap} from "./fn.mjs";
+import {xmap} from "./xmap.mjs";
 
 export class AsyncLock {
     private static readonly map = xmap(new WeakMap<WeakKey, Promise<unknown>>());

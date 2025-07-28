@@ -1,5 +1,5 @@
 import {describe, expect, mock, test} from "bun:test";
-import {AsyncLock} from "./index.mjs";
+import {AsyncLock} from "../index.mjs";
 
 describe("AsyncLock", () => {
     test("acquire", async () => {

@@ -1,5 +1,5 @@
 import {describe, expect, mock, test} from "bun:test";
-import {xmap} from "./index.mjs";
+import {xmap} from "../index.mjs";
 
 describe("XMap", () => {
     test("Map", () => {

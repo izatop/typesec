@@ -1,4 +1,4 @@
-import {runtime} from "@typesec/core";
+import {runtime} from "@typesec/core" with {};
 import {getApplication} from "@typesec/unit";
 import {describe, expect, test} from "bun:test";
 import assert from "node:assert";

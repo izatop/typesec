@@ -12,6 +12,7 @@ export class PendingService<T extends Service> extends PendingError<T> {
         super();
     }
 
+    /* oxlint-disable unicorn/no-thenable expected behavior */
     public then<TResult1 = T, TResult2 = never>(
         onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
         onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined,

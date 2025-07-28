@@ -45,3 +45,20 @@ export function defnify<R>(value: Fnify<R>): R {
 export function isNullable<T>(value: Nullable<T>): value is null | undefined {
     return value === null || is(value, "undefined");
 }
+
+const onceRef = new WeakMap<Fn<[], any>, any>();
+
+function once<R>(fn: Fn<[], R>): Fn<[], R> {
+    return () => {
+        const res = onceRef.get(fn) ?? fn();
+        if (!onceRef.has(fn)) {
+            onceRef.set(fn, res);
+        }
+
+        return res;
+    };
+}
+
+export const fn = {
+    once,
+};

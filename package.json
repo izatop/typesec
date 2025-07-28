@@ -11,9 +11,11 @@
     "up": "bun update --latest && bun run -F '*' upgrade && bun i"
   },
   "devDependencies": {
+    "@prettier/plugin-oxc": "^0.0.4",
+    "@types/bun": "^1.2.19",
+    "oxlint": "^1.8.0",
     "prettier": "3.6.2",
-    "typescript": "^5.8.3",
-    "@types/bun": "^1.2.19"
+    "typescript": "^5.8.3"
   },
   "private": true
 }

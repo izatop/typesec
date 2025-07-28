@@ -9,6 +9,9 @@
     },
     "./object": {
       "import": "./src/object.mts"
+    },
+    "./fn": {
+      "import": "./src/fn.mts"
     }
   },
   "scripts": {

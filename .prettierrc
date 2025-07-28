@@ -1,15 +1,24 @@
 {
-  "bracketSpacing": false,
-  "arrowParens": "always",
-  "bracketSameLine": true,
-  "endOfLine": "lf",
-  "semi": true,
-  "overrides": [
-    {
-      "files": "*.mts",
-      "options": {
-        "parser": "typescript"
-      }
-    }
-  ]
+    "bracketSpacing": false,
+    "arrowParens": "always",
+    "bracketSameLine": true,
+    "endOfLine": "lf",
+    "semi": true,
+    "plugins": ["@prettier/plugin-oxc"],
+    "overrides": [
+        {
+            "files": "**/*.{js,mjs,cjs,jsx}",
+            "options": {
+                "plugins": ["@prettier/plugin-oxc"],
+                "parser": "oxc"
+            }
+        },
+        {
+            "files": "**/*.{ts,mts,cts,tsx}",
+            "options": {
+                "plugins": ["@prettier/plugin-oxc"],
+                "parser": "oxc-ts"
+            }
+        }
+    ]
 }

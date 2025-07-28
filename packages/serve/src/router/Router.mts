@@ -44,12 +44,10 @@ export class Router<TContext, TTransforms extends RestTransforms = {}, TRet exte
     public get<TProto extends RestProto<TTransforms>>(
         handle: Handle<TContext, TProto, ServeInput, TRet>,
     ): HandleEntry<ServeProto, ServeInput, Response> {
-        const self = this;
-
         return this.#app({
             ...this.#meta,
-            handle: this.#wrap(async function get({context, request}) {
-                const proto = new RestProto<TTransforms>(request, self.#map) as TProto;
+            handle: this.#wrap(async ({context, request}) => {
+                const proto = new RestProto<TTransforms>(request, this.#map) as TProto;
 
                 const response = await handle({
                     context,
@@ -57,7 +55,7 @@ export class Router<TContext, TTransforms extends RestTransforms = {}, TRet exte
                     proto,
                 });
 
-                return self.#as ? parse(self.#as, response) : new Response(`${response}`);
+                return this.#as ? parse(this.#as, response) : new Response(`${response}`);
             }),
         });
     }
@@ -65,12 +63,10 @@ export class Router<TContext, TTransforms extends RestTransforms = {}, TRet exte
     public post<TProto extends RestProto<TTransforms>>(
         handle: Handle<TContext, TProto, ServeInput, TRet>,
     ): HandleEntry<ServeProto, ServeInput, Response> {
-        const self = this;
-
         return this.#app({
             ...this.#meta,
-            handle: this.#wrap(async function post({context, request}) {
-                const proto = new RestProto<TTransforms>(request, self.#map) as TProto;
+            handle: this.#wrap(async ({context, request}) => {
+                const proto = new RestProto<TTransforms>(request, this.#map) as TProto;
 
                 const response = await handle({
                     context,
@@ -78,7 +74,7 @@ export class Router<TContext, TTransforms extends RestTransforms = {}, TRet exte
                     proto,
                 });
 
-                return self.#as ? parse(self.#as, response) : new Response(`${response}`);
+                return this.#as ? parse(this.#as, response) : new Response(`${response}`);
             }),
         });
     }
@@ -104,16 +100,14 @@ export class Router<TContext, TTransforms extends RestTransforms = {}, TRet exte
     #wrap(
         handle: Handle<TContext, ProtoAbstract<ServeInput>, ServeInput, Response>,
     ): Handle<TContext, ProtoAbstract<ServeInput>, ServeInput, Response> {
-        const self = this;
-
-        return async function wrapOnError(...args) {
+        return async (...args) => {
             try {
                 return await locator(function wrapOnErrorServiceLocate() {
                     return handle(...args);
                 });
             } catch (reason) {
-                if (self.#error) {
-                    return self.#error(reason);
+                if (this.#error) {
+                    return this.#error(reason);
                 }
 
                 throw reason;
