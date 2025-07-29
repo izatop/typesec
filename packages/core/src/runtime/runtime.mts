@@ -1,3 +1,3 @@
-import {RuntimeController} from "./rc/RuntimeController.mts";
+import {RuntimeController} from "./controller/index.mjs";
 
-export const runtime = new RuntimeController();
+export const runtime = RuntimeController.start();

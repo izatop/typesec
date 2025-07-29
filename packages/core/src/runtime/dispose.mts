@@ -1,3 +1,4 @@
+import {identify} from "@typesec/the";
 import {log} from "@typesec/tracer";
 import {isAsyncDisposable, isDisposable} from "../index.mjs";
 
@@ -11,8 +12,4 @@ export async function dispose(res: unknown): Promise<void> {
         using dispose = res;
         log("dispose( <%s> ):", identify(dispose));
     }
-}
-
-function identify(disposable: Disposable | AsyncDisposable): string {
-    return "name" in disposable && typeof disposable.name === "string" ? disposable.name : "object";
 }

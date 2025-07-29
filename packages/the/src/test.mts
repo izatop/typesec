@@ -1,4 +1,4 @@
-import type {Equal, Extends, HasNull, HasUndefined} from "./interfaces.mjs";
+import type {Equal, Extends, HasNull, HasUndefined} from "./type.mjs";
 
 export function isXEqualToY<X, Y>(equal: Equal<X, Y>): boolean {
     return equal;

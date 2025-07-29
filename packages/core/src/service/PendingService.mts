@@ -1,6 +1,5 @@
-import type {Promisify} from "@typesec/the";
+import {identify, type Promisify} from "@typesec/the";
 import {log} from "@typesec/tracer";
-import {identify} from "./fn.mjs";
 import type {Service, ServiceCtor} from "./interfaces.mjs";
 import {PendingError} from "./PendingError.mjs";
 

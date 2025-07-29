@@ -1,5 +1,6 @@
 import {describe, test} from "bun:test";
 import assert from "node:assert";
+import {isXEqualToY, isXExtendsOfY} from "./test.mjs";
 import type {
     Arrayify,
     DeArrayify,
@@ -20,8 +21,7 @@ import type {
     Rec,
     ReMap,
     ToAny,
-} from "./interfaces.mjs";
-import {isXEqualToY, isXExtendsOfY} from "./test.mjs";
+} from "./type.mjs";
 
 // type T1 = Expect<Equal<A, B>>;
 

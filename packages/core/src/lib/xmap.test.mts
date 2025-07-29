@@ -2,7 +2,7 @@ import {describe, expect, mock, test} from "bun:test";
 import {xmap} from "../index.mjs";
 
 describe("XMap", () => {
-    test("Map", () => {
+    test("xmap(Map)", () => {
         const map = xmap(new Map<string, number>());
         expect(Reflect.has(map, "ensure")).toBeTrue();
 
@@ -12,7 +12,7 @@ describe("XMap", () => {
         expect(factory.mock.calls.length).toBe(1);
     });
 
-    test("WeakMap", () => {
+    test("xmap(WeakMap)", () => {
         const map = xmap(new WeakMap<WeakKey>());
         expect(Reflect.has(map, "ensure")).toBeTrue();
 

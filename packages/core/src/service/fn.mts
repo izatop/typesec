@@ -1,4 +1,4 @@
-import {defnify, type Fn, type Promisify} from "@typesec/the";
+import {defnify, identify, type Fn, type Promisify} from "@typesec/the";
 import {log} from "@typesec/tracer";
 import assert from "node:assert";
 import {isPromise} from "node:util/types";
@@ -11,7 +11,6 @@ import {PendingService} from "./PendingService.mjs";
 const store = new WeakMap<ServiceCtor<any>, any>();
 const registry = new Map<ServiceCtor<any>, ServiceFactory<any>>();
 const pendings = new WeakMap<ServiceCtor<any>, Promisify<Service>>();
-export const identify = (ctor: ServiceCtor<any>) => ctor.name;
 
 export function service<T extends Service>(ctor: ServiceCtor<T>, value: ServiceFactory<T>, lazy = false) {
     registry.set(ctor, value);

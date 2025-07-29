@@ -1,5 +1,5 @@
 import {is} from "./fn.mts";
-import type {Entries, KeyOf, Override, Rec} from "./interfaces.mjs";
+import type {Entries, KeyOf, Override, Rec} from "./type.mjs";
 
 export function toEntries<T extends Rec>(value: T): Entries<T>[] {
     return Object.entries(value);
@@ -48,9 +48,15 @@ export function keys<T extends Rec>(value: T, type?: any): KeyOf<T, any>[] {
     return type ? keys.filter((key) => is(key, type)) : keys;
 }
 
+export function identify(target: unknown, defaultValue = "anonymous"): string {
+    return isObject(target) && has(target, "name") && is(target.name, "string") ? target.name : defaultValue;
+}
+
 export const object = {
+    identify,
     toEntries,
     fromEntries,
+    fromAsyncEntries,
     override,
     isObject,
     isNull,

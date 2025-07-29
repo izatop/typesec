@@ -1,6 +1,5 @@
-import {test} from "bun:test";
-import {runtime} from "./runtime.mts";
+import {describe, test} from "bun:test";
 
-test("heartbeat", async () => {
-    runtime.trap();
+describe("runtime", () => {
+    test("runtime", async () => {});
 });

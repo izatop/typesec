@@ -1,4 +1,4 @@
-import type {Fn, Fnify, Nullable, Rec} from "./interfaces.mjs";
+import type {Fn, Fnify, Nullable, Rec} from "./type.mjs";
 
 export type TypeCheckcList = "function" | "string" | "boolean" | "number" | "bigint" | "object" | "symbol";
 
@@ -49,7 +49,7 @@ export function isNullable<T>(value: Nullable<T>): value is null | undefined {
 const onceRef = new WeakMap<Fn<[], any>, any>();
 
 function once<R>(fn: Fn<[], R>): Fn<[], R> {
-    return () => {
+    return (): R => {
         const res = onceRef.get(fn) ?? fn();
         if (!onceRef.has(fn)) {
             onceRef.set(fn, res);

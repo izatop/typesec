@@ -22,6 +22,8 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  "typescript.preferences.autoImportFileExcludePatterns": ["**/index.mts"],
+  "typescript.preferences.importModuleSpecifier": "non-relative",
   "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": false,
   "typescript.preferences.preferTypeOnlyAutoImports": true,
   "typescript.updateImportsOnFileMove.enabled": "always",

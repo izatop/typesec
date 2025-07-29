@@ -7,11 +7,23 @@
     ".": {
       "import": "./src/index.mts"
     },
+    "./fn": {
+      "import": "./src/fn.mts"
+    },
     "./object": {
       "import": "./src/object.mts"
     },
-    "./fn": {
-      "import": "./src/fn.mts"
+    "./primitives": {
+      "import": "./src/primitives.mts"
+    },
+    "./task": {
+      "import": "./src/task.mts"
+    },
+    "./test": {
+      "import": "./src/test.mts"
+    },
+    "./type": {
+      "import": "./src/type.mts"
     }
   },
   "scripts": {
