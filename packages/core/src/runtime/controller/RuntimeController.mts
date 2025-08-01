@@ -1,27 +1,30 @@
+import {assert} from "@typesec/the/assert";
 import {task} from "@typesec/the/task";
-import {log, warn} from "@typesec/tracer";
-import {randomUUIDv7} from "bun";
-import {setImmediate} from "node:timers";
+import type {Fn} from "@typesec/the/type";
+import {type Tracer, wrap} from "@typesec/tracer";
 import {scheduler} from "node:timers/promises";
 import {ExitSignals} from "../../const.mts";
 import type {EnvModeType} from "../../env.mts";
 import {Ref} from "../../lib/Ref.mts";
-import {assert} from "../../lib/assert.mts";
+import {heartbeat} from "../heartbeat.mts";
+import {RuntimeSequence} from "./RuntimeSequence.mts";
 
-export class RuntimeController extends AbortController {
-    public readonly id = randomUUIDv7();
+export class RuntimeController extends AbortController implements Disposable {
+    public readonly id: string;
 
-    static readonly #ref = new Ref(() => new this());
+    readonly #trace: Tracer;
+    readonly #parent: RuntimeController | null;
+    readonly #children = new Set<AbortController>();
 
-    public constructor() {
+    static readonly #ref = new Ref(() => new this(null, "lifecycle"));
+
+    private constructor(parent?: RuntimeController | null, id?: string) {
         super();
-
-        setImmediate(() => {
-            const {lifecycle} = RuntimeController;
-            if (lifecycle.id !== this.id) {
-                lifecycle.enqueue(this);
-            }
-        });
+        id = id ?? `runtime(${RuntimeSequence.increment(RuntimeController)})`;
+        this.#trace = wrap(`${id}`);
+        this.id = id;
+        this.#parent = parent ?? null;
+        this.#parent?.enqueue(this);
     }
 
     public static get lifecycle(): RuntimeController {
@@ -33,42 +36,22 @@ export class RuntimeController extends AbortController {
     }
 
     public static start = (): RuntimeController => {
+        this.lifecycle.#trace.log("?.start(): %s", this.lifecycle.id);
         this.signal.throwIfAborted();
 
-        if (!process.listeners("SIGINT").includes(this.lifecycle.abort)) {
-            log("trap(%o)", ExitSignals);
-            for (const signal of ExitSignals) {
-                process.once(signal, this.lifecycle.abort);
-                this.signal.addEventListener("abort", () => process.removeListener(signal, this.lifecycle.abort), {
-                    once: true,
-                });
-            }
-        }
-
-        return this.lifecycle;
+        return this.lifecycle.trap();
     };
 
-    public clone(): RuntimeController {
-        return new RuntimeController();
-    }
+    public static clone = (id?: string): RuntimeController => {
+        return this.lifecycle.clone(id);
+    };
 
-    public trap = (): this => {
-        if (this.signal.aborted) {
-            warn("trap(): Already aborted");
+    public clone = (id?: string): RuntimeController => {
+        return new RuntimeController(this, id);
+    };
 
-            return this;
-        }
-
-        if (process.listeners("SIGINT").includes(this.abort)) {
-            warn("trap(): Trap already set for SIGINT and SIGTERM");
-
-            return this;
-        }
-
-        log("listen(%o)", ExitSignals);
-        ExitSignals.forEach((fn) => process.once(fn, this.abort));
-
-        return this;
+    public isLifecycle = (): boolean => {
+        return this === RuntimeController.lifecycle;
     };
 
     public isRunning = (): boolean => {
@@ -79,33 +62,67 @@ export class RuntimeController extends AbortController {
         return process.env["NODE_ENV"] ?? "development";
     }
 
-    public isTest(): boolean {
+    public isTest = (): boolean => {
         return this.mode === "test";
-    }
+    };
 
-    public isProduction(): boolean {
+    public heartbeat = <R = void,>(dispose?: Fn<[], R>): Promise<R> => {
+        return heartbeat(this).then(dispose);
+    };
+
+    public isProduction = (): boolean => {
         return this.mode === "production";
-    }
+    };
 
-    public isDevelopment(): boolean {
+    public isDevelopment = (): boolean => {
         return this.mode !== "production";
-    }
+    };
 
-    public only(mode?: EnvModeType, message?: string) {
-        assert(mode === this.mode, message ?? `Only available in the ${mode} mode only`);
-    }
+    public only = (mode?: EnvModeType, message?: string) => {
+        assert(!mode || mode === this.mode, message ?? `Only available in the ${mode} mode only`);
+    };
+
+    public trap = (): this => {
+        if (ExitSignals.some((signal) => process.listeners(signal).includes(this.abort))) {
+            this.#trace.warn("?.trap(): has been already registered");
+        }
+
+        if (!ExitSignals.some((signal) => process.listeners(signal).includes(this.abort))) {
+            /**
+             * @TODO Think about how to prevent event-loop blocking during tests.
+             */
+            if (!this.isTest()) {
+                this.#trace.log("?.trap(%o)", ExitSignals);
+                for (const signal of ExitSignals) {
+                    process.once(signal, this.abort);
+                }
+            } else {
+                this.#trace.log("?.trap(): skips in testing environment");
+            }
+
+            this.signal.addEventListener("abort", () => this[Symbol.dispose](), {once: true});
+        }
+
+        return this;
+    };
 
     public override abort = (reason?: unknown): this => {
         if (this.signal.aborted) {
-            warn("abort(): Already aborted");
+            this.#trace.warn("?.abort(): Already aborted");
 
             return this;
         }
 
-        log("abort()");
+        this.#trace.log("?.abort(%o)", this.isLifecycle() ? "lifecycle" : "runtime", reason);
         super.abort(reason);
+        this.#parent?.detach(this);
+        ExitSignals.forEach((signal) => process.off(signal, this.abort));
 
         return this;
+    };
+
+    public has = (ctrl: AbortController): boolean => {
+        return this.#children.has(ctrl);
     };
 
     public enqueue = (ctrl: AbortController, throwIfAborted = false): this => {
@@ -120,10 +137,26 @@ export class RuntimeController extends AbortController {
             return this;
         }
 
-        this.signal.addEventListener("abort", (reason) => ctrl.abort(reason), {once: true});
+        this.signal.addEventListener("abort", ctrl.abort, {once: true});
+        this.#children.add(ctrl);
 
         return this;
     };
 
-    public wait = (ms: number): Promise<void> => task.tolerant(scheduler.wait(ms, {signal: this.signal}));
+    public detach = (ctrl: AbortController) => {
+        this.signal.removeEventListener("abort", ctrl.abort);
+        this.#children.delete(ctrl);
+    };
+
+    public wait = (ms: number): Promise<void> => {
+        return task.tolerant(scheduler.wait(ms, {signal: this.signal}));
+    };
+
+    public async [Symbol.dispose](): Promise<void> {
+        if (!this.signal.aborted) {
+            this.abort("Disposed");
+        }
+    }
 }
+
+export default RuntimeController.start();

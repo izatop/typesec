@@ -17,4 +17,8 @@ export class Ref<T> {
 
         return this.ref.value;
     }
+
+    public replace(value: T) {
+        this.ref = {value};
+    }
 }

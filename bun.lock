@@ -71,7 +71,6 @@
         "@types/bun": "^1.2.19",
         "@types/chalk": "^2.2.4",
         "@typesec/the": "workspace:*",
-        "@typesec/tracer": "workspace:*",
         "chalk": "^5.4.1",
         "radash": "^12.1.1",
       },
@@ -81,17 +80,6 @@
       "version": "0.1.0",
       "dependencies": {
         "@types/bun": "^1.2.19",
-        "@typesec/the": "workspace:*",
-        "@typesec/tracer": "workspace:*",
-        "radash": "^12.1.1",
-      },
-    },
-    "packages/util": {
-      "name": "@typesec/util",
-      "version": "0.1.0",
-      "dependencies": {
-        "@types/bun": "^1.2.19",
-        "@typesec/core": "workspace:*",
         "@typesec/the": "workspace:*",
         "@typesec/tracer": "workspace:*",
         "radash": "^12.1.1",
@@ -182,8 +170,6 @@
     "@typesec/tracer": ["@typesec/tracer@workspace:packages/tracer"],
 
     "@typesec/unit": ["@typesec/unit@workspace:packages/unit"],
-
-    "@typesec/util": ["@typesec/util@workspace:packages/util"],
 
     "bun-types": ["bun-types@1.2.19", "", { "dependencies": { "@types/node": "*" }, "peerDependencies": { "@types/react": "^19" } }, "sha512-uAOTaZSPuYsWIXRpj7o56Let0g/wjihKCkeRqUBhlLVM/Bt+Fj9xTo+LhC1OV1XDaGkz4hNC80et5xgy+9KTHQ=="],
 

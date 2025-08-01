@@ -1,6 +1,10 @@
 import {is} from "./fn.mts";
 import type {Entries, KeyOf, Override, Rec} from "./type.mjs";
 
+export function prop<T extends Rec, K extends keyof T>(value: T, key: K): T[K] {
+    return value[key];
+}
+
 export function toEntries<T extends Rec>(value: T): Entries<T>[] {
     return Object.entries(value);
 }
@@ -53,6 +57,7 @@ export function identify(target: unknown, defaultValue = "anonymous"): string {
 }
 
 export const object = {
+    prop,
     identify,
     toEntries,
     fromEntries,
@@ -64,6 +69,7 @@ export const object = {
     hasKeyOf,
     hasKeyListOf,
     keys,
+    is: isObject,
 };
 
 export default object;

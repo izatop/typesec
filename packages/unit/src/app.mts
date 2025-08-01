@@ -1,7 +1,7 @@
 import {isFunction, type Rec} from "@typesec/the";
+import {assert} from "@typesec/the/assert";
 import {log} from "@typesec/tracer";
 import {resolveSync} from "bun";
-import {ok} from "node:assert";
 import type Module from "node:module";
 import path from "node:path";
 import type {Application, HandleEntry, Proto} from "./interfaces.mjs";
@@ -18,8 +18,8 @@ export async function runApplication(location: string) {
 export function getApplication<TContext, TProto extends ProtoAbstract<TIn>, TIn, TRet>(
     module: Rec,
 ): Application<TContext, TProto, TIn, TRet> {
-    ok("default" in module, "Wrong an Application default export");
-    ok(isApplication<TContext, TProto, TIn, TRet>(module["default"]), "Wrong an Application Entrypoint");
+    assert("default" in module, "Wrong an Application default export");
+    assert(isApplication<TContext, TProto, TIn, TRet>(module["default"]), "Wrong an Application Entrypoint");
 
     return module["default"];
 }
@@ -34,9 +34,9 @@ export function getHandle<TProto extends ProtoAbstract<TIn>, TIn, TRet>(
     proto: Proto<TProto, TIn, TRet>,
     module: Module,
 ): HandleEntry<TProto, TIn, TRet> {
-    ok("default" in module, "Unknown default export");
-    ok(isHandleEntry<TProto, TIn, TRet>(module.default), "Wrong default export type");
-    ok(module.default.proto === proto, "Wrong default export proto");
+    assert("default" in module, "Unknown default export");
+    assert(isHandleEntry<TProto, TIn, TRet>(module.default), "Wrong default export type");
+    assert(module.default.proto === proto, "Wrong default export proto");
 
     return module.default;
 }

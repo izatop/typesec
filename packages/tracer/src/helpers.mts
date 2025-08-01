@@ -4,7 +4,7 @@ import {type TracerStackLine} from "./interfaces.mjs";
 const lineMatch = /([^\s]+)\s\((.+):(\d+):(\d+)\)/;
 const {pathname} = new URL(import.meta.url);
 
-function parseLine(str: string): TracerStackLine {
+export function parseLine(str: string): TracerStackLine {
     const [, name, file, line, position] = str.match(lineMatch) ?? [void 0, "unknown", "unknown", 0, 0];
 
     return {

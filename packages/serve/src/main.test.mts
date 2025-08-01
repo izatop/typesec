@@ -1,7 +1,7 @@
-import {runtime} from "@typesec/core" with {};
+import {runtime} from "@typesec/core";
+import {assert} from "@typesec/the/assert";
 import {getApplication} from "@typesec/unit";
 import {describe, expect, test} from "bun:test";
-import assert from "node:assert";
 import {resolve} from "node:path";
 import {parse} from "valibot";
 import {response, ServeProto} from "./index.mjs";
@@ -10,13 +10,14 @@ describe("Main", () => {
     test("Server", async () => {
         const path = resolve(import.meta.dirname, "test/app");
         const app = getApplication(await import("./test/index.mjs"));
-        const pending = app.proto.run({path});
+        app.proto.run({path});
+        using _ = runtime.use();
 
         const {
             instances: [server],
         } = ServeProto;
 
-        assert(server);
+        assert(server, "Unexpected error");
         const r200 = await server.fetch(new Request("http://localhost:3000/"));
         expect(r200.status).toBe(200);
 
@@ -27,7 +28,7 @@ describe("Main", () => {
         expect(userId.status).toBe(200);
         expect(await userId.json()).toEqual({id: 1, name: "Dave"});
 
-        const userUpdate = await server.fetch(
+        const update = await server.fetch(
             new Request("http://localhost:3000/user/1/update", {
                 method: "post",
                 body: JSON.stringify({name: "Mike"}),
@@ -35,11 +36,8 @@ describe("Main", () => {
             }),
         );
 
-        expect(userUpdate.status).toBe(200);
-        expect(await userUpdate.json()).toEqual({id: 1, name: "Mike"});
-
-        runtime.abort();
-        await pending;
+        expect(update.status).toBe(200);
+        expect(await update.json()).toEqual({id: 1, name: "Mike"});
     });
 
     test("Response", async () => {

@@ -15,7 +15,6 @@
     "@types/chalk": "^2.2.4",
     "@types/bun": "^1.2.19",
     "@typesec/the": "workspace:*",
-    "@typesec/tracer": "workspace:*",
     "chalk": "^5.4.1",
     "radash": "^12.1.1"
   },

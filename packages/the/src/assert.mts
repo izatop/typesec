@@ -1,12 +1,5 @@
 import {AssertionError} from "node:assert";
 
-/**
- * @deprecated use @typesec/the/assert
- *
- * @param value
- * @param message
- * @returns
- */
 export function assert(value: unknown, message: string | Error): asserts value {
     if (value) {
         return;

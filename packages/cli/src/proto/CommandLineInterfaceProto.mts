@@ -1,8 +1,8 @@
 import {dispose} from "@typesec/core";
 import type {Rec, StringKeyOf} from "@typesec/the";
+import {assert} from "@typesec/the/assert";
 import {getHandle, ProtoAbstract, type MainArgs} from "@typesec/unit";
 import {FileSystemRouter, type MatchedRoute} from "bun";
-import {ok} from "node:assert";
 import path from "node:path";
 import {crush} from "radash";
 import {ArgvParser, type ArgvOption, type OptionPattern} from "../index.mjs";
@@ -48,7 +48,7 @@ export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
 
         const [p = "/"] = process.argv.slice(2);
         const route = router.match(p);
-        ok(route, `Route not found ${p}`);
+        assert(route, `Route "${p}" not found`);
 
         const module = await import(route.filePath);
         const handle = getHandle(this, module);

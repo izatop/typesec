@@ -1,5 +1,4 @@
-import {describe, test} from "bun:test";
-import assert from "node:assert";
+import {describe, expect, test} from "bun:test";
 import {isXEqualToY, isXExtendsOfY} from "./test.mjs";
 import type {
     Arrayify,
@@ -28,121 +27,121 @@ import type {
 describe("Types", () => {
     test("Fn<A, R>", () => {
         type T1 = Fn<[], void>;
-        assert.ok(isXEqualToY<T1, () => void>(true));
+        expect(isXEqualToY<T1, () => void>(true)).toBeTrue();
 
         type T2 = Fn<[number], void>;
-        assert.ok(isXEqualToY<T2, (...args: [number]) => void>(true));
+        expect(isXEqualToY<T2, (...args: [number]) => void>(true)).toBeTrue();
 
         type T3 = Fn<[Date], string>;
-        assert.ok(isXEqualToY<T3, (...args: [Date]) => string>(true));
+        expect(isXEqualToY<T3, (...args: [Date]) => string>(true)).toBeTrue();
     });
 
     test("Fnfy<T>", () => {
         type T1 = Fnify<number>;
-        assert.ok(isXEqualToY<T1, {(): number} | number>(true));
+        expect(isXEqualToY<T1, {(): number} | number>(true)).toBeTrue();
     });
 
     test("Rec<K, T>", () => {
         type T1 = Rec<string, number>;
-        assert.ok(isXEqualToY<T1, Record<string, number>>(true));
+        expect(isXEqualToY<T1, Record<string, number>>(true)).toBeTrue();
     });
 
     test("Prop<T, K>", () => {
         type T1 = {foo: number};
-        assert.ok(isXEqualToY<Prop<T1, "foo">, number>(true));
+        expect(isXEqualToY<Prop<T1, "foo">, number>(true)).toBeTrue();
     });
 
     test("ReMap<T, V>", () => {
         type T1 = {foo: number};
-        assert.ok(isXEqualToY<ReMap<T1, string>, {foo: string}>(true));
+        expect(isXEqualToY<ReMap<T1, string>, {foo: string}>(true)).toBeTrue();
     });
 
     test("ToEntries", () => {
         type T1 = {foo: number};
-        assert.ok(isXEqualToY<Entries<T1>[], [keyof T1, number][]>(true));
+        expect(isXEqualToY<Entries<T1>[], [keyof T1, number][]>(true)).toBeTrue();
     });
 
     test("FromEntries", () => {
         type T1 = {foo: number; bar: string};
         type R1 = Entries<T1>[];
-        assert.ok(isXEqualToY<FromEntries<R1>, T1>(true));
+        expect(isXEqualToY<FromEntries<R1>, T1>(true)).toBeTrue();
     });
 
     test("Arrayify<T>", () => {
         type T1 = Arrayify<number>;
-        assert.ok(isXEqualToY<T1, number | number[]>(true));
+        expect(isXEqualToY<T1, number | number[]>(true)).toBeTrue();
     });
 
     test("DeArrayify<T>", () => {
         type T1 = DeArrayify<number[]>;
-        assert.ok(isXEqualToY<T1, number>(true));
-        assert.equal(isXEqualToY<T1, number[]>(false), false);
+        expect(isXEqualToY<T1, number>(true)).toBeTrue();
+        expect(isXEqualToY<T1, number[]>(false)).toBeFalse();
 
         type T2 = DeArrayify<string>;
-        assert.ok(isXEqualToY<T2, string>(true));
+        expect(isXEqualToY<T2, string>(true)).toBeTrue();
     });
 
     test("Promisify<T>", () => {
         type T1 = Promisify<number>;
-        assert.ok(isXEqualToY<T1, number | Promise<number> | PromiseLike<number>>(true));
+        expect(isXEqualToY<T1, number | Promise<number> | PromiseLike<number>>(true)).toBeTrue();
     });
 
     test("KeyOf<T>", () => {
         type T1 = KeyOf<Rec<string>>;
-        assert.ok(isXEqualToY<T1, string>(true));
+        expect(isXEqualToY<T1, string>(true)).toBeTrue();
 
         type T2 = KeyOf<Rec<string | number | symbol>>;
-        assert.ok(isXEqualToY<T2, string | number | symbol>(true));
+        expect(isXEqualToY<T2, string | number | symbol>(true)).toBeTrue();
 
         type T3 = KeyOf<{key: number; [k: symbol]: number}>;
-        assert.ok(isXEqualToY<T3, "key" | symbol>(true));
+        expect(isXEqualToY<T3, "key" | symbol>(true)).toBeTrue();
     });
 
     test("KeyOf<T, I>", () => {
         type D1 = Rec<string | number | symbol>;
-        assert.ok(isXEqualToY<KeyOf<D1, string>, string>(true));
-        assert.ok(isXEqualToY<KeyOf<D1, number>, number>(true));
-        assert.ok(isXEqualToY<KeyOf<D1, symbol>, symbol>(true));
-        assert.ok(isXEqualToY<KeyOf<D1, any>, string | number | symbol>(true));
+        expect(isXEqualToY<KeyOf<D1, string>, string>(true)).toBeTrue();
+        expect(isXEqualToY<KeyOf<D1, number>, number>(true)).toBeTrue();
+        expect(isXEqualToY<KeyOf<D1, symbol>, symbol>(true)).toBeTrue();
+        expect(isXEqualToY<KeyOf<D1, any>, string | number | symbol>(true)).toBeTrue();
     });
 
     test("Nullable<T>", () => {
         type T1 = Nullable<number>;
-        assert.ok(isXEqualToY<T1, number | null | undefined>(true));
+        expect(isXEqualToY<T1, number | null | undefined>(true)).toBeTrue();
     });
 
     test("ToAny<T>", () => {
-        assert.ok(isXEqualToY<ToAny<number, 1>, 1>(true));
-        assert.ok(isXEqualToY<ToAny<number | any, 1>, any>(true));
+        expect(isXEqualToY<ToAny<number, 1>, 1>(true)).toBeTrue();
+        expect(isXEqualToY<ToAny<number | any, 1>, any>(true)).toBeTrue();
     });
 
     test("HasNull<T>", () => {
-        assert.ok(isXEqualToY<HasNull<number>, false>(true));
-        assert.ok(isXEqualToY<HasNull<number | null>, true>(true));
+        expect(isXEqualToY<HasNull<number>, false>(true)).toBeTrue();
+        expect(isXEqualToY<HasNull<number | null>, true>(true)).toBeTrue();
     });
 
     test("HasUndefined<T>", () => {
-        assert.ok(isXEqualToY<HasUndefined<number>, false>(true));
-        assert.ok(isXEqualToY<HasUndefined<number | null>, false>(true));
-        assert.ok(isXEqualToY<HasUndefined<number | null | undefined>, true>(true));
+        expect(isXEqualToY<HasUndefined<number>, false>(true)).toBeTrue();
+        expect(isXEqualToY<HasUndefined<number | null>, false>(true)).toBeTrue();
+        expect(isXEqualToY<HasUndefined<number | null | undefined>, true>(true)).toBeTrue();
     });
 
     test("HasNullOrUndefined<T>", () => {
-        assert.ok(isXEqualToY<HasNullOrUndefined<number>, false>(true));
-        assert.ok(isXEqualToY<HasNullOrUndefined<number | null>, true>(true));
-        assert.ok(isXEqualToY<HasNullOrUndefined<number | null | undefined>, true>(true));
+        expect(isXEqualToY<HasNullOrUndefined<number>, false>(true)).toBeTrue();
+        expect(isXEqualToY<HasNullOrUndefined<number | null>, true>(true)).toBeTrue();
+        expect(isXEqualToY<HasNullOrUndefined<number | null | undefined>, true>(true)).toBeTrue();
     });
 
     test("IfTrue<T>", () => {
-        assert.ok(isXEqualToY<IfTrue<true, 1, 0>, 1>(true));
-        assert.ok(isXEqualToY<IfTrue<false, 1, 0>, 0>(true));
-        assert.ok(isXEqualToY<IfTrue<false, 1>, never>(true));
+        expect(isXEqualToY<IfTrue<true, 1, 0>, 1>(true)).toBeTrue();
+        expect(isXEqualToY<IfTrue<false, 1, 0>, 0>(true)).toBeTrue();
+        expect(isXEqualToY<IfTrue<false, 1>, never>(true)).toBeTrue();
     });
 
     test("IsArray<T>", () => {
-        assert.ok(isXEqualToY<IsArray<Rec>, false>(true));
-        assert.ok(isXEqualToY<IsArray<number>, false>(true));
-        assert.ok(isXEqualToY<IsArray<number[]>, true>(true));
+        expect(isXEqualToY<IsArray<Rec>, false>(true)).toBeTrue();
+        expect(isXEqualToY<IsArray<number>, false>(true)).toBeTrue();
+        expect(isXEqualToY<IsArray<number[]>, true>(true)).toBeTrue();
     });
 
     test("LikeString", () => {
@@ -158,10 +157,10 @@ describe("Types", () => {
             },
         };
 
-        assert.ok(isXExtendsOfY<string | number | symbol | boolean, LikeString>(true));
-        assert.ok(isXExtendsOfY<typeof likeString, LikeString>(true));
-        assert.equal(isXEqualToY<null, LikeString>(false), false);
-        assert.equal(isXEqualToY<undefined, LikeString>(false), false);
-        assert.equal(isXExtendsOfY<typeof likeNotString, LikeString>(false), false);
+        expect(isXExtendsOfY<string | number | symbol | boolean, LikeString>(true)).toBeTrue();
+        expect(isXExtendsOfY<typeof likeString, LikeString>(true)).toBeTrue();
+        expect(isXEqualToY<null, LikeString>(false)).toBeFalse();
+        expect(isXEqualToY<undefined, LikeString>(false)).toBeFalse();
+        expect(isXExtendsOfY<typeof likeNotString, LikeString>(false)).toBeFalse();
     });
 });

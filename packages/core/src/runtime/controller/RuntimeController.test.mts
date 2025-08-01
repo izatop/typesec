@@ -1,50 +1,79 @@
 import {describe, expect, test} from "bun:test";
+import {ExitSignals} from "../../const.mts";
+import {lifecycle} from "../runtime.mts";
 import {RuntimeController} from "./RuntimeController.mts";
 
 describe("RuntimeController", () => {
-    test("lifecycle should be a singleton", () => {
-        const runtime = RuntimeController.lifecycle;
-
-        expect(runtime.clone()).toBeInstanceOf(RuntimeController);
-        expect(RuntimeController.lifecycle).toBe(runtime);
+    test("lifecycle should be initalized", async () => {
+        test.each(ExitSignals)("test", (signal) => expect(process.listeners(signal)).toContainValue(lifecycle.abort));
     });
 
-    test("calling lifecycle() should create isolated clones", () => {
-        const clone = RuntimeController.lifecycle.clone();
+    test("lifecycle should be a singleton", async () => {
+        expect(RuntimeController.lifecycle).toBe(lifecycle);
+    });
+
+    test("lifecycle should be detected as iteself", async () => {
+        expect(RuntimeController.lifecycle.isLifecycle()).toBeTrue();
+        expect(lifecycle.isLifecycle()).toBeTrue();
+
+        using clone = lifecycle.clone();
+        expect(clone.isLifecycle()).toBeFalse();
+    });
+
+    test("clone() should create isolated clones", async () => {
+        using clone = RuntimeController.clone();
         expect(clone).not.toBe(RuntimeController.lifecycle);
         expect(clone.id).not.toBe(RuntimeController.lifecycle.id);
     });
 
-    test("clone() should produce independent RuntimeController", () => {
-        const root = new RuntimeController();
-        const child = root.clone();
+    test("clone() should produce independent RuntimeController", async () => {
+        using runtime = RuntimeController.clone();
+        using child = runtime.clone();
 
-        expect(child).not.toBe(root);
-        expect(child.id).not.toBe(root.id);
+        expect(child).not.toBe(runtime);
+        expect(child.id).not.toBe(runtime.id);
     });
 
-    test("isRunning() reflects signal state correctly", () => {
-        const runtime = new RuntimeController();
+    test("abort() should be called in cascade", async () => {
+        using runtime = RuntimeController.clone();
+        using child = runtime.clone();
+
+        runtime.abort();
+        expect(child.signal.aborted).toBeTrue();
+    });
+
+    test("abort() should detach from parent", async () => {
+        using child = lifecycle.clone("123");
+
+        expect(lifecycle.has(child)).toBeTrue();
+        expect(child.abort().signal.aborted).toBeTrue();
+        expect(lifecycle.has(child)).toBeFalse();
+    });
+
+    test("isRunning() reflects signal state correctly", async () => {
+        using runtime = RuntimeController.clone();
         expect(runtime.isRunning()).toBe(true);
 
         runtime.abort();
         expect(runtime.isRunning()).toBe(false);
+        expect(runtime.heartbeat()).resolves.not.fail();
     });
 
-    test("abort() should be idempotent and return self", () => {
-        const runtime = new RuntimeController();
+    test("heartbeat() should resolves correctly", async () => {
+        using runtime = RuntimeController.clone();
+        let resolved = false;
+        const pending = runtime.heartbeat().then(() => (resolved = true));
+        await Promise.resolve();
+        expect(resolved).toBeFalse();
 
-        const first = runtime.abort();
-        expect(first).toBe(runtime);
-        expect(runtime.signal.aborted).toBe(true);
-
-        const second = runtime.abort();
-        expect(second).toBe(runtime);
+        runtime.abort();
+        expect(await pending).resolves.not.fail();
+        expect(resolved).toBeTrue();
     });
 
-    test("enqueue() should propagate abort to children", () => {
-        const parent = new RuntimeController();
-        const child = new RuntimeController();
+    test("enqueue() should propagate abort to children", async () => {
+        using parent = RuntimeController.clone();
+        using child = RuntimeController.clone();
 
         parent.enqueue(child);
         parent.abort();
@@ -52,23 +81,23 @@ describe("RuntimeController", () => {
         expect(child.signal.aborted).toBe(true);
     });
 
-    test("enqueue() should throw if throwIfAborted is true and parent aborted", () => {
-        const parent = new RuntimeController();
-        const child = new RuntimeController();
+    test("enqueue() should throw if throwIfAborted is true and parent aborted", async () => {
+        using parent = RuntimeController.clone();
+        using child = RuntimeController.clone();
 
         expect(() => parent.abort().enqueue(child, true)).toThrow("Parent instance has already aborted");
     });
 
-    test("enqueue() should throw if throwIfAborted is true and child already aborted", () => {
-        const parent = new RuntimeController();
-        const child = new RuntimeController();
+    test("enqueue() should throw if throwIfAborted is true and child already aborted", async () => {
+        using parent = RuntimeController.clone();
+        using child = RuntimeController.clone();
 
         expect(() => parent.enqueue(child.abort(), true)).toThrow("Child instance has already aborted");
     });
 
-    test("enqueue() should immediately abort child if parent already aborted and throwIfAborted is false", () => {
-        const parent = new RuntimeController();
-        const child = new RuntimeController();
+    test("enqueue() should immediately abort child if parent already aborted and throwIfAborted is false", async () => {
+        using parent = RuntimeController.clone();
+        using child = RuntimeController.clone();
 
         parent.abort();
         parent.enqueue(child);
@@ -77,7 +106,7 @@ describe("RuntimeController", () => {
 
     test("wait() should resolve after delay if running", async () => {
         const timeout = 50;
-        const runtime = new RuntimeController();
+        using runtime = RuntimeController.clone();
 
         const started = Date.now();
         await runtime.wait(timeout);
@@ -87,7 +116,7 @@ describe("RuntimeController", () => {
 
     test("wait() should resolve immediately if aborted", async () => {
         const timeout = 50;
-        const runtime = new RuntimeController();
+        using runtime = RuntimeController.clone();
 
         const started = Date.now();
         await runtime.abort().wait(100);
@@ -95,15 +124,8 @@ describe("RuntimeController", () => {
         expect(Date.now()).toBeLessThan(started + timeout);
     });
 
-    test("start() returns lifecycle and sets up signal handlers", () => {
-        const started = RuntimeController.start();
-        expect(started).toBe(RuntimeController.lifecycle);
-        expect(process.listeners("SIGINT")).toContainValue(started.abort);
-        started.abort();
-    });
-
-    test("only() should throw if mode does not match", () => {
-        const runtime = new RuntimeController();
+    test("only() should throw if mode does not match", async () => {
+        using runtime = RuntimeController.clone();
 
         // @ts-expect-error
         expect(() => runtime.only(runtime.mode)).not.toThrow();

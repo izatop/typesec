@@ -1,5 +1,4 @@
-import {describe, test} from "bun:test";
-import * as assert from "node:assert";
+import {describe, expect, test} from "bun:test";
 import {createContext} from "node:vm";
 import {context} from "./index.mjs";
 import {TestProto} from "./test/TestProto.mts";
@@ -24,6 +23,6 @@ describe("Unit", () => {
         const queue: unknown[] = [Math.random()];
         await main(queue);
 
-        assert.deepEqual(queue, [queue[0], createContext().version, TestProto.disposed]);
+        expect(queue).toEqual([queue[0], createContext().version, TestProto.disposed]);
     });
 });

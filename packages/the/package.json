@@ -7,6 +7,15 @@
     ".": {
       "import": "./src/index.mts"
     },
+    "./array": {
+      "import": "./src/array.mts"
+    },
+    "./assert": {
+      "import": "./src/assert.mts"
+    },
+    "./date": {
+      "import": "./src/date.mts"
+    },
     "./fn": {
       "import": "./src/fn.mts"
     },
@@ -15,6 +24,9 @@
     },
     "./primitives": {
       "import": "./src/primitives.mts"
+    },
+    "./string": {
+      "import": "./src/string.mts"
     },
     "./task": {
       "import": "./src/task.mts"

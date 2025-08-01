@@ -1,4 +1,4 @@
-import assert from "node:assert";
+import {assert} from "@typesec/the/assert";
 import type {OptionPattern} from "./interfaces.mjs";
 
 export class ArgvOption<T, R extends boolean> {

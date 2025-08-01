@@ -1,4 +1,5 @@
-import {has, is, isNullable, isObject} from "@typesec/the";
+import {has, is, isNullable} from "@typesec/the";
+import object from "@typesec/the/object";
 import type {Graph, Proto} from "./interfaces.mts";
 
 export const ProtoSymbol = Symbol();
@@ -58,5 +59,5 @@ export function getProtoOf<T extends Proto.Any>(factory: Proto.Factory<T>): T {
 }
 
 export function isProto(value: unknown): value is Proto.Any {
-    return isObject(value) && has(value, "name", "validate") && is(value.validate, "function");
+    return object.is(value) && has(value, "name", "validate") && is(value.validate, "function");
 }

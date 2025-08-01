@@ -1,6 +1,6 @@
 import {defnify, identify, type Fn, type Promisify} from "@typesec/the";
+import {assert} from "@typesec/the/assert";
 import {log} from "@typesec/tracer";
-import assert from "node:assert";
 import {isPromise} from "node:util/types";
 import {isFunction} from "radash";
 import {isAsyncDisposable, isDisposable, PendingServiceList} from "../index.mjs";
