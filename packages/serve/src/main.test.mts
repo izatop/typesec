@@ -8,10 +8,11 @@ import {response, ServeProto} from "./index.mjs";
 
 describe("Main", () => {
     test("Server", async () => {
+        using _ = runtime.use();
+
         const path = resolve(import.meta.dirname, "test/app");
         const app = getApplication(await import("./test/index.mjs"));
         app.proto.run({path});
-        using _ = runtime.use();
 
         const {
             instances: [server],

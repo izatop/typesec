@@ -1,4 +1,5 @@
 import {assert} from "@typesec/the/assert";
+import {identify} from "@typesec/the/object";
 import {task} from "@typesec/the/task";
 import type {Fn} from "@typesec/the/type";
 import {type Tracer, wrap} from "@typesec/tracer";
@@ -21,8 +22,8 @@ export class RuntimeController extends AbortController implements Disposable {
     private constructor(parent?: RuntimeController | null, id?: string) {
         super();
         id = id ?? `runtime(${RuntimeSequence.increment(RuntimeController)})`;
-        this.#trace = wrap(`${id}`);
         this.id = id;
+        this.#trace = wrap(`${id}`);
         this.#parent = parent ?? null;
         this.#parent?.enqueue(this);
     }
@@ -36,13 +37,15 @@ export class RuntimeController extends AbortController implements Disposable {
     }
 
     public static start = (): RuntimeController => {
-        this.lifecycle.#trace.log("?.start(): %s", this.lifecycle.id);
+        this.lifecycle.#trace.log("?.start()");
         this.signal.throwIfAborted();
 
         return this.lifecycle.trap();
     };
 
     public static clone = (id?: string): RuntimeController => {
+        this.lifecycle.#trace.log("?.clone(%s)", id);
+
         return this.lifecycle.clone(id);
     };
 
@@ -85,9 +88,7 @@ export class RuntimeController extends AbortController implements Disposable {
     public trap = (): this => {
         if (ExitSignals.some((signal) => process.listeners(signal).includes(this.abort))) {
             this.#trace.warn("?.trap(): has been already registered");
-        }
-
-        if (!ExitSignals.some((signal) => process.listeners(signal).includes(this.abort))) {
+        } else {
             /**
              * @TODO Think about how to prevent event-loop blocking during tests.
              */
@@ -97,7 +98,7 @@ export class RuntimeController extends AbortController implements Disposable {
                     process.once(signal, this.abort);
                 }
             } else {
-                this.#trace.log("?.trap(): skips in testing environment");
+                this.#trace.log("?.trap(): This was ignored %O", {env: this.mode});
             }
 
             this.signal.addEventListener("abort", () => this[Symbol.dispose](), {once: true});
@@ -107,6 +108,7 @@ export class RuntimeController extends AbortController implements Disposable {
     };
 
     public override abort = (reason?: unknown): this => {
+        this.#trace.info("?.abort(%s)", reason);
         if (this.signal.aborted) {
             this.#trace.warn("?.abort(): Already aborted");
 
@@ -122,10 +124,12 @@ export class RuntimeController extends AbortController implements Disposable {
     };
 
     public has = (ctrl: AbortController): boolean => {
+        this.#trace.info("?.has(%s)", identify(ctrl));
         return this.#children.has(ctrl);
     };
 
     public enqueue = (ctrl: AbortController, throwIfAborted = false): this => {
+        this.#trace.info("?.enqueue(%s)", identify(ctrl));
         if (throwIfAborted) {
             assert(!this.signal.aborted, "Parent instance has already aborted");
             assert(!ctrl.signal.aborted, "Child instance has already aborted");
@@ -144,6 +148,7 @@ export class RuntimeController extends AbortController implements Disposable {
     };
 
     public detach = (ctrl: AbortController) => {
+        this.#trace.info("?.detach(%s)", identify(ctrl));
         this.signal.removeEventListener("abort", ctrl.abort);
         this.#children.delete(ctrl);
     };
@@ -153,9 +158,15 @@ export class RuntimeController extends AbortController implements Disposable {
     };
 
     public async [Symbol.dispose](): Promise<void> {
-        if (!this.signal.aborted) {
+        if (!this.signal.aborted && !this.isTest()) {
             this.abort("Disposed");
+        } else {
+            for (const child of this.#children.values()) {
+                this.detach(child);
+            }
         }
+
+        this.#children.clear();
     }
 }
 
