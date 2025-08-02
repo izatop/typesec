@@ -1,44 +1,22 @@
-import type {Rec} from "@typesec/the";
-import {log, wrap} from "@typesec/tracer";
-import {dispose} from "./dispose.mjs";
+import {identify} from "@typesec/the/object";
+import {wrap} from "@typesec/tracer";
+import type {RuntimeController} from "./controller/RuntimeController.mts";
 import {type Task} from "./interfaces.mjs";
 import {runtime} from "./runtime.mts";
 
-const trace = wrap("watch");
-const reasons: Rec = {0: "No errors"};
+const tracer = wrap("run(task)");
 
-function exit(code: number, reason: unknown = null): Timer {
-    const fn = code > 0 ? trace.error : trace.info;
-    fn("[main] exit(%d): %o", code, reason ? `${reason}` : reasons[code]);
-
-    // @TODO bun's types are conflicting with node's
-    return runtime.isTest()
-        ? (setImmediate(() => void 0) as unknown as Timer)
-        : (setImmediate(() => process.exit(code)) as unknown as Timer);
-}
-
-export async function run(task: Task): Promise<Timer> {
-    trace.log("[main] lock()");
-    using cycle = runtime.use();
-    const tick = setInterval(() => log("[main] tick()"), runtime.isProduction() ? 10_000_000 : 10_000);
-
+export async function run<R>(task: Task<R>, withContext?: RuntimeController): Promise<Awaited<R>> {
     try {
-        const fn = task.name || "fn";
-        trace.log("[main] %s(): *res", fn);
+        tracer.info("run( <%s> )", identify(task));
+        using pending = runtime.run(task, withContext);
 
-        const res = await task();
-        await dispose(res);
-
-        return exit(0);
+        return await pending;
     } catch (reason) {
-        return exit(1, reason);
+        tracer.error(reason);
+
+        throw reason;
     } finally {
-        trace.log("[main] release()");
-        clearInterval(tick);
+        tracer.log("release");
     }
 }
-
-/**
- * @deprecated use run(task) instead
- */
-export const watch = run;

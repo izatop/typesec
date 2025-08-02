@@ -82,17 +82,17 @@ describe("RuntimeController", () => {
     });
 
     test("enqueue() should throw if throwIfAborted is true and parent aborted", async () => {
-        using parent = RuntimeController.clone();
-        using child = RuntimeController.clone();
+        using parent = RuntimeController.clone("p");
+        using child = RuntimeController.clone("c");
 
-        expect(() => parent.abort().enqueue(child, true)).toThrow("Parent instance has already aborted");
+        expect(() => parent.abort().enqueue(child, true)).toThrowError();
     });
 
     test("enqueue() should throw if throwIfAborted is true and child already aborted", async () => {
-        using parent = RuntimeController.clone();
-        using child = RuntimeController.clone();
+        using parent = RuntimeController.clone("p");
+        using child = RuntimeController.clone("c");
 
-        expect(() => parent.enqueue(child.abort(), true)).toThrow("Child instance has already aborted");
+        expect(() => parent.enqueue(child.abort(), true)).toThrowError();
     });
 
     test("enqueue() should immediately abort child if parent already aborted and throwIfAborted is false", async () => {

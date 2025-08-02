@@ -16,6 +16,9 @@
     "./date": {
       "import": "./src/date.mts"
     },
+    "./env": {
+      "import": "./src/env.mts"
+    },
     "./fn": {
       "import": "./src/fn.mts"
     },

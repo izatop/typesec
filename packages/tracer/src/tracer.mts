@@ -37,40 +37,49 @@ const bgs: Rec<TracerLevel, Color> = {
 function getLogArgs(label: TracerLevel, ...args: TracerFunctionArgs): TracerFunctionArgs {
     const labels = [];
 
-    if (options.welcome) {
-        labels.push(chalk.gray(options.welcome));
-    }
-
     if (options.trace) {
         const stack = getCallStack();
         labels.unshift(
-            ...stack.flatMap((caller) => [
-                chalk.gray(`@ ${bgs[label].white(caller?.name)} at ${caller?.relative}:${caller?.line}`),
-                "\n",
-            ]),
-            chalk.gray(`\n>`),
+            ...stack
+                .slice(0, 1)
+                .flatMap((caller) => [
+                    chalk.gray(`% ${caller?.name} at ${caller?.relative}:${caller?.line}:${caller?.position}`),
+                ]),
+            ...stack
+                .slice(1)
+                .flatMap((caller) => [
+                    chalk.gray(` > ${caller?.name} at ${caller?.relative}:${caller?.line}:${caller?.position}`),
+                ]),
         );
-    } else {
-        labels.push(chalk.gray(`${bgs[label].white(`${label}`)}`));
     }
 
-    return [labels.join(" "), formatWithOptions({colors: true, compact: true}, ...args), options.trace ? "\n" : ""];
+    const tags = Object.entries({level: label, ...options.tags})
+        .map(([key, value]) => `${key} = ${value}`)
+        .join(", ");
+
+    return [
+        chalk.gray(`% ${bgs[label].white(`${tags}`)}`),
+        labels.join("\n"),
+        "\n",
+        formatWithOptions({colors: true, compact: true}, ...args),
+        options.trace ? "\n" : "\n",
+    ];
 }
 
 export function log(...args: TracerFunctionArgs): void {
-    v(3) && instance.log(...getLogArgs("log", ...args));
+    v(3) && instance.log(getLogArgs("log", ...args).join(""));
 }
 
 export function info(...args: TracerFunctionArgs): void {
-    v(2) && instance.info(...getLogArgs("info", ...args));
+    v(2) && instance.info(getLogArgs("info", ...args).join(""));
 }
 
 export function warn(...args: TracerFunctionArgs): void {
-    v(1) && instance.warn(...getLogArgs("warn", ...args));
+    v(1) && instance.warn(getLogArgs("warn", ...args).join(""));
 }
 
 export function error(...args: TracerFunctionArgs): void {
-    v(0) && instance.error(...getLogArgs("error", ...args));
+    v(0) && instance.error(getLogArgs("error", ...args).join(""));
 }
 
 export function format(...args: TracerFunctionArgs): string {
@@ -91,7 +100,7 @@ export function wrap(target: TracerWrapTarget): Tracer {
                 return fn(is(label, "string") ? label.replace(/^\?/, name) : label, ...args);
             },
         ]),
-    );
+    ) as Tracer;
 }
 
 export const tracer: Tracer = {
@@ -99,4 +108,5 @@ export const tracer: Tracer = {
     info,
     warn,
     error,
+    format,
 };

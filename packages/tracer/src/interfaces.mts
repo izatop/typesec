@@ -15,12 +15,16 @@ export type TracerOptions = {
     trace: boolean;
     disabled: boolean;
     verbose: number;
-    welcome?: string;
+    tags: Rec<string, string>;
 };
 
 export type TracerWrapTarget = {name: string} | {constructor: {name: string}} | string;
 export type TracerFunctionArgs = [...args: unknown[]];
-export type Tracer = Rec<TracerLevel, Fn<TracerFunctionArgs>>;
+export type TracerList = Rec<TracerLevel, Fn<TracerFunctionArgs>>;
+
+export type Tracer = TracerList & {
+    format: Fn<TracerFunctionArgs, string>;
+};
 
 declare module "bun" {
     interface Env {

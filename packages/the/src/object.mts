@@ -55,12 +55,12 @@ export function keys<T extends Rec>(value: T, type?: any): KeyOf<T, any>[] {
 const identifyKeys = ["id", "name"];
 export function identify(target: unknown, defaultValue = "anonymous"): string {
     if (object.is(target) || is(target, "function")) {
-        const key = identifyKeys.find((key) => has(target, key));
+        const key = identifyKeys.find((key) => has(target, key) && is(target[key], "string"));
 
         return key ? identify(Reflect.get(target, key), defaultValue) : identify(target.constructor, defaultValue);
     }
 
-    return is(target, "string") ? target : defaultValue;
+    return is(target, "string") && target ? target : defaultValue;
 }
 
 export const object = {

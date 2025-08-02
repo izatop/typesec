@@ -6,7 +6,9 @@ import {type Tracer, wrap} from "@typesec/tracer";
 import {scheduler} from "node:timers/promises";
 import {ExitSignals} from "../../const.mts";
 import type {EnvModeType} from "../../env.mts";
+import {withDisposablePending, type WithDisposablePending} from "../../lib/dispostable.mts";
 import {Ref} from "../../lib/Ref.mts";
+import {dispose} from "../dispose.mts";
 import {heartbeat} from "../heartbeat.mts";
 import {RuntimeSequence} from "./RuntimeSequence.mts";
 
@@ -15,15 +17,14 @@ export class RuntimeController extends AbortController implements Disposable {
 
     readonly #trace: Tracer;
     readonly #parent: RuntimeController | null;
-    readonly #children = new Set<AbortController>();
+    readonly #children = new Map<AbortController, EventListener>();
 
     static readonly #ref = new Ref(() => new this(null, "lifecycle"));
 
     private constructor(parent?: RuntimeController | null, id?: string) {
         super();
-        id = id ?? `runtime(${RuntimeSequence.increment(RuntimeController)})`;
-        this.id = id;
-        this.#trace = wrap(`${id}`);
+        this.id = id ?? RuntimeSequence.increment(RuntimeController).toString();
+        this.#trace = wrap(`runtime.<${id}>`);
         this.#parent = parent ?? null;
         this.#parent?.enqueue(this);
     }
@@ -81,13 +82,27 @@ export class RuntimeController extends AbortController implements Disposable {
         return this.mode !== "production";
     };
 
-    public only = (mode?: EnvModeType, message?: string) => {
+    public only = (mode?: EnvModeType, message?: string): void => {
         assert(!mode || mode === this.mode, message ?? `Only available in the ${mode} mode only`);
+    };
+
+    public run = <R,>(task: Fn<[], R>, lock = true): WithDisposablePending<R> => {
+        return withDisposablePending(lock ? this.runWithLock(task) : task(), () => dispose(this));
+    };
+
+    public runWithLock = async <R,>(task: Fn<[], R>): Promise<R> => {
+        const lock = setTimeout(() => void 0, Infinity);
+
+        try {
+            return await task();
+        } finally {
+            clearTimeout(lock);
+        }
     };
 
     public trap = (): this => {
         if (ExitSignals.some((signal) => process.listeners(signal).includes(this.abort))) {
-            this.#trace.warn("?.trap(): has been already registered");
+            this.#trace.warn("?.trap(): already registered");
         } else {
             /**
              * @TODO Think about how to prevent event-loop blocking during tests.
@@ -98,24 +113,24 @@ export class RuntimeController extends AbortController implements Disposable {
                     process.once(signal, this.abort);
                 }
             } else {
-                this.#trace.log("?.trap(): This was ignored %O", {env: this.mode});
+                this.#trace.log("?.trap(): skipping signal binding in '%s' mode", this.mode);
             }
 
-            this.signal.addEventListener("abort", () => this[Symbol.dispose](), {once: true});
+            this.signal.addEventListener("abort", () => dispose(this), {once: true});
         }
 
         return this;
     };
 
     public override abort = (reason?: unknown): this => {
-        this.#trace.info("?.abort(%s)", reason);
         if (this.signal.aborted) {
-            this.#trace.warn("?.abort(): Already aborted");
+            this.#trace.warn("?.abort(%s): already aborted");
 
             return this;
         }
 
-        this.#trace.log("?.abort(%o)", this.isLifecycle() ? "lifecycle" : "runtime", reason);
+        this.#trace.log("?.abort(%s)", reason);
+
         super.abort(reason);
         this.#parent?.detach(this);
         ExitSignals.forEach((signal) => process.off(signal, this.abort));
@@ -123,34 +138,39 @@ export class RuntimeController extends AbortController implements Disposable {
         return this;
     };
 
-    public has = (ctrl: AbortController): boolean => {
-        this.#trace.info("?.has(%s)", identify(ctrl));
-        return this.#children.has(ctrl);
+    public has = (child: AbortController): boolean => {
+        this.#trace.log("?.has(%s)", identify(child));
+        return this.#children.has(child);
     };
 
-    public enqueue = (ctrl: AbortController, throwIfAborted = false): this => {
-        this.#trace.info("?.enqueue(%s)", identify(ctrl));
+    public enqueue = (child: AbortController, throwIfAborted = false): this => {
+        this.#trace.log("?.enqueue(%s)", identify(child));
         if (throwIfAborted) {
-            assert(!this.signal.aborted, "Parent instance has already aborted");
-            assert(!ctrl.signal.aborted, "Child instance has already aborted");
+            assert(!this.signal.aborted, this.#trace.format("?.enqueue(%s): parent already aborted", identify(child)));
+            assert(!child.signal.aborted, this.#trace.format("?.enqueue(%s): child already aborted", identify(child)));
         }
 
         if (this.signal.aborted) {
-            ctrl.abort("Parent instance has already aborted");
+            child.abort(this.#trace.format("?.enqueue(%s): parent instance already aborted", identify(child)));
 
             return this;
         }
 
-        this.signal.addEventListener("abort", ctrl.abort, {once: true});
-        this.#children.add(ctrl);
+        const onAbort = () => child.abort();
+        this.signal.addEventListener("abort", child.abort, {once: true});
+        this.#children.set(child, onAbort);
 
         return this;
     };
 
-    public detach = (ctrl: AbortController) => {
-        this.#trace.info("?.detach(%s)", identify(ctrl));
-        this.signal.removeEventListener("abort", ctrl.abort);
-        this.#children.delete(ctrl);
+    public detach = (child: AbortController) => {
+        this.#trace.log("?.detach(%s)", identify(child));
+        const onAbort = this.#children.get(child);
+        if (onAbort) {
+            this.signal.removeEventListener("abort", onAbort);
+        }
+
+        this.#children.delete(child);
     };
 
     public wait = (ms: number): Promise<void> => {
@@ -161,7 +181,7 @@ export class RuntimeController extends AbortController implements Disposable {
         if (!this.signal.aborted && !this.isTest()) {
             this.abort("Disposed");
         } else {
-            for (const child of this.#children.values()) {
+            for (const child of this.#children.keys()) {
                 this.detach(child);
             }
         }
