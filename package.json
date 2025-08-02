@@ -8,6 +8,7 @@
     "check:watch": "bun tsc -b packages -w",
     "test": "bun test",
     "test:watch": "bun test --watch",
+    "lint": "oxlint",
     "up": "bun update --latest && bun run -F '*' upgrade && bun i"
   },
   "devDependencies": {

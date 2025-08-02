@@ -4,6 +4,7 @@ import type {OptionPattern, ParseOptions} from "./interfaces.mjs";
 
 export class ArgvParser<O extends Rec<string, ArgvOption<string, boolean>>> {
     readonly #options: O;
+
     readonly #defaultArgv: string[];
 
     constructor(options: O, argv?: string[]) {
@@ -36,7 +37,8 @@ export class ArgvParser<O extends Rec<string, ArgvOption<string, boolean>>> {
         });
     }
 
-    public parse(argv: string[] = this.#defaultArgv): Expand<ParseOptions<O>> {
+    public parse(argv?: string[]): Expand<ParseOptions<O>> {
+        argv = argv ?? this.#defaultArgv;
         const args = argv.slice();
         const result: Rec<string, string | undefined> = {};
         const options = Object.values(this.#options);

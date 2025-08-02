@@ -7,8 +7,8 @@ import {RestProto} from "./RestProto.mjs";
 import type {RestOnError, RestResponse, RestTransforms, RouteArgs} from "./interfaces.mjs";
 
 export class Router<TContext, TTransforms extends RestTransforms = {}, TRet extends RestResponse = RestResponse> {
-    readonly #app: Application<TContext, ProtoAbstract<ServeInput>, ServeInput, Response>;
     readonly #meta: Meta;
+    readonly #app: Application<TContext, ProtoAbstract<ServeInput>, ServeInput, Response>;
     readonly #map: TTransforms;
     readonly #as?: BaseSchema<any, any, any>;
     readonly #error?: RestOnError;
@@ -19,6 +19,10 @@ export class Router<TContext, TTransforms extends RestTransforms = {}, TRet exte
         this.#meta = meta;
         this.#map = map;
         this.#as = as;
+    }
+
+    public get meta(): Meta {
+        return this.#meta;
     }
 
     public get map(): Partial<TTransforms> {
