@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euox pipefail
+
+fail() {
+    echo @$
+    exit 1
+}
+
+TARGET="$(pwd)"
+SOURCE="$(realpath "${0}/../..")/files"
+test -f "${TARGET}/package.json" || fail "No project's package.json found"
+
+bun i --dev @types/bun @prettier/plugin-oxc oxlint prettier typescript
+cp -r "${SOURCE}/" "${TARGET}/"

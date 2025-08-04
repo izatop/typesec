@@ -11,6 +11,23 @@
         "typescript": "^5.9.2",
       },
     },
+    "packages/bootstrap": {
+      "name": "@typesec/bootstrap",
+      "version": "0.1.0",
+      "bin": {
+        "create-typesec": "bin/create-typesec",
+      },
+      "dependencies": {
+        "@commander-js/extra-typings": "^14.0.0",
+        "@types/bun": "^1.2.19",
+        "@typesec/core": "workspace:*",
+        "@typesec/the": "workspace:*",
+        "@typesec/tracer": "workspace:*",
+        "@typesec/unit": "workspace:*",
+        "commander": "^14.0.0",
+        "radash": "^12.1.1",
+      },
+    },
     "packages/cli": {
       "name": "@typesec/cli",
       "version": "0.1.0",
@@ -156,6 +173,8 @@
     "@types/node": ["@types/node@22.13.17", "", { "dependencies": { "undici-types": "~6.20.0" } }, "sha512-nAJuQXoyPj04uLgu+obZcSmsfOenUg6DxPKogeUy6yNCFwWaj5sBF8/G/pNo8EtBJjAfSVgfIlugR/BCOleO+g=="],
 
     "@types/react": ["@types/react@19.1.8", "", { "dependencies": { "csstype": "^3.0.2" } }, "sha512-AwAfQ2Wa5bCx9WP8nZL2uMZWod7J7/JSplxbTmBQ5ms6QpqNYm672H0Vu9ZVKVngQ+ii4R/byguVEUZQyeg44g=="],
+
+    "@typesec/bootstrap": ["@typesec/bootstrap@workspace:packages/bootstrap"],
 
     "@typesec/cli": ["@typesec/cli@workspace:packages/cli"],
 

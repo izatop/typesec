@@ -20,6 +20,7 @@ export type Runtime = {
     heartbeat: RuntimePick<"heartbeat">;
     abort: RuntimePick<"abort">;
     only: RuntimePick<"only">;
+    wait: RuntimePick<"wait">;
     increment: () => number;
     run<R>(task: Fn<[], R>, withContext?: RuntimeController): WithDisposablePending<R>;
 };
@@ -67,6 +68,9 @@ export const runtime: Runtime = {
     },
     increment() {
         return RuntimeSequence.increment(RuntimeController);
+    },
+    wait(ms) {
+        return this.controller.wait(ms);
     },
     run(task, withContext) {
         const controller = withContext ?? this.controller;

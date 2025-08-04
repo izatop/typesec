@@ -1,5 +1,5 @@
 import {is} from "./fn.mts";
-import type {Entries, KeyOf, Override, Rec} from "./type.mjs";
+import type {Entries, KeyOf, Override, Rec, RecKey} from "./type.mjs";
 
 export function prop<T extends Rec, K extends keyof T>(value: T, key: K): T[K] {
     return value[key];
@@ -35,24 +35,26 @@ export function has<T extends Rec, K extends string>(value: T, ...keys: K[]): va
     return keys.every((key) => Object.hasOwn(value, key));
 }
 
-export function hasKeyOf<T extends Rec>(value: T, key: string): key is KeyOf<T, string> {
+export function hasKeyOf<T extends Rec>(value: T, key: RecKey): key is KeyOf<T> {
     return Object.hasOwn(value, key);
 }
 
-export function hasKeyListOf<T extends Rec>(value: T, keys: string[]): keys is KeyOf<T, string>[] {
+export function hasKeyListOf<T extends Rec>(value: T, keys: RecKey[]): keys is KeyOf<T>[] {
     return keys.every((key) => Object.hasOwn(value, key));
 }
 
 export function keys<T extends Rec>(value: T): KeyOf<T>[];
 export function keys<T extends Rec>(value: T, type: "string"): KeyOf<T, string>[];
 export function keys<T extends Rec>(value: T, type: "symbol"): KeyOf<T, symbol>[];
-export function keys<T extends Rec>(value: T, type?: any): KeyOf<T, any>[] {
+export function keys<T extends Rec>(value: T, type: "number"): KeyOf<T, symbol>[];
+export function keys<T extends Rec, K extends RecKey>(value: T, type?: K): KeyOf<T, any>[] {
     const keys = Reflect.ownKeys(value);
 
-    return type ? keys.filter((key) => is(key, type)) : keys;
+    return type ? keys.filter((key) => is(key, type as any)) : keys;
 }
 
 const identifyKeys = ["id", "name"];
+
 export function identify(target: unknown, defaultValue = "anonymous"): string {
     if (object.is(target) || is(target, "function")) {
         const key = identifyKeys.find((key) => has(target, key) && is(target[key], "string"));

@@ -28,10 +28,14 @@ export function isInstance<T extends Rec>(value: unknown): value is T {
     return typeof value === "object" && value !== null;
 }
 
-export function when<T, R1>(value: T, then: Fn<[NonNullable<T>], R1>): R1 | undefined;
-export function when<T, R1, R2>(value: T, then: Fn<[NonNullable<T>], R1>, fallback: Fnify<R2>): R1 | R2;
-export function when<T, R1, R2>(value: T, then: Fn<[NonNullable<T>], R1>, fallback?: Fnify<R2>): R1 | R2 | undefined {
-    return value ? then(value) : is(fallback, "function") ? fallback() : fallback;
+export function when<T, R1>(value: T, then: Fn<[NonNullable<T>], R1> | R1): R1 | undefined;
+export function when<T, R1, R2>(value: T, then: Fn<[NonNullable<T>], R1> | R1, fallback: Fnify<R2>): R1 | R2;
+export function when<T, R1, R2>(
+    value: T,
+    then: Fn<[NonNullable<T>], R1> | R1,
+    fallback?: Fnify<R2>,
+): R1 | R2 | undefined {
+    return value ? (is(then, "function") ? then(value) : then) : is(fallback, "function") ? fallback() : fallback;
 }
 
 export function fnify<R>(value: Fnify<R>): Fn<[], R> {

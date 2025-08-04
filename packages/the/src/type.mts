@@ -16,6 +16,11 @@ export type Recify<T, K extends string = string> = Rec<K, T> | T;
 export type DeArrayify<T> = T extends Array<infer A> ? A : T;
 export type Promisify<T> = T | Promise<T> | PromiseLike<T>;
 
+export type RecKey = string | number | symbol;
+export type RequiresKeysOf<T extends Rec, I extends RecKey = RecKey> = {
+    [K in KeyOf<T, I>]: HasUndefined<T[K]> extends true ? never : K;
+}[KeyOf<T, I>];
+
 export type KeyOf<T extends Rec, I extends string | number | symbol = string | number | symbol> = Extract<keyof T, I>;
 export type KeyOfValue<T extends Rec, TExtends> = ValueOf<{[K in keyof Rec]: TExtends extends T[K] ? K : never}>;
 export type ValueOf<T extends Rec> = T[keyof T];
