@@ -15,17 +15,7 @@
       "name": "@typesec/bootstrap",
       "version": "0.1.0",
       "bin": {
-        "create-typesec": "bin/create-typesec",
-      },
-      "dependencies": {
-        "@commander-js/extra-typings": "^14.0.0",
-        "@types/bun": "^1.2.19",
-        "@typesec/core": "workspace:*",
-        "@typesec/the": "workspace:*",
-        "@typesec/tracer": "workspace:*",
-        "@typesec/unit": "workspace:*",
-        "commander": "^14.0.0",
-        "radash": "^12.1.1",
+        "typesec-sync": "bin/typesec-sync",
       },
     },
     "packages/cli": {
@@ -96,10 +86,10 @@
       "name": "@typesec/unit",
       "version": "0.1.0",
       "dependencies": {
-        "@types/bun": "^1.2.19",
+        "@types/bun": "latest",
         "@typesec/the": "workspace:*",
         "@typesec/tracer": "workspace:*",
-        "radash": "^12.1.1",
+        "radash": "latest",
       },
     },
   },

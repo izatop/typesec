@@ -1,1 +1,3 @@
-throw new Error("Forbidden");
+export function main(): void {
+    return;
+}

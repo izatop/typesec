@@ -15,7 +15,7 @@
     "@types/chalk": "^2.2.4",
     "@types/bun": "^1.2.19",
     "@typesec/the": "workspace:*",
-    "chalk": "^5.4.1",
+    "chalk": "^5.5.0",
     "radash": "^12.1.1"
   },
   "license": "MIT"

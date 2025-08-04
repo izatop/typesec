@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euox pipefail
+set -euo pipefail
 
 fail() {
     echo @$
@@ -12,3 +12,10 @@ test -f "${TARGET}/package.json" || fail "No project's package.json found"
 
 bun i --dev @types/bun @prettier/plugin-oxc oxlint prettier typescript
 cp -r "${SOURCE}/" "${TARGET}/"
+
+bunx npm-add-script --force -k "check" -v "bun tsc -b packages"
+bunx npm-add-script --force -k "check:watch" -v "bun tsc -b packages -w"
+bunx npm-add-script --force -k "test" -v "bun test"
+bunx npm-add-script --force -k "test:watch" -v "bun test --watch"
+bunx npm-add-script --force -k "lint" -v "oxlint"
+bunx npm-add-script --force -k "up" -v "bun update --latest && bun run -F '*' upgrade && bun i"
