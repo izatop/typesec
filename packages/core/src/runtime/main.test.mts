@@ -3,10 +3,7 @@ import {main} from "./main.mts";
 
 test("main", async () => {
     const value = Math.random();
-    const task = mock(async function task() {
-        return value;
-    });
-
+    const task = mock(async function task() {});
     const timer = await main(task);
 
     clearImmediate(timer);
