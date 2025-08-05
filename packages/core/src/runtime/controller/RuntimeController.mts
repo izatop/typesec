@@ -24,7 +24,7 @@ export class RuntimeController extends AbortController implements Disposable {
     private constructor(parent?: RuntimeController | null, id?: string) {
         super();
         this.id = id ?? RuntimeSequence.increment(RuntimeController).toString();
-        this.#trace = wrap(`runtime.<${id}>`);
+        this.#trace = wrap(`[runtime] ${id}`);
         this.#parent = parent ?? null;
         this.#parent?.enqueue(this);
     }

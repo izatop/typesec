@@ -1,3 +1,4 @@
+import {assert} from "./assert.mts";
 import {isBlank} from "./blank.mts";
 import {is} from "./fn.mts";
 import object from "./object.mts";
@@ -26,8 +27,8 @@ export type EnvRuleList<T extends Dict<string>> = {
     [K in RequiresKeysOf<T, string>]: HasUndefined<T[K]> extends true ? never : true | string;
 };
 
-export function createStrict<T extends Dict<string>>(requires: EnvRuleList<T>): EnvRegistry<T> {
-    const env = {...process.env};
+export function createStrict<T extends Dict<string>>(requires: EnvRuleList<T>, payload?: Partial<T>): EnvRegistry<T> {
+    const env = {...(payload ?? process.env)} as Dict<string>;
     const failed: string[] = [];
     for (const [required, defaultValue] of object.toEntries(requires)) {
         if (!object.hasKeyOf(env, required)) {
@@ -40,6 +41,8 @@ export function createStrict<T extends Dict<string>>(requires: EnvRuleList<T>): 
             }
         }
     }
+
+    assert(failed.length === 0, `Variables should be defined: ${failed.join(", ")}`);
 
     return {
         ...env,

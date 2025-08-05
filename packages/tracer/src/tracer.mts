@@ -53,12 +53,13 @@ function getLogArgs(label: TracerLevel, ...args: TracerFunctionArgs): TracerFunc
         );
     }
 
-    const tags = Object.entries({level: label, ...options.tags})
-        .map(([key, value]) => `${key} = ${value}`)
+    const tags = Object.entries({level: bgs[label].white(label), ...options.tags})
+        .map(([key, value]) => `${key}: ${value}`)
         .join(", ");
 
     return [
-        chalk.gray(`% ${bgs[label].white(`${tags}`)}`),
+        chalk.gray(`% { ${tags} }`),
+        "\n",
         labels.join("\n"),
         "\n",
         formatWithOptions({colors: true, compact: true}, ...args),

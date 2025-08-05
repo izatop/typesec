@@ -1,6 +1,6 @@
 import {defnify, identify, type Fn, type Promisify} from "@typesec/the";
 import {assert} from "@typesec/the/assert";
-import {log} from "@typesec/tracer";
+import {wrap} from "@typesec/tracer";
 import {isPromise} from "node:util/types";
 import {isFunction} from "radash";
 import {isAsyncDisposable, isDisposable, PendingServiceList} from "../index.mjs";
@@ -8,6 +8,7 @@ import type {Service, ServiceCtor, ServiceFactory, ServiceState} from "./interfa
 import {PendingError} from "./PendingError.mjs";
 import {PendingService} from "./PendingService.mjs";
 
+const tracer = wrap("service");
 const store = new WeakMap<ServiceCtor<any>, any>();
 const registry = new Map<ServiceCtor<any>, ServiceFactory<any>>();
 const pendings = new WeakMap<ServiceCtor<any>, Promisify<Service>>();
@@ -99,11 +100,11 @@ export function syncArray<T extends Service>(...ctors: ServiceCtor<T>[]): T[] {
 
 export function sync<T extends Service>(ctor: ServiceCtor<T>): T {
     const name = identify(ctor);
-    log("[service] sync ( <%s>, <has=%s> )", name, store.has(ctor));
+    tracer.log("?.sync( <%s> ): %d", name, store.has(ctor));
 
     const known = store.get(ctor);
     if (!known) {
-        log("[service] throw ( <PendingService ( <%s> )> )", name);
+        tracer.log("throw PendingService( <%s> )", name);
         throw new PendingService(ctor, resolve(ctor));
     }
 
@@ -131,7 +132,7 @@ export function resolveArray<T extends Service>(...ctors: ServiceCtor<T>[]): Pro
 
 export function resolve<T extends Service>(ctor: ServiceCtor<T>): Promise<T> {
     const name = identify(ctor);
-    log("[service] resolve ( <%s>, <has=%s> )", name, store.has(ctor));
+    tracer.log("?.resolve( <%s> ): %d", name, store.has(ctor));
     const known = store.get(ctor);
     if (known) {
         return known;
@@ -140,12 +141,12 @@ export function resolve<T extends Service>(ctor: ServiceCtor<T>): Promise<T> {
     const value = registry.get(ctor);
     assert(isFunction(value) || isPromise(value), `Unknown service ${name}`);
 
-    log("[service] factory ( <%s>, <reuse=%s> )", name, pendings.has(ctor));
+    tracer.log("?.factory( <%s> ): %d", name, pendings.has(ctor));
     const pending = Promise.resolve(pendings.get(ctor) ?? defnify(value));
     pendings.set(ctor, pending);
 
     pending.then((instance) => {
-        log("[resolve] register ( <%s> )", name);
+        tracer.log("?.register( <%s> )", name);
         store.set(ctor, instance);
         pendings.delete(ctor);
 
@@ -157,16 +158,17 @@ export function resolve<T extends Service>(ctor: ServiceCtor<T>): Promise<T> {
 
 export async function locator<F extends Fn<[], any>>(fn: F): Promise<ReturnType<F>> {
     const name = fn.name ?? "fn";
-    log("[service] locator ( <%s()> )", name);
+    tracer.log("locator( %s() )", name);
 
     try {
+        tracer.log("<%s()>: try", name);
         return await fn();
     } catch (reason) {
         if (reason instanceof PendingError) {
-            log("[service] locator ( <await ( %s )> )", name);
+            tracer.log("<%s()>: await <PendingError>", name);
             await reason;
 
-            log("[service] locate ( <retry ( %s )> )", name);
+            tracer.log("<%s()>: retry", name);
 
             return await fn();
         }
