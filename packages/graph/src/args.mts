@@ -1,19 +1,20 @@
-import {assert} from "@typesec/core";
 import {isObject, object} from "@typesec/the";
-import type {Args, Graph, Node, Proto} from "./interfaces.mts";
+import {assert} from "@typesec/the/assert";
+import type {Args, Node, Proto} from "./interfaces.mts";
 import {isProto} from "./proto.mts";
 
 export function args<A extends Args<any>, ID extends string = string>(
     name: ID,
-    members: Node.MakeArgs<A>,
+    members: Node.MembersArgs<A>,
 ): Proto.ArgsNode<ID, A> {
     return {
         name,
         members,
+        $: {} as A,
         kind: "args",
         keys: () => object.keys(members),
         has: (key) => object.hasKeyOf(members, key),
-        validate: (value): value is Graph.Infer<A> => {
+        validate: (value): value is A => {
             const entries = Object.entries(members);
             if (!isObject(value)) {
                 return false;

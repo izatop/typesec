@@ -1,5 +1,6 @@
-import {assert} from "@typesec/core";
 import {object, type KeyOf, type Promisify} from "@typesec/the";
+import {assert} from "@typesec/the/assert";
+import {GraphAssertion} from "../assert.mts";
 import type {Args, Graph, Node, Proto} from "../interfaces.mts";
 
 export class ArgsResolver<A extends Args<any>> {
@@ -22,7 +23,7 @@ export class ArgsResolver<A extends Args<any>> {
         return result;
     }
 
-    async #resolveType<K extends KeyOf<A, string>>({type}: Node.MakeArgs<A>[K], payload: unknown): Promise<any> {
+    async #resolveType<K extends KeyOf<A, string>>({type}: Node.MembersArgs<A>[K], payload: unknown): Promise<any> {
         switch (type.kind) {
             case "args":
                 return this.#resolveArgs(type, payload);
@@ -36,6 +37,9 @@ export class ArgsResolver<A extends Args<any>> {
 
             case "primitive":
                 return this.#resolvePrimitive(type, payload);
+
+            default:
+                throw new GraphAssertion({message: "Unsupported type"});
         }
     }
 
@@ -54,7 +58,10 @@ export class ArgsResolver<A extends Args<any>> {
         return payload;
     }
 
-    async #resolveArgs<T extends Proto.ArgsNode<any, any>>(type: T, payload: unknown): Promise<Graph.Extract<T>> {
+    async #resolveArgs<T extends Proto.ArgsNode<any, SA>, SA extends Args<any>>(
+        type: T,
+        payload: unknown,
+    ): Promise<Graph.Extract<SA>> {
         const resolver = new ArgsResolver(type);
 
         const result = await resolver.resolve(payload);

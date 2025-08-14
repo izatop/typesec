@@ -8,10 +8,10 @@ import type {
     Fnify,
     FromEntries,
     HasNull,
-    HasNullOrUndefined,
     HasUndefined,
     IfTrue,
     IsArray,
+    IsNullable,
     KeyOf,
     LikeString,
     Nullable,
@@ -127,9 +127,9 @@ describe("Types", () => {
     });
 
     test("HasNullOrUndefined<T>", () => {
-        expect(isXEqualToY<HasNullOrUndefined<number>, false>(true)).toBeTrue();
-        expect(isXEqualToY<HasNullOrUndefined<number | null>, true>(true)).toBeTrue();
-        expect(isXEqualToY<HasNullOrUndefined<number | null | undefined>, true>(true)).toBeTrue();
+        expect(isXEqualToY<IsNullable<number>, false>(true)).toBeTrue();
+        expect(isXEqualToY<IsNullable<number | null>, true>(true)).toBeTrue();
+        expect(isXEqualToY<IsNullable<number | null | undefined>, true>(true)).toBeTrue();
     });
 
     test("IfTrue<T>", () => {

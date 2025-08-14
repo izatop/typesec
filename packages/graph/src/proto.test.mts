@@ -11,7 +11,9 @@ describe("proto(schema)", () => {
         expect(nullableString.validate(undefined)).toBeTrue();
         expect(nullableString.validate("string")).toBeTrue();
         expect(nullableString.validate(-1)).toBeFalse();
-        expect(isXEqualToY<typeof nullableString, Proto.NullishType<Proto.Primitive<"string", string>>>(true));
+
+        type Expected = Proto.Referenced<Proto.NullishType<Proto.Referenced<Proto.Primitive<"string", string>>>>;
+        expect(isXEqualToY<typeof nullableString, Expected>(true));
     });
 
     test("array(type) should work", () => {
@@ -19,7 +21,9 @@ describe("proto(schema)", () => {
         expect(numbers.validate(1)).toBeFalse();
         expect(numbers.validate([1, 2, 3])).toBeTrue();
         expect(numbers.validate([1, 2, true])).toBeFalse();
-        expect(isXEqualToY<typeof numbers, Proto.ArrayType<Proto.Primitive<"int", number>>>(true));
+
+        type Expected = Proto.Referenced<Proto.ArrayType<Proto.Referenced<Proto.Primitive<"int", number>>>>;
+        expect(isXEqualToY<typeof numbers, Expected>(true));
     });
 
     test("array(nullable(type)) should work", () => {

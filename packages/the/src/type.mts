@@ -31,10 +31,13 @@ export type PairKeyOf<
     I extends string | number | symbol = any,
 > = Extract<KeyOf<TSpec, I>, KeyOf<TQuery, I>>;
 
+export type PartialKeys<T extends Rec, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
 export type Nullish<T> = T | null;
 export type Nullable<T> = T | null | undefined;
 
 export type ToAny<T, E> = Equal<T, any> extends true ? any : E;
+export type ToNullish<T> = IsNullable<T> extends true ? Nullish<NonNullable<T>> : T;
 
 export type Expect<T extends true> = T;
 export type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? true : false;
@@ -43,7 +46,7 @@ export type Label<T> = {[key: symbol]: T};
 
 export type HasNull<T1> = null extends T1 ? true : false;
 export type HasUndefined<T1> = [undefined] extends [T1] ? true : false;
-export type HasNullOrUndefined<T1> = [null] extends [T1] ? true : HasUndefined<T1> extends true ? true : false;
+export type IsNullable<T1> = [null] extends [T1] ? true : HasUndefined<T1> extends true ? true : false;
 export type IfTrue<TCond, TThen, TElse = never> = Equal<TCond, true> extends true ? TThen : TElse;
 export type IsArray<T> = T extends any[] ? true : false;
 export type IsNever<T> = [T] extends [never] ? true : false;

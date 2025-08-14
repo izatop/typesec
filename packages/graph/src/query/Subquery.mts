@@ -1,4 +1,3 @@
-import {assert} from "@typesec/core";
 import {
     defnify,
     fromAsyncEntries,
@@ -11,6 +10,8 @@ import {
     type Promisify,
     type Rec,
 } from "@typesec/the";
+import {assert} from "@typesec/the/assert";
+import type {Fnify} from "@typesec/the/type";
 import {ArgsResolver} from "../args/ArgsResolver.mts";
 import type {Graph, Node, Proto, Query} from "../interfaces.mts";
 import {isProto} from "../proto.mts";
@@ -42,7 +43,11 @@ export class Subquery<G extends Graph<any>, S extends Rec, C> {
         return this.#flush(query);
     }
 
-    #enqueue<Q extends Query<G>, K extends KeyOf<Q, string>>(query: Q, key: K) {
+    public async serialize(): Promise<Rec> {
+        return {};
+    }
+
+    #enqueue<Q extends Query<G>, K extends KeyOf<Q, string>>(query: Q, key: K): void {
         const queue: [key: string, state: QueryNodeDataset<any>][] = [];
         for (const [alias, selector] of this.#getSelectorList(query, key)) {
             assert(this.#node.has(key), `QUERY_UNKNOWN_KEY: ${key}`);
@@ -86,41 +91,39 @@ export class Subquery<G extends Graph<any>, S extends Rec, C> {
             return () => null;
         }
 
-        const type = defnify(member.type);
-        const proto = (type === "self" ? this.#node : type) as Proto.All;
-        assert(isProto(proto), `${this.#node.name}.${key} type should be a proto`);
-        const args = this.#createArgsFactory(member, selector);
+        const type = this.#unwrapType(key, member.type);
+        const args = this.#createArgsFactory(key, member, selector);
 
         return async () => {
             const value = is(member.resolve, "function")
                 ? await member.resolve({
+                      name: key,
                       args: await args?.(),
-                      value: this.#source[key],
-                      parent: this.#source,
+                      source: this.#source,
                       context: this.#context,
                       subquery: new Subquery(this.#node, this.#source, this.#context),
                   })
                 : this.#source[key];
 
-            return this.#resolveField(proto, selector, value);
+            return this.#resolveField(type, selector, value);
         };
     }
 
-    async #resolveField(proto: Proto.All, selector: Query.Selector<any, any>, payload: any): Promise<any> {
-        if (proto.kind === "graph") {
-            const q = new Subquery(proto as Proto.GraphNode<any, any, any, C>, payload, this.#context);
+    async #resolveField(proto: Proto.Any, selector: Query.Selector<any, any>, payload: any): Promise<any> {
+        if (isProto<string, any, any, C>(proto, "graph")) {
+            const q = new Subquery(proto, payload, this.#context);
             assert(this.#getSubquerySelector(selector), `${proto.name}: Wrong selector ${selector}`);
 
             return q.query(selector[0]);
         }
 
-        if (proto.kind === "array") {
+        if (isProto(proto, "array")) {
             assert(Array.isArray(payload), `Wrong array`);
 
             return Promise.all(payload.map((item) => this.#resolveField(proto.child, selector, item)));
         }
 
-        if (proto.kind === "null") {
+        if (isProto(proto, "null")) {
             return isNullable(payload) ? this.#resolveField(proto.child, selector, payload) : null;
         }
 
@@ -134,7 +137,8 @@ export class Subquery<G extends Graph<any>, S extends Rec, C> {
     }
 
     #createArgsFactory<K extends KeyOf<G, string>>(
-        member: Node.Member<any, G, K, S, C>,
+        key: string,
+        member: Node.Member<G, K, S, C>,
         selector: Query.Selector<G, any>,
     ): Fn<[], Promisify<Node.ExtractArgs<G, K>>> {
         const resolver = () => {
@@ -142,16 +146,28 @@ export class Subquery<G extends Graph<any>, S extends Rec, C> {
                 assert(this.#isArgs(member.args), "QUERY_WRONG_ARGS");
                 assert(Array.isArray(selector), `QUERY_SHOULD_ARRAY_SELECTOR`);
 
-                const type: Proto.Kind = member.type;
+                const type = this.#unwrapType(key, member.type);
                 const args = new ArgsResolver(member.args);
 
-                return args.resolve(type === "graph" ? selector[1] : selector[0]);
+                return args.resolve(type.kind === "graph" ? selector[1] : selector[0]);
             }
 
             return null;
         };
 
         return resolver as Fn<[], Promisify<Node.ExtractArgs<G, K>>>;
+    }
+
+    #unwrapType<P extends Proto.Any>(key: string, type: Fnify<P>): Proto.Any {
+        const unwrapped = defnify(type);
+        assert(isProto(unwrapped), `${this.#node.name}.${key} type should be a proto`);
+        switch (unwrapped.kind) {
+            case "self":
+                return this.#node;
+
+            default:
+                return unwrapped;
+        }
     }
 
     async #flush<Q extends Query<G>>(query: Q): Promise<Query.Result<G, Q>> {

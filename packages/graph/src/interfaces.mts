@@ -1,13 +1,11 @@
 import {
     type Arrayify,
     type DeArrayify,
-    type DeFnify,
     type Equal,
     type Expand,
     type Fn,
     type Fnify,
     type HasNull,
-    type IsAny,
     type IsNever,
     type KeyOf,
     type Nullable,
@@ -15,21 +13,25 @@ import {
     type Rec,
     type Recify,
 } from "@typesec/the";
+import type {ToNullish} from "@typesec/the/type";
 import type {Subquery} from "./query/Subquery.mts";
 
-export type Base<T extends Rec<string>, A extends boolean = any> = {
-    [K in KeyOf<T, string>]: Exclude<Graph.Validate<T[K], A>, undefined>;
-};
+export type NodeKind = "args" | "graph";
+export const NODE_KIND = Symbol();
 
-export type Graph<T extends Graph.RecStrict> = Base<T, true>;
+export type Base<T extends Rec<string>, TK extends NodeKind = NodeKind> = {
+    [K in KeyOf<T, string>]: Exclude<Graph.Validate<T[K], TK>, undefined>;
+} & {[NODE_KIND]: TK};
 
-export type Args<T extends Graph.RecStrictArgs> = Base<T, false>;
+export type Graph<T extends Graph.RecStrict> = Base<T, "graph">;
+
+export type Args<T extends Graph.RecStrictArgs> = Base<T, "args">;
 
 export type Node<T, A extends Args<any> = never> = (args: A) => T;
 
 export namespace Graph {
     export type RecursiveType = "self";
-    export type Primitive = string | number | boolean;
+    export type Primitive = string | number | boolean | null;
 
     export type Any<T> = Nullable<Arrayify<Nullable<T>>>;
     export type NodeAny<T = any> = Node<T, any> | Node<T, never>;
@@ -41,8 +43,11 @@ export namespace Graph {
 
     export type Infer<G> = G extends Base<infer T> ? T : never;
 
-    export type Validate<T, A extends boolean = true> =
-        Equal<A, false> extends true ? ValidateArgs<T> : [T] extends [Value] ? T : never;
+    export type Validate<T, K extends NodeKind = NodeKind> = K extends "args"
+        ? ValidateArgs<T>
+        : [T] extends [Value]
+          ? T
+          : never;
 
     export type ValidateArgs<T> = [T] extends [ValueArgs]
         ? T extends Node<any, infer N>
@@ -61,7 +66,7 @@ export namespace Graph {
             ? ExtractNode<A>[]
             : T extends Primitive
               ? T
-              : T extends NodeAny<infer V extends Base<infer _ extends RecStrict>>
+              : T extends NodeAny<infer V extends Base<any>>
                 ? Expand<Extract<V>>
                 : T extends NodeAny<infer V>
                   ? V
@@ -70,158 +75,169 @@ export namespace Graph {
     export type ContextualFactory<C> = {
         <G extends Graph<any>, S extends Rec, ID extends string = string>(
             name: ID,
-            members: Node.Make<G, S, C>,
+            members: Node.Members<G, S, C>,
         ): Proto.GraphNode<ID, G, S, C>;
     };
 }
 
 export namespace Node {
-    type Proto = Proto.Any | Graph.RecursiveType;
-
     export type ScopeResolve<S extends Rec, C> = Fn<[ResolverContext<C>], Promisify<S>> | S;
 
-    export type TypeAny<G extends Base<any> = any, S extends Rec = any, C = any> =
-        IsAny<C> extends true
-            ? IsNever<C> extends true
-                ? Proto.GraphNode<any, G, S, never>
-                : Proto.GraphNode<any, G, S, any>
-            : Proto.GraphNode<any, G, S, C>;
-
-    export type Make<G extends Base<any>, S extends Rec, C> = {
-        [K in KeyOf<G, string>]: Equal<G, NonNullable<Unpack<G[K]>>> extends true
-            ? Member<Graph.RecursiveType, G, K, S, C>
-            : Member<Wrap<G[K], S, C>, G, K, S, C>;
-    };
-
-    export type MakeArgs<G extends Base<any>> = {
-        [K in KeyOf<G, string>]: MemberType<WrapArgs<G[K]>>;
-    };
-
-    export type Wrap<T, S extends Rec = any, C = never> =
-        HasNull<T> extends true
-            ? Proto.NullishType<Wrap<NonNullable<T>, S, C>>
-            : [T] extends [Graph.Primitive]
-              ? Proto.Primitive<any, T>
-              : T extends Array<infer I>
-                ? Proto.ArrayType<Wrap<I, S, C>>
-                : T extends Graph.NodeAny<infer V>
-                  ? Wrap<V>
-                  : T extends Graph<infer _ extends Graph.RecStrict>
-                    ? TypeAny<T, S, C>
-                    : Proto.Complex<any, T, any>;
-
-    export type WrapArgs<T> =
-        HasNull<T> extends true
-            ? Proto.NullishType<WrapArgs<NonNullable<T>>>
-            : [T] extends [Graph.Primitive]
-              ? Proto.Primitive<any, T>
-              : T extends Array<infer I>
-                ? Proto.ArrayType<WrapArgs<I>>
-                : T extends Graph.NodeAny<infer V>
-                  ? WrapArgs<V>
-                  : T extends Args<infer _ extends Graph.RecStrictArgs>
-                    ? Proto.ArgsNode<any, T>
-                    : Proto.Complex<any, T, any>;
-
-    export type Unpack<T> = T extends Node<infer V> ? V : T;
-    export type MemberType<P extends Proto> = {type: P};
-    export type Member<
-        P extends Proto,
-        G extends Graph<any>,
-        K extends KeyOf<G, string>,
-        S extends Rec,
-        C,
-    > = MemberType<P> & MemberResolver<G, K, S, C> & MemberArgs<G, K>;
-
-    export type MemberResolver<G extends Base<any>, K extends KeyOf<G, string>, S extends Rec, C> =
-        Equal<Unpack<G[K]>, S[K]> extends true ? OptionalResolver<G, K, S, C> : Resolver<G, K, S, C>;
-
-    export type Resolver<G extends Base<any>, K extends KeyOf<G, string>, S extends Rec, C> = {
-        resolve: (args: ResolverArgs<G, K, S, C>) => Promisify<S[K]>;
-    };
-
-    export type OptionalResolver<G extends Base<any>, K extends KeyOf<G, string>, S extends Rec, C> = {
-        resolve?: (args: ResolverArgs<G, K, S, C>) => Promisify<S[K]>;
-    };
-
-    export type MemberArgs<G extends Base<any>, K extends KeyOf<G, string>> =
-        G[K] extends Node<any, infer A> ? (IsNever<A> extends true ? {} : {args: WrapArgs<A>}) : {};
-
-    export type ResolverArgs<G extends Base<any>, K extends KeyOf<G, string>, S extends Rec, C> = {
-        value: S[K];
-        parent: S;
-        subquery: Subquery<G, S, C>;
-        args: ExtractArgs<G, K>;
-    } & ResolverContext<C>;
-
-    export type ExtractArgs<G extends Base<any>, K extends KeyOf<G, string>> =
-        G[K] extends Node<any, infer A>
-            ? A extends Args<infer _ extends Graph.RecStrict>
-                ? Graph.Extract<A>
-                : never
-            : never;
-
     export type ResolverContext<C> = IsNever<C> extends false ? {context: C} : {};
+
+    export type Unpack<G extends Base<any>, K extends KeyOf<G, string>> = G[K] extends Node<infer V> ? V : G[K];
+    export type UnpackArgs<G extends Base<any>, K extends KeyOf<G, string>> =
+        G[K] extends Node<any, infer V> ? V : never;
+
+    export type ExtractArgs<G extends Graph<any>, K extends KeyOf<G, string>> =
+        G[K] extends Node<any, infer A> ? (A extends Args<any> ? Graph.Extract<A> : never) : never;
+
+    export type Members<G extends Graph<any>, S extends Rec, C = never> = {
+        [K in KeyOf<G, string>]: Member<G, K, S, C>;
+    };
+
+    export type MembersArgs<G extends Args<any>> = {
+        [K in KeyOf<G, string>]: {type: MemberType<G, Unpack<G, K>, never>};
+    };
+
+    export type Member<G extends Graph<any>, K extends KeyOf<G, string>, S extends Rec, C> = ResolverRequire<
+        {
+            type: Fnify<MemberType<G, Unpack<G, K>, C>>;
+            resolve?: (
+                args: Proto.ResolveArgs<G, K, S, C>,
+            ) => Promisify<ResolverReturnValue<MemberType<G, Unpack<G, K>, C>, S>>;
+        },
+        Equal<ToNullish<Unpack<G, K>>, ToNullish<S[K]>>
+    > &
+        MemberArgs<UnpackArgs<G, K>>;
+
+    export type MemberArgs<A extends Args<any>> = IsNever<A> extends true ? {} : {args: Proto.ArgsNode<any, A>};
+
+    export type ResolverRequire<C extends Rec, TOptional> = TOptional extends true ? C : Required<C>;
+
+    export type ResolverReturnValue<P extends Proto.Any<any>, S> =
+        P extends Proto.Type<any, "self", any>
+            ? S
+            : P extends Proto.Type<any, "graph", any>
+              ? unknown // special case so we cannot infer a source type
+              : P extends Proto.Type<string, Proto.Kind, infer V>
+                ? V
+                : never;
+
+    export type MemberType<G extends Base<any>, T, C> =
+        HasNull<T> extends true
+            ? Proto.NullishType<MemberType<G, NonNullable<T>, C>>
+            : T extends Array<infer A>
+              ? Proto.ArrayType<MemberType<G, A, C>>
+              : T extends Graph<any>
+                ? Equal<T, G> extends true
+                    ? Proto.SelfReference<T>
+                    : Proto.GraphNode<any, T, any, C>
+                : T extends Args<any>
+                  ? Proto.ArgsNode<any, T>
+                  : T extends Graph.Primitive
+                    ? T extends boolean
+                        ? Proto.Primitive<string, boolean> // deunionize boolean
+                        : Proto.Primitive<string, T>
+                    : Proto.Complex<string, T, any>;
 }
 
 export namespace Proto {
-    export type Kind = "graph" | "args" | "complex" | "primitive" | "array" | "null";
+    export type Kind = "graph" | "args" | "complex" | "primitive" | "array" | "null" | "self";
 
-    export type Type<ID extends string, T, K extends Kind> = {
+    export interface Type<ID extends string, K extends Kind, T> {
         name: ID;
         kind: K;
         validate: (value: unknown) => value is T;
-    };
+    }
 
-    export type Any<T = any> = Type<any, T, any>;
-    export type All =
-        | Primitive<any, Graph.Primitive>
-        | Complex<any, any, Graph.Primitive>
-        | NullishType<Any>
-        | ArrayType<Any>
-        | GraphNode<any, any, any>
-        | ArgsNode<any, any>;
+    export type Any<T = any> = Type<any, Kind, T>;
 
-    export type Infer<T> = T extends Any<infer E> ? E : never;
+    export type InferType<T> = T extends Any<infer E> ? E : never;
 
-    export type Primitive<ID extends string, T extends Graph.Primitive> = Type<ID, T, "primitive">;
+    export interface Primitive<ID extends string, T extends Graph.Primitive> extends Type<ID, "primitive", T> {}
 
-    export type Complex<ID extends string, T, O extends Graph.Primitive> = Type<ID, T, "complex"> & {
+    export interface SelfReference<G extends Graph<any>, S extends Rec = {}> extends Type<"self", "self", S> {
+        $: G;
+    }
+
+    export interface Complex<ID extends string, T, O extends Graph.Primitive> extends Type<ID, "complex", T> {
         format: Any<O>;
-        serialize: Fn<[T], O>;
-        deserialize: Fn<[O], T>;
-    };
+        serialize: (value: T) => O;
+        deserialize: (value: O) => T;
+    }
 
-    export type Composite<T, C extends Proto.Any, K extends Kind> = Type<any, T, K> & {
+    export type Composite<K extends Kind, T, C extends Proto.Any> = Type<any, K, T> & {
         child: C;
     };
 
-    export type NullishType<C extends Proto.Any<any>> = Composite<Nullable<Infer<C>>, C, "null">;
-    export type ArrayType<C extends Proto.Any<any>> = Composite<Infer<C>[], C, "array">;
+    export interface NullishType<C extends Proto.Any> extends Composite<"null", Nullable<InferType<C>>, C> {}
 
-    export type Definition<
+    export interface ArrayType<C extends Proto.Any> extends Composite<"array", InferType<C>[], C> {}
+
+    export interface Definition<
         ID extends string,
-        G extends Base<any>,
-        K extends "graph" | "args",
+        K extends NodeKind,
+        G extends Base<any, K>,
+        S extends Rec,
         M extends Rec,
-    > = Proto.Type<ID, Graph.Infer<G>, K> & {
+    > extends Proto.Type<ID, K, S> {
+        $: G;
         members: M;
         keys(): KeyOf<M, string>[];
         has: (key: string) => key is KeyOf<M, string>;
+    }
+
+    export interface GraphNode<ID extends string, G extends Graph<any>, S extends Rec, C = never>
+        extends Definition<ID, "graph", G, S, Node.Members<G, S, C>>,
+            GraphFactory<ID, G, S, C> {}
+
+    export type GraphFactory<ID extends string, G extends Graph<any>, S extends Rec, C = never> = {
+        (): GraphNode<ID, G, S, C>;
+        <PG extends Graph<any>, PK extends KeyOf<PG, string>, PS extends Rec>(
+            resolve: (args: ResolveArgs<PG, PK, PS, C>) => S,
+        ): GraphNodeDef<ID, G, S, PG, PK, PS, C>;
     };
 
-    export type GraphNode<ID extends string, G extends Graph<any>, S extends Rec, C = never> = Definition<
-        ID,
-        G,
-        "graph",
-        Node.Make<G, S, C>
-    >;
+    export type GraphNodeDef<
+        ID extends string,
+        G extends Graph<any>,
+        S extends Rec,
+        PG extends Graph<any>,
+        PK extends KeyOf<PG, string>,
+        PS extends Rec,
+        C = never,
+    > = {
+        type: GraphNode<ID, G, S, C>;
+        resolve: (args: ResolveArgs<PG, PK, PS, C>) => S;
+    };
 
-    export type ArgsNode<ID extends string, A extends Args<any>> = Definition<ID, A, "args", Node.MakeArgs<A>>;
+    export type ResolveArgs<G extends Graph<any>, K extends KeyOf<G, string>, S extends Rec, C> = {
+        source: S;
+        context: C;
+        name: K;
+        args: Node.ExtractArgs<G, K>;
+        subquery: Subquery<G, S, C>;
+    };
 
+    export interface ArgsNode<ID extends string, A extends Args<any>>
+        extends Definition<ID, "args", A, {}, Node.MembersArgs<A>> {}
+
+    export type Referenced<T extends Any> = T & {type: T};
     export type Factory<T extends Any> = {
-        readonly type: T;
-        (): T;
+        readonly type: Referenced<T>;
+        (): Referenced<T>;
+        <G extends Graph<any>, K extends KeyOf<G, string>, S extends Rec, C>(
+            resolve: (args: ResolveArgs<G, K, S, C>) => InferType<T>,
+        ): {
+            type: Referenced<T>;
+            resolve: (args: ResolveArgs<G, K, S, C>) => InferType<T>;
+        };
+    };
+
+    export type NodeDef<G extends Graph<any>, K extends KeyOf<G, string>, S extends Rec, T, R, C> = {
+        type: T;
+        resolve: (args: ResolveArgs<G, K, S, C>) => R;
     };
 }
 
@@ -249,44 +265,28 @@ export namespace Query {
         | ArgsSelector<A>
         | GraphSelector<G, A>;
 
-    export type ArgsSelector<A extends Args<any>> = [args: A];
+    export type ArgsSelector<A extends Args<any>> = [args: Graph.Extract<A>];
     export type GraphSelector<G extends Graph<any>, A extends Args<any> = never> =
-        IsNever<A> extends true ? [query: Query<G>] : [query: Query<G>, args: A];
+        IsNever<A> extends true ? [query: Query<G>] : [query: Query<G>, args: Graph.Extract<A>];
 
-    export type Result2<G extends Graph<any>, Q extends Query<G>> = {
-        [K in KeyOf<Q, string>]: DeFnify<Q[K]> extends ReadDeny
-            ? null
-            : G[K] extends Node<infer V, any>
-              ? V extends Graph<infer _ extends Graph.RecStrict>
-                  ? Q[K] extends [query: infer SQ extends Query<V>, ...any[]]
-                      ? Result<V, SQ>
-                      : never
-                  : V
-              : K extends KeyOf<Graph.Extract<G>, string>
-                ? Graph.Extract<G>[K]
-                : never;
-    };
-
-    export type Result<G extends Graph<any>, Q extends Query<G>> = {
+    export type Result<G extends Graph<any>, Q extends Query<G>> = Expand<{
         [K in KeyOf<Q, string>]: Q[K] extends Fnify<ReadDeny>
             ? null
             : K extends KeyOf<G, string>
               ? ResultNode<G, K, Q[K]>
               : never;
-    };
+    }>;
 
     export type ResultNode<G extends Graph<any>, K extends KeyOf<G, string>, Q> =
         Q extends Fnify<ReadAllow>
             ? Graph.Extract<G>[K]
             : G[K] extends Graph.NodeAny<infer SG extends Arrayify<Graph<any>>>
               ? Q extends [infer SQ extends Query<DeArrayify<SG>>, ...any[]]
-                  ? SG extends (infer AG extends Graph<any>)[]
-                      ? Result<AG, SQ>[]
-                      : Result<SG, SQ>
+                  ? SG extends any[]
+                      ? Result<DeArrayify<SG>, SQ>[]
+                      : Result<DeArrayify<SG>, SQ>
                   : Q extends Rec<infer SK>
                     ? {[AK in SK]: ResultNode<G, K, Q[AK]>}
-                    : never
-              : Q extends [infer _ extends Args<any>]
-                ? Graph.Extract<G>[K]
-                : never;
+                    : 1
+              : Graph.ExtractNode<G[K]>;
 }

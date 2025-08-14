@@ -18,6 +18,9 @@
       "path": "./serve"
     },
     {
+      "path": "./graph"
+    },
+    {
       "path": "./cli"
     }
   ]

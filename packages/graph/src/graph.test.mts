@@ -1,5 +1,7 @@
+import {defnify} from "@typesec/the/fn";
 import {describe, expect, it} from "bun:test";
 import {array, graph, scalars, type Graph, type Node} from "./index.mts";
+import {self} from "./proto.mts";
 
 describe("Schema", () => {
     it("should have a name", () => {
@@ -49,13 +51,13 @@ describe("Schema", () => {
 
         const Node = graph<G, {id: number}>("T", {
             parent: {
-                type: "self",
+                type: self(),
                 resolve: () => {
-                    return {};
+                    return {id: 1};
                 },
             },
         });
 
-        expect(Node.members.parent.type).toBe("self");
+        expect(defnify(Node.members.parent.type).kind).toBe("self");
     });
 });

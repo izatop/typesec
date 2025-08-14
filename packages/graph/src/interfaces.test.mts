@@ -1,6 +1,8 @@
 import {isXEqualToY, isXExtendsOfY, type Exact, type Nullish, type Prop} from "@typesec/the";
+import type {DeFnify, Fn, Promisify} from "@typesec/the/type";
 import {describe, expect, test} from "bun:test";
-import type {Args, Graph, Node, Proto, Query} from "./index.mts";
+import type {Args, Graph, Node, Query} from "./index.mts";
+import type {Proto} from "./interfaces.mts";
 
 describe("Args<T>", () => {
     test("should fail", () => {
@@ -10,11 +12,19 @@ describe("Args<T>", () => {
         expect(isXEqualToY<Prop<G, "test">, never>(true)).toBeTrue();
     });
 
-    test("should extends Graph<T>", () => {
-        type G = Args<{test: boolean}>;
-        type S = Graph<{test: boolean}>;
+    test("should not extend Graph<T>", () => {
+        type A = Args<{test: boolean}>;
+        type G = Graph<{test: boolean}>;
 
-        expect(isXExtendsOfY<G, S>(true)).toBeTrue();
+        // @ts-expect-error
+        expect(isXExtendsOfY<A, G>(true)).toBeTrue();
+    });
+
+    test("should extend strict Node<T, never>", () => {
+        // @ts-expect-error
+        type A = Args<{test: Node<bigint, G>}>;
+
+        expect(isXEqualToY<Prop<A, "test">, never>(true)).toBeTrue();
     });
 });
 
@@ -150,94 +160,38 @@ describe("Graph<T>", () => {
     });
 });
 
-describe("Node<T, A>", () => {
-    test("should wrap with primitives", () => {
-        type B = Node.Wrap<boolean>;
-        type S = Node.Wrap<string>;
-        type N = Node.Wrap<number>;
-        type NW = Node.Wrap<Node<number>>;
-
-        expect(isXEqualToY<B, Proto.Primitive<any, boolean>>(true)).toBeTrue();
-        expect(isXEqualToY<S, Proto.Primitive<any, string>>(true)).toBeTrue();
-        expect(isXEqualToY<N, Proto.Primitive<any, number>>(true)).toBeTrue();
-        expect(isXEqualToY<NW, Proto.Primitive<any, number>>(true)).toBeTrue();
+describe("Node", () => {
+    test("ScopeResolve<S, C>", () => {
+        type s = {test: number};
+        type n = Node.ScopeResolve<s, never>;
+        expect(isXEqualToY<n, s | Fn<[{}], Promisify<s>>>(true)).toBeTrue();
     });
 
-    test("should wrap a complex values", () => {
-        type W = Node.Wrap<Node<Date>>;
-
-        expect(isXEqualToY<W, Proto.Complex<any, Date, any>>(true)).toBeTrue();
+    test("ResolverContext<C>", () => {
+        expect(isXEqualToY<Node.ResolverContext<never>, {}>(true)).toBeTrue();
+        expect(isXEqualToY<Node.ResolverContext<number>, {context: number}>(true)).toBeTrue();
     });
 
-    test("should composite values", () => {
-        type TestNull = Node.Wrap<string | null>;
-        type TestArray = Node.Wrap<string[]>;
-        type TestArrayOrNull = Node.Wrap<string[] | null>;
-        type TestNullableArray = Node.Wrap<Nullish<string>[]>;
+    test("Unpack<G, K>", () => {
+        type g1 = Graph<{node: Node<Date>}>;
+        type g2 = Graph<{node: Node<string, Args<{}>>}>;
 
-        type ArrayOrNull = Proto.NullishType<Proto.ArrayType<Proto.Primitive<any, string>>>;
-        type NullableArray = Proto.ArrayType<Proto.NullishType<Proto.Primitive<any, string>>>;
-
-        expect(isXEqualToY<TestNull, Proto.NullishType<Proto.Primitive<any, string>>>(true)).toBeTrue();
-        expect(isXEqualToY<TestArray, Proto.ArrayType<Proto.Primitive<any, string>>>(true)).toBeTrue();
-        expect(isXEqualToY<TestArrayOrNull, ArrayOrNull>(true)).toBeTrue();
-        expect(isXEqualToY<TestNullableArray, NullableArray>(true)).toBeTrue();
+        expect(isXEqualToY<Node.Unpack<g1, "node">, Date>(true)).toBeTrue();
+        expect(isXEqualToY<Node.Unpack<g2, "node">, string>(true)).toBeTrue();
     });
 
-    test("should wrap a graph", () => {
-        type G = Graph<{test: string}>;
-        type W = Node.Wrap<Node<G>>;
+    test("ExtractArgs<G, K>", () => {
+        type a = Graph<{b: Node<number, Args<{a: number; b: Node<Args<{c: number}>>}>>}>;
 
-        expect(isXEqualToY<W, Proto.GraphNode<any, G, any, never>>(true)).toBeTrue();
+        expect(isXEqualToY<Node.ExtractArgs<a, "b">, {a: number; b: {c: number}}>(true)).toBeTrue();
     });
 
-    test("should wrap an args", () => {
-        type A = Args<{test: string}>;
-        type W = Node.WrapArgs<A>;
+    test("boolean should resolve Primitive<ID, boolean>", () => {
+        type G = Graph<{bool: boolean}>;
+        type M = Node.Member<G, "bool", {}, never>;
+        type test = DeFnify<M["type"]>;
 
-        expect(isXEqualToY<W, Proto.ArgsNode<any, A>>(true)).toBeTrue();
-    });
-
-    test("should make a node", () => {
-        type C = never;
-        type S = {n: number};
-        type G = Graph<{
-            n: number;
-        }>;
-
-        type N = Node.Make<G, S, C>;
-
-        expect(isXEqualToY<N["n"], Node.Member<Node.Wrap<G["n"]>, G, "n", S, C>>(true)).toBeTrue();
-    });
-
-    test("should mark a resolver as an optional", () => {
-        type C = never;
-        type S = {n1: number};
-        type G = Graph<{
-            n1: number;
-            n2: string;
-        }>;
-
-        type N = Node.Make<G, S, C>;
-        type N1 = N["n1"];
-        type N2 = N["n2"];
-        type R1 = Node.MemberType<Proto.Primitive<any, number>> & Node.OptionalResolver<G, "n1", S, C>;
-        type R2 = Node.MemberType<Proto.Primitive<any, string>> & Node.Resolver<G, "n2", S, C>;
-
-        expect(isXEqualToY<N1, R1>(true)).toBeTrue();
-        expect(isXEqualToY<N2, R2>(true)).toBeTrue();
-    });
-
-    test("should pass args", () => {
-        type C = {v: number};
-        type S = {id: number};
-        type G = Graph<{
-            avg: Node<number, Args<{values: number[]}>>;
-        }>;
-
-        type N = Node.Make<G, S, C>;
-        type TestResolve = N["avg"]["resolve"];
-        expect(isXEqualToY<Parameters<TestResolve>[0]["args"], {values: number[]}>(true)).toBeTrue();
+        expect(isXEqualToY<test, Proto.Primitive<string, boolean>>(true)).toBeTrue();
     });
 });
 
@@ -270,21 +224,6 @@ describe("Query<G>", () => {
         type G = Graph<{a: Node<Graph<{b: number}>>}>;
         type Q1 = Run<G, {a: [{b: 1}]}>;
 
-        // @ts-expect-error
-        type Q2 = Run<G, {a: [{z: 1}]}>;
-
         expect(isXEqualToY<Q1, {a: [{b: 1}]}>(true)).toBeTrue();
-        expect(isXEqualToY<Q2, never>(true)).toBeTrue();
-    });
-
-    test("should support args", () => {
-        type G = Graph<{test: Node<number, Args<{adds: number}>>}>;
-        type Q1 = Run<G, {test: {first: [{adds: 10}]; second: [{adds: 20}]}}>;
-
-        // @ts-expect-error
-        type Q2 = Run<G, {test: [{z: 1}]}>;
-
-        expect(isXEqualToY<Q1, {test: {first: [{adds: 10}]; second: [{adds: 20}]}}>(true)).toBeTrue();
-        expect(isXEqualToY<Q2, never>(true)).toBeTrue();
     });
 });

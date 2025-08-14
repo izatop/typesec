@@ -1,4 +1,4 @@
-import type {Node, Proto, Query} from "./interfaces.mts";
+import type {Proto, Query} from "./interfaces.mts";
 import type {Scope} from "./scope/Scope.mts";
 
 export type AssertReason = {
@@ -8,7 +8,7 @@ export type AssertReason = {
 
 export type AssertionDetails = {
     query?: Query<any>;
-    node?: Node.Make<any, any, any>;
+    node?: Proto.GraphNode<any, any, any, any>;
     scope?: Scope<any, any, any>;
     proto?: Proto.Any;
     reason?: AssertReason[];
@@ -17,16 +17,13 @@ export type AssertionDetails = {
 };
 
 export class GraphAssertion extends Error {
-    constructor(
-        public readonly expression: unknown,
-        public readonly details: AssertionDetails,
-    ) {
+    constructor(public readonly details: AssertionDetails) {
         super();
     }
 }
 
 export function assert(expression: unknown, details: AssertionDetails): asserts expression {
     if (!expression) {
-        throw new GraphAssertion(expression, details);
+        throw new GraphAssertion(details);
     }
 }
