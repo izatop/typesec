@@ -6,7 +6,11 @@ export type BankTypeList = "string" | "number" | "object";
 const validators = {
     string: (v: unknown) => is(v, "string") && v === "",
     object: (v: unknown) => {
-        return is(v, "object") ? (Array.isArray(v) ? v.length === 0 : isNull(v) || Object.keys(v).length === 0) : false;
+        return is(v, "object")
+            ? Array.isArray(v)
+                ? v.every((v) => v === undefined)
+                : isNull(v) || Object.keys(v).length === 0
+            : false;
     },
 };
 

@@ -1,10 +1,10 @@
 import {describe, expect, test} from "bun:test";
-import {createStrict} from "./env.mts";
+import {createStrict, detectRuntime, type RuntimeEnv} from "./env.mts";
 
 // type T1 = Expect<Equal<A, B>>;
 
 describe("env", () => {
-    test("createStatic", () => {
+    test("createStatic(requires, payload?)", () => {
         type StrictEnv = {
             required: string;
             optional?: string;
@@ -16,5 +16,19 @@ describe("env", () => {
         expect(() => createStrict<StrictEnv>({required: true}, {})).toThrowError();
         const env2 = createStrict<StrictEnv>({required: true}, {required: "required"});
         expect(env2.required).toBe("required");
+    });
+
+    test("detectRuntime()", () => {
+        let runtime: RuntimeEnv = "unknown";
+        if (typeof globalThis.Bun !== "undefined") runtime = "bun";
+        if (typeof globalThis.process !== "undefined" && typeof globalThis.process.versions?.node !== "undefined") {
+            runtime = "node";
+        }
+
+        if (Reflect.has(globalThis, "window")) {
+            runtime = "browser";
+        }
+
+        expect(detectRuntime()).toBe(runtime);
     });
 });
