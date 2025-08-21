@@ -9,13 +9,15 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "lint": "oxlint",
-    "up": "bun update --latest && bun run -F '*' upgrade && bun i"
+    "sync": "bun typesec-sync",
+    "up": "bun run up:all && bun update -i --latest",
+    "up:all": "find packages -maxdepth 1 -mindepth 1 -type d -exec env -C {} bun update -i --latest \\;"
   },
   "devDependencies": {
     "@prettier/plugin-oxc": "^0.0.4",
     "@types/bun": "^1.2.20",
     "oxlint": "^1.12.0",
-    "prettier": "3.6.2",
+    "prettier": "^3.6.2",
     "typescript": "^5.9.2"
   },
   "private": true

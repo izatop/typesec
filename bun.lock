@@ -7,7 +7,7 @@
         "@prettier/plugin-oxc": "^0.0.4",
         "@types/bun": "^1.2.20",
         "oxlint": "^1.12.0",
-        "prettier": "3.6.2",
+        "prettier": "^3.6.2",
         "typescript": "^5.9.2",
       },
     },
@@ -59,12 +59,12 @@
       "name": "@typesec/serve",
       "version": "0.1.0",
       "dependencies": {
-        "@types/bun": "latest",
+        "@types/bun": "^1.2.20",
         "@typesec/core": "workspace:*",
         "@typesec/the": "workspace:*",
         "@typesec/tracer": "workspace:*",
         "@typesec/unit": "workspace:*",
-        "valibot": "latest",
+        "valibot": "^1.1.0",
       },
     },
     "packages/the": {
