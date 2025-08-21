@@ -1,7 +1,8 @@
 import {assert} from "@typesec/the/assert";
+import {is} from "@typesec/the/fn";
 import type {OptionPattern} from "./interfaces.mjs";
 
-export class ArgvOption<T, R extends boolean> {
+export class ArgvOption<T extends string, R extends boolean> {
     readonly #pattern: string;
     readonly #patterns: string[];
 
@@ -9,7 +10,7 @@ export class ArgvOption<T, R extends boolean> {
 
     public readonly name: T;
 
-    constructor(pattern: string, required: R) {
+    private constructor(pattern: OptionPattern<T>, required: R) {
         this.#pattern = pattern;
         this.#patterns = pattern.replace(/\s*<([^>]+)>$/, "").split(/[,\s]/);
         this.name = pattern.match(/<([^>]+)>/)?.[1] as T;
@@ -27,10 +28,8 @@ export class ArgvOption<T, R extends boolean> {
         return new ArgvOption<T, boolean>(pattern, required);
     }
 
-    public validate(value: string | undefined): string | undefined {
-        assert(value || !this.#required, `The option ${this.#pattern} is required`);
-
-        return value;
+    public validate(value?: string): void {
+        assert(is(value, "string") || !this.#required, `The option ${this.#pattern} is required`);
     }
 
     public match(value?: string) {

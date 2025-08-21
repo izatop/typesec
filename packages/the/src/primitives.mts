@@ -23,5 +23,5 @@ export const primitives: PrimitiveList = {
     False: false,
     String: "Hello, tests!",
     Closure: () => void 0,
-    Function: function () {},
+    Function: function named() {},
 };
