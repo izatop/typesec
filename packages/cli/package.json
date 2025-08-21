@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@commander-js/extra-typings": "^14.0.0",
-    "@types/bun": "^1.2.19",
+    "@types/bun": "^1.2.20",
     "@typesec/core": "workspace:*",
     "@typesec/the": "workspace:*",
     "@typesec/tracer": "workspace:*",

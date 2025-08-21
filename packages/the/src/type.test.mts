@@ -3,6 +3,7 @@ import {isXEqualToY, isXExtendsOfY} from "./test.mjs";
 import type {
     Arrayify,
     DeArrayify,
+    DeFnify,
     Entries,
     Fn,
     Fnify,
@@ -24,7 +25,7 @@ import type {
 
 // type T1 = Expect<Equal<A, B>>;
 
-describe("Types", () => {
+describe("Type", () => {
     test("Fn<A, R>", () => {
         type T1 = Fn<[], void>;
         expect(isXEqualToY<T1, () => void>(true)).toBeTrue();
@@ -39,6 +40,13 @@ describe("Types", () => {
     test("Fnfy<T>", () => {
         type T1 = Fnify<number>;
         expect(isXEqualToY<T1, {(): number} | number>(true)).toBeTrue();
+    });
+
+    test("DeFnify<T>", () => {
+        type T1 = DeFnify<number>;
+        type T2 = DeFnify<Fnify<number>>;
+        expect(isXEqualToY<T1, number>(true)).toBeTrue();
+        expect(isXEqualToY<T2, number>(true)).toBeTrue();
     });
 
     test("Rec<K, T>", () => {
