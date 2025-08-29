@@ -55,6 +55,16 @@
         "@typesec/tracer": "workspace:*",
       },
     },
+    "packages/gup": {
+      "name": "@typesec/gup",
+      "version": "0.1.0",
+      "dependencies": {
+        "@types/bun": "^1.2.20",
+        "@typesec/core": "workspace:*",
+        "@typesec/the": "workspace:*",
+        "@typesec/tracer": "workspace:*",
+      },
+    },
     "packages/serve": {
       "name": "@typesec/serve",
       "version": "0.1.0",
@@ -183,6 +193,8 @@
     "@typesec/core": ["@typesec/core@workspace:packages/core"],
 
     "@typesec/graph": ["@typesec/graph@workspace:packages/graph"],
+
+    "@typesec/gup": ["@typesec/gup@workspace:packages/gup"],
 
     "@typesec/serve": ["@typesec/serve@workspace:packages/serve"],
 

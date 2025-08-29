@@ -20,12 +20,14 @@ describe("env", () => {
 
     test("detectRuntime()", () => {
         let runtime: RuntimeEnv = "unknown";
-        if (typeof globalThis.Bun !== "undefined") runtime = "bun";
-        if (typeof globalThis.process !== "undefined" && typeof globalThis.process.versions?.node !== "undefined") {
+        if (typeof globalThis.Bun !== "undefined") {
+            runtime = "bun";
+        } else if (
+            typeof globalThis.process !== "undefined" &&
+            typeof globalThis.process.versions?.node !== "undefined"
+        ) {
             runtime = "node";
-        }
-
-        if (Reflect.has(globalThis, "window")) {
+        } else if (Reflect.has(globalThis, "window")) {
             runtime = "browser";
         }
 

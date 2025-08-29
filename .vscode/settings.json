@@ -43,5 +43,6 @@
     "**/.pnp.*": true
   },
   "npm.packageManager": "bun",
-  "npm.scriptRunner": "bun"
+  "npm.scriptRunner": "bun",
+  "CodeGPT.apiKey": "OpenAI"
 }

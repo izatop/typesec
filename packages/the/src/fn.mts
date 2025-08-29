@@ -38,7 +38,7 @@ export function when<T, R1, R2>(
     return value ? (is(then, "function") ? then(value) : then) : is(fallback, "function") ? fallback() : fallback;
 }
 
-export function fnify<R>(value: Fnify<R>): Fn<[], R> {
+export function fnify<R>(value: Fnify<R>): Fnify<R> {
     return is(value, "function") ? value : () => value;
 }
 

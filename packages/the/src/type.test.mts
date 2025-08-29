@@ -4,6 +4,7 @@ import type {
     Arrayify,
     DeArrayify,
     DeFnify,
+    Drop,
     Entries,
     Fn,
     Fnify,
@@ -57,6 +58,11 @@ describe("Type", () => {
     test("Prop<T, K>", () => {
         type T1 = {foo: number};
         expect(isXEqualToY<Prop<T1, "foo">, number>(true)).toBeTrue();
+    });
+
+    test("Drop<T, V>", () => {
+        type T1 = {foo: number; bar: null};
+        expect(isXEqualToY<Drop<T1, null>, {foo: number}>(true)).toBeTrue();
     });
 
     test("ReMap<T, V>", () => {

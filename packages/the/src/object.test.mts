@@ -1,5 +1,6 @@
 import {describe, expect, test} from "bun:test";
 import {
+    drop,
     fromAsyncEntries,
     fromEntries,
     has,
@@ -61,6 +62,10 @@ describe("Object", () => {
         expect(override({a: 1}, {a: 2})).toEqual({a: 2});
     });
 
+    test("drop", () => {
+        expect(drop({a: 1, b: 2, c: 3}, 2)).toEqual({a: 1, c: 3});
+    });
+
     test("isNull", () => {
         expect(isNull(null)).toBeTrue();
         expect(isNull({})).toBeFalse();
@@ -91,6 +96,10 @@ describe("Object", () => {
     });
 
     test("keys", () => {
+        expect(keys({a: 1})).toEqual(["a"]);
+    });
+
+    test("overwrite", () => {
         expect(keys({a: 1})).toEqual(["a"]);
     });
 });

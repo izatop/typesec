@@ -6,6 +6,11 @@ function uniq(values: any[], map?: Fn<[any], any>): any[] {
     return [...new Set(map ? values.map(map) : values).values()];
 }
 
+function arraify<T>(value: T | T[]): T[] {
+    return Array.isArray(value) ? value : [value];
+}
+
 export const array = {
     uniq,
+    arraify,
 };

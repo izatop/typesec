@@ -7,7 +7,8 @@ export type Prop<T extends Rec, K extends keyof T> = T[K];
 export type ReMap<T extends Rec, V> = {[K in keyof T]: V};
 export type Entries<T> = {[K in keyof T]: [K, T[K]]}[keyof T];
 export type FromEntries<T extends Entries<any>[]> = T extends Entries<infer R>[] ? R : never;
-export type StrictRec<T extends Rec> = {[K in keyof T as T[K] extends undefined ? never : K]: T[K]};
+export type StrictRec<T extends Rec> = Drop<T, undefined>;
+export type Drop<T extends Rec, V> = {[K in keyof T as V extends T[K] ? never : K]: T[K]};
 export type Override<I extends Rec, O extends Rec> = Expand<Omit<I, keyof O> & O>;
 export type Expand<T> = T extends infer O ? {[K in keyof O]: O[K]} : never;
 
@@ -44,9 +45,9 @@ export type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T exte
 export type Extends<X, Y> = X extends Y ? true : false;
 export type Label<T> = {[key: symbol]: T};
 
-export type HasNull<T1> = null extends T1 ? true : false;
+export type HasNull<T1> = [null] extends [T1] ? true : false;
 export type HasUndefined<T1> = [undefined] extends [T1] ? true : false;
-export type IsNullable<T1> = [null] extends [T1] ? true : HasUndefined<T1> extends true ? true : false;
+export type IsNullable<T1> = HasNull<T1> extends true ? true : HasUndefined<T1> extends true ? true : false;
 export type IfTrue<TCond, TThen, TElse = never> = Equal<TCond, true> extends true ? TThen : TElse;
 export type IsArray<T> = T extends any[] ? true : false;
 export type IsNever<T> = [T] extends [never] ? true : false;

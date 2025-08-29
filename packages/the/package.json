@@ -13,6 +13,9 @@
     "./assert": {
       "import": "./src/assert.mts"
     },
+    "./blank": {
+      "import": "./src/blank.mts"
+    },
     "./date": {
       "import": "./src/date.mts"
     },
@@ -39,6 +42,9 @@
     },
     "./type": {
       "import": "./src/type.mts"
+    },
+    "./numbers": {
+      "import": "./src/numbers.mts"
     }
   },
   "scripts": {

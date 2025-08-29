@@ -1,5 +1,5 @@
 import {is} from "./fn.mts";
-import type {Entries, KeyOf, Override, Rec, RecKey} from "./type.mjs";
+import type {Drop, Entries, KeyOf, Override, Rec, RecKey} from "./type.mjs";
 
 export function prop<T extends Rec, K extends keyof T>(value: T, key: K): T[K] {
     return value[key];
@@ -21,6 +21,10 @@ export async function fromAsyncEntries<K extends PropertyKey, V>(value: [K, Prom
 
 export function override<A extends Rec, B extends Rec>(a: A, b: B): Override<A, B> {
     return {...a, ...b} as unknown as Override<A, B>;
+}
+
+export function drop<A extends Rec, V>(a: A, dropValue: V): Drop<A, V> {
+    return fromEntries(toEntries(a).filter(([, value]) => dropValue !== value)) as unknown as Drop<A, V>;
 }
 
 export function isNull(value: unknown): value is null {
@@ -67,6 +71,7 @@ export function identify(target: unknown, defaultValue = "anonymous"): string {
 
 export const object = {
     prop,
+    drop,
     identify,
     toEntries,
     fromEntries,
