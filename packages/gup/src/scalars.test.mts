@@ -18,28 +18,32 @@ const table: ScalarsTestTable = {
     bigint: {
         proto: scalars.bigint,
         value: 1n,
+        fails: [1, "s"],
     },
     boolean: {
         proto: scalars.boolean,
         value: [true, false],
+        fails: [0, 1, "Y"],
     },
     float: {
         proto: scalars.float,
         value: [1, 1.1, Number.MAX_VALUE],
-        fails: [Infinity, NaN],
+        fails: [Infinity, -Infinity, NaN],
     },
     int: {
         proto: scalars.int,
         value: [...Array.from({length: 3}).map((_, index) => index), Number.MAX_SAFE_INTEGER],
-        fails: [1.1, Infinity, NaN],
+        fails: [-1.1, 1.1, Infinity, -Infinity, NaN],
     },
     ISODate: {
         proto: scalars.ISODate,
         value: new Date(0),
+        fails: [new Date("invalid")],
     },
     string: {
         proto: scalars.string,
         value: ["", "test"],
+        fails: [{}, {toString: () => ""}],
     },
 };
 
