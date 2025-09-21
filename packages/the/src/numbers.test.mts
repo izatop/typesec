@@ -10,8 +10,13 @@ describe("numbers", () => {
         expect(numbers.is(NaN)).toBeFalse();
     });
 
-    test("isDouble(number)", () => {
+    test("isUnsafe(number)", () => {
+        expect(numbers.isUnsafe(NaN)).toBeTrue();
+    });
+
+    test("isFinite(number)", () => {
         expect(numbers.isFinite(1)).toBeTrue();
+        expect(numbers.isFinite(Math.random())).toBeTrue();
         expect(numbers.isFinite(0)).toBeTrue();
         expect(numbers.isFinite(-1)).toBeTrue();
         expect(numbers.isFinite(Infinity)).toBeFalse();

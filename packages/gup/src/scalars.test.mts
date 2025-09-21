@@ -1,4 +1,5 @@
 import {array} from "@typesec/the/array";
+import {fn} from "@typesec/the/fn";
 import type {Arrayify, KeyOf} from "@typesec/the/type";
 import {describe, expect, it} from "bun:test";
 import type {Proto} from "./proto.mts";
@@ -8,58 +9,82 @@ type ScalarsType = typeof scalars;
 
 type ScalarsTestTable = {
     [K in KeyOf<ScalarsType>]: {
-        proto: ScalarsType[K];
-        value: Arrayify<Proto.Infer<ScalarsType[K]>>;
-        fails?: unknown[];
+        proto: Proto.Any;
+        isKind?: Arrayify<Proto.Infer<ScalarsType[K]>>;
+        isValid: Arrayify<Proto.Infer<ScalarsType[K]>>;
+        faildKind?: unknown[];
+        faildValid: unknown[];
     };
 };
 
 const table: ScalarsTestTable = {
     bigint: {
         proto: scalars.bigint,
-        value: 1n,
-        fails: [1, "s"],
+        isValid: 1n,
+        faildValid: [1, "s"],
     },
     boolean: {
         proto: scalars.boolean,
-        value: [true, false],
-        fails: [0, 1, "Y"],
+        isValid: [true, false],
+        faildValid: [0, 1, "Y"],
     },
     float: {
         proto: scalars.float,
-        value: [1, 1.1, Number.MAX_VALUE],
-        fails: [Infinity, -Infinity, NaN],
+        isValid: [1, 1.1, Number.MAX_VALUE, -Number.MAX_VALUE],
+        faildValid: [Infinity, -Infinity, NaN],
     },
     int: {
         proto: scalars.int,
-        value: [...Array.from({length: 3}).map((_, index) => index), Number.MAX_SAFE_INTEGER],
-        fails: [-1.1, 1.1, Infinity, -Infinity, NaN],
+        isValid: [...Array.from({length: 3}).map((_, index) => index), Number.MAX_SAFE_INTEGER],
+        faildValid: [-1.1, 1.1, Infinity, -Infinity, NaN],
     },
     ISODate: {
         proto: scalars.ISODate,
-        value: new Date(0),
-        fails: [new Date("invalid")],
+        isKind: [new Date(0), new Date("invalid")],
+        isValid: new Date(0),
+        faildKind: [{}],
+        faildValid: [new Date("invalid")],
     },
     string: {
         proto: scalars.string,
-        value: ["", "test"],
-        fails: [{}, {toString: () => ""}],
+        isValid: ["", "test"],
+        faildValid: [{}, {toString: () => ""}],
     },
 };
 
-describe.each(Object.values(table).flatMap((item) => array.arraify(item.value).map((value) => ({...item, value}))))(
-    "scalars should pass",
+describe.each(
+    Object.values(table).flatMap((item) =>
+        array.arraify(item.isKind || item.isValid).map((value) => ({...item, value})),
+    ),
+)("should pass", ({proto, value}) => {
+    it(`${proto.id}.isKind(${fn.toStringValue(value)})`, () => {
+        expect(proto.isKind(value)).toBeTrue();
+    });
+});
+
+describe.each(
+    Object.values(table).flatMap((item) =>
+        array.arraify(item.faildKind ?? item.faildValid ?? []).map((value) => ({...item, value})),
+    ),
+)("should fail", ({proto, value}) => {
+    it(`${proto.id}.isKind(${fn.toStringValue(value)})`, () => {
+        expect(proto.isKind(value)).toBeFalse();
+    });
+});
+
+describe.each(Object.values(table).flatMap((item) => array.arraify(item.isValid).map((value) => ({...item, value}))))(
+    "should pass",
     ({proto, value}) => {
-        it(`${proto.id}.is(${value})`, () => {
-            expect(proto.is(value)).toBeTrue();
+        it(`${proto.id}.isValid(${fn.toStringValue(value)})`, () => {
+            expect(proto.isValid(value)).toBeTrue();
         });
     },
 );
 
 describe.each(
-    Object.values(table).flatMap((item) => array.arraify(item.fails ?? []).map((value) => ({...item, value}))),
-)("scalars should fail", ({proto, value}) => {
-    it(`${proto.id}.is(${value})`, () => {
-        expect(proto.is(value)).toBeFalse();
+    Object.values(table).flatMap((item) => array.arraify(item.faildValid ?? []).map((value) => ({...item, value}))),
+)("should fail", ({proto, value}) => {
+    it(`${proto.id}.isValid(${fn.toStringValue(value)})`, () => {
+        expect(proto.isValid(value)).toBeFalse();
     });
 });

@@ -1,8 +1,6 @@
 import {describe, expect, test} from "bun:test";
 import {createStrict, detectRuntime, type RuntimeEnv} from "./env.mts";
 
-// type T1 = Expect<Equal<A, B>>;
-
 describe("env", () => {
     test("createStatic(requires, payload?)", () => {
         type StrictEnv = {

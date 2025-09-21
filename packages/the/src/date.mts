@@ -76,9 +76,7 @@ function assertWith(expr: unknown): asserts expr {
     throw new Error(`Unknown expression "${expr}"`);
 }
 
-function valid(date: Date): boolean;
-function valid(date: unknown): date is Date;
-function valid(date: any): boolean {
+function valid(date: Date | unknown): date is Date {
     return is(date) && date.toString() !== "Invalid Date";
 }
 
@@ -86,7 +84,7 @@ function is(value: unknown): value is Date {
     return value instanceof Date;
 }
 
-export const dateUtils = {
+export const date = {
     is,
     valid,
     now,
@@ -98,3 +96,8 @@ export const dateUtils = {
     isWith,
     assertWith,
 };
+
+/**
+ * @deprecated
+ */
+export const dateUtils = date;

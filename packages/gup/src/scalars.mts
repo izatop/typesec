@@ -1,40 +1,46 @@
-import {dateUtils} from "@typesec/the/date";
+import {date} from "@typesec/the/date";
 import {is} from "@typesec/the/fn";
 import {numbers} from "@typesec/the/numbers";
-import {proto} from "./proto.mts";
+import {codec, primitive, proto} from "./proto.mts";
 
-const string = proto.primitive({
+const string = primitive({
     id: "string",
-    is: (value) => is(value, "string"),
+    kind: "string",
+    isValid: (value): value is string => is(value, "string"),
 });
 
-const boolean = proto.primitive({
+const boolean = primitive({
     id: "boolean",
-    is: (value) => is(value, "boolean"),
+    kind: "boolean",
+    isValid: (value): value is boolean => is(value, "boolean"),
 });
 
 const float = proto.primitive({
     id: "float",
-    is: (value) => numbers.isFinite(value),
+    kind: "number",
+    isValid: numbers.isFinite,
 });
 
 const int = proto.primitive({
     id: "int",
-    is: (value) => numbers.isInt(value),
+    kind: "number",
+    isValid: numbers.isInt,
+});
+
+const bigint = codec({
+    id: "bigint",
+    isKind: (value): value is bigint => is(value, "bigint"),
+    isValid: (value): value is bigint => is(value, "bigint"),
+    encode: (value) => value.toString(),
+    decode: (value) => BigInt(value),
 });
 
 const ISODate = proto.codec({
     id: "ISODate",
-    is: (value) => dateUtils.valid(value),
+    isKind: date.is,
+    isValid: date.valid,
     encode: (value) => value.toISOString(),
     decode: (value) => new Date(value),
-});
-
-const bigint = proto.codec({
-    id: "bigint",
-    is: (value) => is(value, "bigint"),
-    encode: (value) => value.toString(),
-    decode: (value) => BigInt(value),
 });
 
 export const scalars = {

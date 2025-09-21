@@ -25,6 +25,9 @@
     "./fn": {
       "import": "./src/fn.mts"
     },
+    "./guard": {
+      "import": "./src/guard.mts"
+    },
     "./object": {
       "import": "./src/object.mts"
     },

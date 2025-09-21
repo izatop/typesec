@@ -11,19 +11,21 @@ export type StrictRec<T extends Rec> = Drop<T, undefined>;
 export type Drop<T extends Rec, V> = {[K in keyof T as V extends T[K] ? never : K]: T[K]};
 export type Override<I extends Rec, O extends Rec> = Expand<Omit<I, keyof O> & O>;
 export type Expand<T> = T extends infer O ? {[K in keyof O]: O[K]} : never;
-
-export type Arrayify<T> = T | T[];
 export type Recify<T, K extends string = string> = Rec<K, T> | T;
-export type DeArrayify<T> = T extends Array<infer A> ? A : T;
-export type Promisify<T> = T | Promise<T> | PromiseLike<T>;
-
 export type RecKey = string | number | symbol;
+
 export type RequiresKeysOf<T extends Rec, I extends RecKey = RecKey> = {
     [K in KeyOf<T, I>]: HasUndefined<T[K]> extends true ? never : K;
 }[KeyOf<T, I>];
 
+export type Arrayify<T> = T | T[];
+export type DeArrayify<T> = T extends Array<infer A> ? A : T;
+export type InferArray<T extends any[]> = T extends (infer A)[] ? A : never;
+
+export type Promisify<T> = T | Promise<T> | PromiseLike<T>;
+
 export type KeyOf<T extends Rec, I extends string | number | symbol = string | number | symbol> = Extract<keyof T, I>;
-export type KeyOfValue<T extends Rec, TExtends> = ValueOf<{[K in keyof Rec]: TExtends extends T[K] ? K : never}>;
+export type KeyOfValue<T extends Rec, TExtends> = ValueOf<{[K in keyof T]: TExtends extends T[K] ? K : never}>;
 export type ValueOf<T extends Rec> = T[keyof T];
 export type StringKeyOf<T extends Rec> = KeyOf<T, string>;
 export type PairKeyOf<
@@ -31,6 +33,8 @@ export type PairKeyOf<
     TQuery extends Rec<string>,
     I extends string | number | symbol = any,
 > = Extract<KeyOf<TSpec, I>, KeyOf<TQuery, I>>;
+
+export type HasKeyOf<T extends Rec, K> = [K] extends [KeyOf<T>] ? true : false;
 
 export type PartialKeys<T extends Rec, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
@@ -52,7 +56,13 @@ export type IfTrue<TCond, TThen, TElse = never> = Equal<TCond, true> extends tru
 export type IsArray<T> = T extends any[] ? true : false;
 export type IsNever<T> = [T] extends [never] ? true : false;
 export type IsAny<T> = 0 extends 1 & T ? true : false;
+export type IsUnknown<T> = Equal<T, unknown>;
+export type HasUnknown<T> =
+    unknown extends Extract<T, unknown> ? (unknown extends T ? true : T extends unknown ? false : true) : false;
 
 export type LikeString = {toString(): string};
 
 export type Exact<T, Shape> = T extends Shape ? (Exclude<keyof T, keyof Shape> extends never ? T : never) : never;
+
+export type Guard<T> = (value: unknown) => value is T;
+export type GuardUnion<T, U = T> = (value: T | U) => value is T;

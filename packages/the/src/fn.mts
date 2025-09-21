@@ -38,7 +38,7 @@ export function when<T, R1, R2>(
     return value ? (is(then, "function") ? then(value) : then) : is(fallback, "function") ? fallback() : fallback;
 }
 
-export function fnify<R>(value: Fnify<R>): Fnify<R> {
+export function fnify<T>(value: Fnify<T>): Fn<[], T> {
     return is(value, "function") ? value : () => value;
 }
 
@@ -48,6 +48,10 @@ export function defnify<R>(value: Fnify<R>): R {
 
 export function isNullable<T>(value: Nullable<T>): value is null | undefined {
     return value === null || is(value, "undefined");
+}
+
+export function invoke<T extends Fn<A, string> | string, A extends any[]>(target: T, ...args: A): string {
+    return is(target, "function") ? target(...args) : target;
 }
 
 const onceRef = new WeakMap<Fn<[], any>, any>();
@@ -63,6 +67,41 @@ function once<R>(fn: Fn<[], R>): Fn<[], R> {
     };
 }
 
+function toStringValue(value: unknown): string {
+    if (value === null) return "null";
+    if (value === undefined) return "undefined";
+
+    if (typeof value === "bigint") {
+        value = String(value).concat("n");
+    }
+
+    if (typeof value === "symbol") {
+        value = value.toString();
+    }
+
+    if (value instanceof Date) {
+        try {
+            return value.toISOString();
+        } catch {
+            return value.toString();
+        }
+    }
+
+    try {
+        return JSON.stringify(value);
+    } catch {
+        return Object.prototype.toString.call(value);
+    }
+}
+
 export const fn = {
+    is,
     once,
+    when,
+    fnify,
+    defnify,
+    invoke,
+    isInstance,
+    isNullable,
+    toStringValue,
 };

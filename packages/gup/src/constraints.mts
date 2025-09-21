@@ -1,4 +1,4 @@
-import {is} from "@typesec/the/fn";
+import {invoke} from "@typesec/the/fn";
 import type {Fn} from "@typesec/the/type";
 import {ConstraintException} from "./exceptions/ConstraintException.mts";
 import type {Proto} from "./proto.mts";
@@ -21,9 +21,8 @@ export namespace Constraint {
 
     export type Message = string | Fn<[Metadata, value: unknown], string>;
 
-    export type FailState = Metadata & {
+    export type Issue = Metadata & {
         message: string;
-        actual: string;
     };
 }
 
@@ -33,22 +32,22 @@ export function constraints<T>(...rules: Constraint.Rule<T>[]): Constraints<T> {
     return {
         rules,
         assert(value, meta) {
-            const fails: Constraint.FailState[] = [];
+            const issues: Constraint.Issue[] = [];
             for (const rule of rules) {
-                const actual = rule.validate(value, meta);
-                if (actual !== true) {
-                    const describe = is(actual, "string") ? actual : (rule.message ?? defaultConstraintMessage);
-                    fails.push({
+                const validationResult = rule.validate(value, meta);
+                if (validationResult !== true) {
+                    const message = validationResult || (rule.message ?? defaultConstraintMessage);
+
+                    issues.push({
                         ...meta,
-                        message: is(describe, "function") ? describe(meta, value) : describe,
-                        actual: typeof value,
+                        message: invoke(message, meta, value),
                     });
                 }
             }
 
-            const [first] = fails;
-            if (first) {
-                throw new ConstraintException(first, fails);
+            const [issue] = issues;
+            if (issue) {
+                throw new ConstraintException(issue, issues);
             }
         },
     };
