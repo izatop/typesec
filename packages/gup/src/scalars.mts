@@ -1,15 +1,15 @@
 import {date} from "@typesec/the/date";
 import {is} from "@typesec/the/fn";
 import {numbers} from "@typesec/the/numbers";
-import {codec, primitive, proto} from "./proto.mts";
+import {codec, proto, scalar} from "./proto.mts";
 
-const string = primitive({
+const string = scalar({
     id: "string",
     kind: "string",
     isValid: (value): value is string => is(value, "string"),
 });
 
-const boolean = primitive({
+const boolean = scalar({
     id: "boolean",
     kind: "boolean",
     isValid: (value): value is boolean => is(value, "boolean"),

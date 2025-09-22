@@ -2,10 +2,10 @@ import {is} from "@typesec/the/fn";
 import {isXEqualToY} from "@typesec/the/test";
 import {type Fn, type Guard, type GuardUnion, type Nullable, type Promisify, type Rec} from "@typesec/the/type";
 import {describe, expect, it} from "bun:test";
-import {codec, list, primitive, type Proto} from "./proto.mts";
+import {codec, complex, list, scalar, tuple, union, type Proto} from "./proto.mts";
 import {scalars} from "./scalars.mts";
 
-describe("Proto/Types", () => {
+describe("Types", () => {
     it("Base<ID, Kind, T>", () => {
         type Test = Proto.Base<"name", "string", string, string>;
 
@@ -15,15 +15,15 @@ describe("Proto/Types", () => {
         expect(isXEqualToY<Test["isValid"], (value: string) => value is string>(true)).toBeTrue();
     });
 
-    it("Primitive<ID, PrimitiveKind, Primitive>", () => {
-        type T1 = Proto.Primitive<"ID", "string", string>;
+    it("Scalar<ID, ScalarKind, Scalar>", () => {
+        type T1 = Proto.Scalar<"ID", "string", string>;
         expect(isXEqualToY<T1, Proto.Base<"ID", "string", string, string>>(true)).toBeTrue();
     });
 
-    it("PrimitiveShape<PrimitiveKind>", () => {
-        type s = Proto.PrimitiveShape<"string">;
-        type b = Proto.PrimitiveShape<"boolean">;
-        type n = Proto.PrimitiveShape<"number">;
+    it("ScalarShape<ScalarKind>", () => {
+        type s = Proto.ScalarShape<"string">;
+        type b = Proto.ScalarShape<"boolean">;
+        type n = Proto.ScalarShape<"number">;
         expect(isXEqualToY<s, string>(true)).toBeTrue();
         expect(isXEqualToY<b, boolean>(true)).toBeTrue();
         expect(isXEqualToY<n, number>(true)).toBeTrue();
@@ -63,18 +63,20 @@ describe("Proto/Types", () => {
         expect(isXEqualToY<Test["isValid"], GuardUnion<Nullable<string>, Nullable<string>>>(true)).toBeTrue();
     });
 
-    it("Tuple<A | B>", () => {
+    it("Tuple<[A, B]>", () => {
         type T = [string, number];
-        type Test = Proto.Tuple<"number", T>;
+        type Test = Proto.Tuple<T>;
 
         expect(isXEqualToY<Test["subject"], Proto.CompositeTuple<T>["subject"]>(true)).toBeTrue();
+        expect(isXEqualToY<Test["subject"], [Proto.Any<string>, Proto.Any<number>]>(true)).toBeTrue();
         expect(isXEqualToY<Test["isKind"], Guard<readonly unknown[]>>(true)).toBeTrue();
         expect(isXEqualToY<Test["isValid"], GuardUnion<T, readonly unknown[]>>(true)).toBeTrue();
+        expect(isXEqualToY<Proto.Infer<Test>, T>(true)).toBeTrue();
     });
 
     it("Union<A | B>", () => {
         type T = string | number | boolean;
-        type Test = Proto.Union<"number", T>;
+        type Test = Proto.Union<T>;
 
         expect(isXEqualToY<Test["subject"], Proto.CompositeUnion<T>["subject"]>(true)).toBeTrue();
         expect(isXEqualToY<Test["isKind"], Guard<unknown>>(true)).toBeTrue();
@@ -92,10 +94,10 @@ describe("Proto/Types", () => {
     });
 });
 
-describe("Proto/Factory", () => {
-    it("primitive", () => {
+describe("Factories", () => {
+    it("scalar(args)", () => {
         const id = "MyString";
-        const MyString = primitive({
+        const MyString = scalar({
             id,
             kind: "string",
             isValid: (value): value is string => is(value, "string"),
@@ -104,11 +106,14 @@ describe("Proto/Factory", () => {
         expect(MyString.id).toBe(id);
         expect(MyString.kind).toBe("string");
         expect(MyString.isKind("s")).toBeTrue();
-        expect(MyString.isValid("s")).toBeTrue();
         expect(MyString.isKind(null)).toBeFalse();
+        expect(MyString.isValid("s")).toBeTrue();
+
+        // @ts-expect-error
+        expect(MyString.isValid(null)).toBeFalse();
     });
 
-    it("codec", async () => {
+    it("codec(args)", async () => {
         const id = "buffer";
         const data: Buffer = Buffer.from("hello");
 
@@ -128,12 +133,73 @@ describe("Proto/Factory", () => {
         await expect(MyCodec.decode([id, data.toString("hex")])).resolves.toEqual(data);
     });
 
-    it("array", () => {
+    it("list(args)", () => {
         const kind: Proto.ListKind = "array";
         const MyList = list(scalars.string());
 
         expect(MyList.kind).toBe(kind);
         expect(MyList.isKind([])).toBeTrue();
-        expect(MyList.isValid?.([])).toBeTrue();
+        expect(MyList.isValid(["value"])).toBeTrue();
+        expect(MyList.isValid([null])).toBeFalse();
+    });
+
+    it("list(args[])", () => {
+        const kind: Proto.ListKind = "array";
+        const MyList = list([scalars.string(), scalars.int()]);
+
+        expect(MyList.kind).toBe(kind);
+        expect(MyList.isKind([])).toBeTrue();
+        expect(MyList.isValid([])).toBeTrue();
+        expect(MyList.isValid([1, "s"])).toBeTrue();
+        expect(MyList.isValid([1, "s", false])).toBeFalse();
+    });
+
+    it("union(args[])", () => {
+        const kind: Proto.UnionKind = "union";
+        const MyList = union([scalars.string(), scalars.int()]);
+
+        expect(MyList.kind).toBe(kind);
+
+        // Unions isKind is always returns true
+        expect(MyList.isKind({})).toBeTrue();
+
+        expect(MyList.isValid("s")).toBeTrue();
+        expect(MyList.isValid(1)).toBeTrue();
+        expect(MyList.isValid({})).toBeFalse();
+    });
+
+    it("tuple([a, b, ...etc])", () => {
+        const kind: Proto.TupleKind = "tuple";
+        const MyList = tuple([scalars.string(), scalars.int()]);
+
+        expect(MyList.kind).toBe(kind);
+        expect(MyList.isKind([])).toBeTrue();
+        expect(MyList.isValid(["s", 1])).toBeTrue();
+        expect(MyList.isValid(["s", 1, 2])).toBeFalse();
+        expect(MyList.isValid(["s", "s"])).toBeFalse();
+        expect(MyList.isValid([1, "s"])).toBeFalse();
+        expect(MyList.isValid([])).toBeFalse();
+    });
+
+    it("complex(args)", () => {
+        type MyType = {
+            name: string;
+            age: number;
+            bd: Date;
+        };
+
+        const id = "MyComplex";
+        const MyComplex = complex<MyType>({
+            id,
+            members: {
+                name: scalars.string,
+                age: scalars.int,
+                bd: scalars.ISODate,
+            },
+        });
+
+        expect(MyComplex.isKind({})).toBeTrue();
+        expect(MyComplex.isKind(null)).toBeFalse();
+        expect(MyComplex.isValid({})).toBeFalse();
     });
 });

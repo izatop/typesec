@@ -69,6 +69,10 @@ export function identify(target: unknown, defaultValue = "anonymous"): string {
     return is(target, "string") && target ? target : defaultValue;
 }
 
+export function values<T extends Rec>(value: T): T[KeyOf<T>] {
+    return Object.values(value) as T[KeyOf<T>];
+}
+
 export const object = {
     prop,
     drop,
@@ -83,6 +87,7 @@ export const object = {
     hasKeyOf,
     hasKeyListOf,
     keys,
+    values,
     is: isObject,
 };
 
