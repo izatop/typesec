@@ -50,8 +50,5 @@
       "import": "./src/numbers.mts"
     }
   },
-  "scripts": {
-    "upgrade": "bun update --latest"
-  },
   "license": "MIT"
 }

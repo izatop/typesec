@@ -23,7 +23,7 @@ export namespace Proto {
 
     export type Infer<P> = P extends {isValid: GuardUnion<infer T, any>} ? T : unknown;
 
-    export type KindOf<P, R extends Kind> = P extends Base<any, infer T extends R, any, any> ? T : never;
+    export type KindOf<P, R extends Kind = Kind> = P extends Base<any, infer T extends R, any, any> ? T : never;
 
     export type WithConstraints<P> = P & Constraints<Infer<P>>;
 
@@ -56,7 +56,7 @@ export namespace Proto {
         subject: DistributeToAny<T>[];
     };
 
-    export type DistributeTuple<T> = {[K in keyof T]: Any<T[K]>};
+    export type DistributeTuple<T> = T extends readonly unknown[] ? {[K in keyof T]: Any<T[K]>} : [];
     export type CompositeTuple<T> = {
         subject: DistributeTuple<T>;
     };
@@ -79,7 +79,7 @@ export namespace Proto {
         "isKind"
     >;
 
-    export type Scalar<ID extends string, K extends ScalarKind, T> = Base<ID, K, T, T>;
+    export type Scalar<ID extends string, K extends ScalarKind, T = Primitives> = Base<ID, K, T, T>;
 
     export type CodecRaw = [id: string, value: string];
 
@@ -103,13 +103,13 @@ export namespace Proto {
     export type Maybe<T = unknown> = Composite<MaybeId, "maybe", Nullable<T>, Nullable<T>, T>;
 
     export type Complex<ID extends string, T> = Base<ID, "complex", T, Rec<string, unknown>> &
-        ComplexMembers<[T] extends [Rec<string, unknown>] ? T : {ERROR_TYPE_MUST_BE_RECORD: never}>;
+        ComplexMembers<[T] extends [Rec<string, unknown>] ? T : {}>;
 
     export type ComplexMembers<T extends Rec> = {
         members: {[K in KeyOf<T, string>]: Any<T[K]>};
     };
 
-    export type Usable<T> =
+    export type Usable<T = any> =
         | Scalar<string, ScalarKind, T>
         | Codec<string, T>
         | List<T>
@@ -132,16 +132,14 @@ function refine<P extends Proto.Any>(type: P): Proto.Refine<P> {
     return Object.assign(factory, type) as Proto.Refine<P>;
 }
 
-function is<T extends Primitives, K extends Proto.ScalarKind>(
-    type: Proto.Any | Proto.Any<T, K>,
-    kind: K,
-): type is Proto.Scalar<string, K, T>;
-function is<T>(type: Proto.Any<Nullable<T>>, kind: Proto.MaybeKind): type is Proto.Maybe<T>;
+function is<T, K extends Proto.ScalarKind>(type: Proto.Any<T>, kind: K): type is Proto.Scalar<string, K, T>;
 function is<T>(type: Proto.Any<T>, kind: Proto.UnionKind): type is Proto.Union<T>;
-function is<T>(type: Proto.Any<T>, kind: Proto.TupleKind): type is Proto.Tuple<T>;
+function is<T extends readonly unknown[]>(type: Proto.Any<T>, kind: Proto.TupleKind): type is Proto.Tuple<T>;
 function is<T>(type: Proto.Any<T>, kind: Proto.CodecKind): type is Proto.Codec<string, T>;
+function is<T>(type: Proto.Any<Nullable<T>>, kind: Proto.MaybeKind): type is Proto.Maybe<T>;
 function is<T>(type: Proto.Any<T[]>, kind: Proto.ListKind): type is Proto.List<T>;
-function is(type: Proto.Any<any>, kind: string): type is Proto.Any<any> {
+function is<T>(type: Proto.Any<T>, kind: Proto.ComplexKind): type is Proto.Complex<string, T>;
+function is<T>(type: Proto.Any<any>, kind: Proto.Kind): type is Proto.Any<T> {
     return type.kind === kind;
 }
 

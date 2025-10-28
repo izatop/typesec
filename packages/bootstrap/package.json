@@ -11,8 +11,5 @@
       "import": "./src/index.mts"
     }
   },
-  "scripts": {
-    "upgrade": "bun update --latest"
-  },
   "license": "MIT"
 }

@@ -11,9 +11,6 @@
       "import": "./src/index.mts"
     }
   },
-  "scripts": {
-    "upgrade": "bun update --latest"
-  },
   "dependencies": {
     "@commander-js/extra-typings": "^14.0.0",
     "@types/bun": "^1.2.20",
@@ -21,7 +18,7 @@
     "@typesec/the": "workspace:*",
     "@typesec/tracer": "workspace:*",
     "@typesec/unit": "workspace:*",
-    "commander": "^14.0.0",
+    "commander": "^14.0.1",
     "radash": "^12.1.1"
   },
   "license": "MIT"

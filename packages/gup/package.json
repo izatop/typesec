@@ -8,9 +8,6 @@
       "import": "./src/index.mts"
     }
   },
-  "scripts": {
-    "upgrade": "bun update --latest"
-  },
   "dependencies": {
     "@types/bun": "^1.2.20",
     "@typesec/the": "workspace:*",

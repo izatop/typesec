@@ -8,3 +8,6 @@ tsconfig.tsbuildinfo
 
 # testing
 /coverage
+
+# excludes
+~*

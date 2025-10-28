@@ -1,12 +1,13 @@
 import {is} from "@typesec/the/fn";
+import object from "@typesec/the/object";
 import {isXEqualToY} from "@typesec/the/test";
 import {type Fn, type Guard, type GuardUnion, type Nullable, type Promisify, type Rec} from "@typesec/the/type";
 import {describe, expect, it} from "bun:test";
 import {codec, complex, list, scalar, tuple, union, type Proto} from "./proto.mts";
 import {scalars} from "./scalars.mts";
 
-describe("Types", () => {
-    it("Base<ID, Kind, T>", () => {
+describe("Proto Types", () => {
+    it("Base exposes id/kind and guards", () => {
         type Test = Proto.Base<"name", "string", string, string>;
 
         expect(isXEqualToY<Test["id"], "name">(true)).toBeTrue();
@@ -15,12 +16,12 @@ describe("Types", () => {
         expect(isXEqualToY<Test["isValid"], (value: string) => value is string>(true)).toBeTrue();
     });
 
-    it("Scalar<ID, ScalarKind, Scalar>", () => {
+    it("Scalar equals Base for primitive kinds", () => {
         type T1 = Proto.Scalar<"ID", "string", string>;
         expect(isXEqualToY<T1, Proto.Base<"ID", "string", string, string>>(true)).toBeTrue();
     });
 
-    it("ScalarShape<ScalarKind>", () => {
+    it("ScalarShape maps kind to TS primitive", () => {
         type s = Proto.ScalarShape<"string">;
         type b = Proto.ScalarShape<"boolean">;
         type n = Proto.ScalarShape<"number">;
@@ -29,7 +30,7 @@ describe("Types", () => {
         expect(isXEqualToY<n, number>(true)).toBeTrue();
     });
 
-    it("CodecInitializer<ID, T>", () => {
+    it("CodecInitializer has encode/decode and guards", () => {
         type Test = Proto.CodecInitializer<"datetime", Date>;
 
         expect(isXEqualToY<Test["encode"], Fn<[Date], Promisify<string>>>(true)).toBeTrue();
@@ -38,7 +39,7 @@ describe("Types", () => {
         expect(isXEqualToY<Test["isValid"], GuardUnion<Date>>(true)).toBeTrue();
     });
 
-    it("Codec<ID, T>", () => {
+    it("Codec has async encode/decode and guards", () => {
         type Test = Proto.Codec<"datetime", Date>;
 
         expect(isXEqualToY<Test["encode"], Fn<[Date], Promise<Proto.CodecRaw>>>(true)).toBeTrue();
@@ -47,7 +48,7 @@ describe("Types", () => {
         expect(isXEqualToY<Test["isValid"], GuardUnion<Date>>(true)).toBeTrue();
     });
 
-    it("Array<T>", () => {
+    it("List composite wraps subject and guards arrays", () => {
         type Test = Proto.List<string>;
 
         expect(isXEqualToY<Test["subject"], Proto.DistributeToAny<string>[]>(true)).toBeTrue();
@@ -55,7 +56,7 @@ describe("Types", () => {
         expect(isXEqualToY<Test["isValid"], GuardUnion<string[], unknown[]>>(true)).toBeTrue();
     });
 
-    it("Maybe<T>", () => {
+    it("Maybe composite wraps subject and nullables", () => {
         type Test = Proto.Maybe<string>;
 
         expect(isXEqualToY<Test["subject"], Proto.Any<string>>(true)).toBeTrue();
@@ -63,7 +64,7 @@ describe("Types", () => {
         expect(isXEqualToY<Test["isValid"], GuardUnion<Nullable<string>, Nullable<string>>>(true)).toBeTrue();
     });
 
-    it("Tuple<[A, B]>", () => {
+    it("Tuple composite yields Any[] and infers T", () => {
         type T = [string, number];
         type Test = Proto.Tuple<T>;
 
@@ -74,7 +75,7 @@ describe("Types", () => {
         expect(isXEqualToY<Proto.Infer<Test>, T>(true)).toBeTrue();
     });
 
-    it("Union<A | B>", () => {
+    it("Union composite distributes subject and guards", () => {
         type T = string | number | boolean;
         type Test = Proto.Union<T>;
 
@@ -83,7 +84,7 @@ describe("Types", () => {
         expect(isXEqualToY<Test["isValid"], GuardUnion<T, unknown>>(true)).toBeTrue();
     });
 
-    it("Complex<ID, T>", () => {
+    it("Complex exposes kind, guards and infers T", () => {
         type T = {name: string};
         type Test = Proto.Complex<"T", T>;
 
@@ -94,8 +95,8 @@ describe("Types", () => {
     });
 });
 
-describe("Factories", () => {
-    it("scalar(args)", () => {
+describe("Factory Functions", () => {
+    it("scalar(...) creates primitive with guards", () => {
         const id = "MyString";
         const MyString = scalar({
             id,
@@ -113,7 +114,7 @@ describe("Factories", () => {
         expect(MyString.isValid(null)).toBeFalse();
     });
 
-    it("codec(args)", async () => {
+    it("codec(...) creates codec with async encode/decode", async () => {
         const id = "buffer";
         const data: Buffer = Buffer.from("hello");
 
@@ -133,7 +134,7 @@ describe("Factories", () => {
         await expect(MyCodec.decode([id, data.toString("hex")])).resolves.toEqual(data);
     });
 
-    it("list(args)", () => {
+    it("list(subject) infers element type and validates", () => {
         const kind: Proto.ListKind = "array";
         const MyList = list(scalars.string());
 
@@ -143,7 +144,7 @@ describe("Factories", () => {
         expect(MyList.isValid([null])).toBeFalse();
     });
 
-    it("list(args[])", () => {
+    it("list([subjects]) accepts multiple and validates each", () => {
         const kind: Proto.ListKind = "array";
         const MyList = list([scalars.string(), scalars.int()]);
 
@@ -154,7 +155,7 @@ describe("Factories", () => {
         expect(MyList.isValid([1, "s", false])).toBeFalse();
     });
 
-    it("union(args[])", () => {
+    it("union([subjects]) validates by any subject; isKind=true", () => {
         const kind: Proto.UnionKind = "union";
         const MyList = union([scalars.string(), scalars.int()]);
 
@@ -168,9 +169,9 @@ describe("Factories", () => {
         expect(MyList.isValid({})).toBeFalse();
     });
 
-    it("tuple([a, b, ...etc])", () => {
+    it("tuple([...]) validates fixed length and element types", () => {
         const kind: Proto.TupleKind = "tuple";
-        const MyList = tuple([scalars.string(), scalars.int()]);
+        const MyList = tuple<[string, number]>([scalars.string(), scalars.int()]);
 
         expect(MyList.kind).toBe(kind);
         expect(MyList.isKind([])).toBeTrue();
@@ -181,11 +182,12 @@ describe("Factories", () => {
         expect(MyList.isValid([])).toBeFalse();
     });
 
-    it("complex(args)", () => {
+    it("complex({ members }) builds complex and validates shape", () => {
         type MyType = {
             name: string;
             age: number;
             bd: Date;
+            flags: number[];
         };
 
         const id = "MyComplex";
@@ -195,10 +197,22 @@ describe("Factories", () => {
                 name: scalars.string,
                 age: scalars.int,
                 bd: scalars.ISODate,
+                flags: list(scalars.int),
             },
         });
 
+        const valid: MyType = {
+            age: 20,
+            bd: new Date(0),
+            name: "Test",
+            flags: [1, 2, 3],
+        };
+
         expect(MyComplex.isKind({})).toBeTrue();
+        expect(MyComplex.isValid(valid)).toBeTrue();
+
+        expect(MyComplex.isValid({name: "Test"})).toBeFalse();
+        expect(MyComplex.isValid(object.override(valid, {extra: true}))).toBeFalse();
         expect(MyComplex.isKind(null)).toBeFalse();
         expect(MyComplex.isValid({})).toBeFalse();
     });

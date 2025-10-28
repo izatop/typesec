@@ -3,25 +3,28 @@
   "include": [],
   "references": [
     {
+      "path": "./bootstrap"
+    },
+    {
+      "path": "./cli"
+    },
+    {
+      "path": "./core"
+    },
+    {
+      "path": "./gup"
+    },
+    {
+      "path": "./serve"
+    },
+    {
       "path": "./the"
     },
     {
       "path": "./tracer"
     },
     {
-      "path": "./core"
-    },
-    {
       "path": "./unit"
-    },
-    {
-      "path": "./serve"
-    },
-    {
-      "path": "./graph"
-    },
-    {
-      "path": "./cli"
     }
   ]
 }

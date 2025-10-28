@@ -5,7 +5,9 @@ import {RuntimeController} from "./RuntimeController.mts";
 
 describe("RuntimeController", () => {
     test("lifecycle should be initalized", async () => {
-        test.each(ExitSignals)("test", (signal) => expect(process.listeners(signal)).toContainValue(lifecycle.abort));
+        for (const signal of ExitSignals) {
+            expect(process.listeners(signal)).toContainValue(lifecycle.abort);
+        }
     });
 
     test("lifecycle should be a singleton", async () => {

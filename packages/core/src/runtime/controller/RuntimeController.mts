@@ -104,16 +104,9 @@ export class RuntimeController extends AbortController implements Disposable {
         if (ExitSignals.some((signal) => process.listeners(signal).includes(this.abort))) {
             this.#trace.warn("?.trap(): already registered");
         } else {
-            /**
-             * @TODO Think about how to prevent event-loop blocking during tests.
-             */
-            if (!this.isTest()) {
-                this.#trace.log("?.trap(%o)", ExitSignals);
-                for (const signal of ExitSignals) {
-                    process.once(signal, this.abort);
-                }
-            } else {
-                this.#trace.log("?.trap(): skipping signal binding in '%s' mode", this.mode);
+            this.#trace.log("?.trap(%o)", ExitSignals);
+            for (const signal of ExitSignals) {
+                process.once(signal, this.abort);
             }
 
             this.signal.addEventListener("abort", () => dispose(this), {once: true});
