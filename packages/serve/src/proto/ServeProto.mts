@@ -11,7 +11,7 @@ export type ServeInput = {
 };
 
 export class ServeProto extends ProtoAbstract<ServeInput> {
-    public static readonly instances: Server[] = [];
+    public static readonly instances: Server<undefined>[] = [];
 
     public static validate(value: unknown): value is Response {
         return value instanceof Response;

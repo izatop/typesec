@@ -1,6 +1,6 @@
 import {deepEquals} from "bun";
 import {describe, expect, it} from "bun:test";
-import {defnify, fn, fnify, invoke, is, isFunction, isInstance, isNullable, when} from "./fn.mjs";
+import {defnify, fn, fnify, invoke, is, isInstance, isNullable, when} from "./fn.mjs";
 
 describe("fn utils", () => {
     it("is(value, type)", () => {
@@ -111,7 +111,7 @@ describe("fn utils", () => {
     });
 
     it("isFunction (deprecated) still detects functions", () => {
-        expect(isFunction(() => 1)).toBeTrue();
+        expect(is(() => 1, "function")).toBeTrue();
         // @ts-expect-error
         expect(isFunction(1)).toBeFalse();
     });

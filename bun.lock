@@ -12,16 +12,6 @@
         "typescript": "^5.9.3",
       },
     },
-    "packages/-graph": {
-      "name": "@typesec/graph",
-      "version": "0.1.0",
-      "dependencies": {
-        "@types/bun": "^1.2.20",
-        "@typesec/core": "workspace:*",
-        "@typesec/the": "workspace:*",
-        "@typesec/tracer": "workspace:*",
-      },
-    },
     "packages/bootstrap": {
       "name": "@typesec/bootstrap",
       "version": "0.1.0",
@@ -98,9 +88,20 @@
       "version": "0.1.0",
       "dependencies": {
         "@types/bun": "^1.2.20",
+        "@typesec/core": "workspace:*",
         "@typesec/the": "workspace:*",
         "@typesec/tracer": "workspace:*",
         "radash": "^12.1.1",
+      },
+    },
+    "packages/~graph": {
+      "name": "@typesec/graph",
+      "version": "0.1.0",
+      "dependencies": {
+        "@types/bun": "^1.2.20",
+        "@typesec/core": "workspace:*",
+        "@typesec/the": "workspace:*",
+        "@typesec/tracer": "workspace:*",
       },
     },
   },
@@ -181,7 +182,7 @@
 
     "@typesec/core": ["@typesec/core@workspace:packages/core"],
 
-    "@typesec/graph": ["@typesec/graph@workspace:packages/-graph"],
+    "@typesec/graph": ["@typesec/graph@workspace:packages/~graph"],
 
     "@typesec/gup": ["@typesec/gup@workspace:packages/gup"],
 

@@ -1,5 +1,5 @@
 import type {Fn, Rec} from "@typesec/the";
-import {isString} from "radash";
+import * as fn from "./fn.mjs";
 
 export type DatePart =
     | "s" // seconds
@@ -69,7 +69,7 @@ function isWith(expr = ""): expr is DateExpr {
 }
 
 function assertWith(expr: unknown): asserts expr {
-    if (isString(expr) && isWith(expr)) {
+    if (fn.is(expr, "string") && isWith(expr)) {
         return;
     }
 
