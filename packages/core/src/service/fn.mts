@@ -16,7 +16,7 @@ const pendings = new WeakMap<ServiceCtor<any>, Promisify<Service>>();
 export function service<T extends Service>(ctor: ServiceCtor<T>, value: ServiceFactory<T>, lazy = false) {
     registry.set(ctor, value);
     if (isFunction(value)) {
-        !lazy && resolve(ctor);
+        if (!lazy) resolve(ctor);
 
         return;
     }

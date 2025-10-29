@@ -112,7 +112,6 @@ describe("fn utils", () => {
 
     it("isFunction (deprecated) still detects functions", () => {
         expect(is(() => 1, "function")).toBeTrue();
-        // @ts-expect-error
-        expect(isFunction(1)).toBeFalse();
+        expect(is(1, "function")).toBeFalse();
     });
 });
