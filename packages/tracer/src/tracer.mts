@@ -68,19 +68,19 @@ function getLogArgs(label: TracerLevel, ...args: TracerFunctionArgs): TracerFunc
 }
 
 export function log(...args: TracerFunctionArgs): void {
-    v(3) && instance.log(getLogArgs("log", ...args).join(""));
+    if (v(3)) instance.log(getLogArgs("log", ...args).join(""));
 }
 
 export function info(...args: TracerFunctionArgs): void {
-    v(2) && instance.info(getLogArgs("info", ...args).join(""));
+    if (v(2)) instance.info(getLogArgs("info", ...args).join(""));
 }
 
 export function warn(...args: TracerFunctionArgs): void {
-    v(1) && instance.warn(getLogArgs("warn", ...args).join(""));
+    if (v(1)) instance.warn(getLogArgs("warn", ...args).join(""));
 }
 
 export function error(...args: TracerFunctionArgs): void {
-    v(0) && instance.error(getLogArgs("error", ...args).join(""));
+    if (v(0)) instance.error(getLogArgs("error", ...args).join(""));
 }
 
 export function format(...args: TracerFunctionArgs): string {

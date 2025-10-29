@@ -77,7 +77,8 @@ export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
                 table.push({key: "--"});
             }
 
-            id && table.push({key: "row", value: row[id]});
+            if (id) table.push({key: "row", value: row[id]});
+
             table.push(
                 ...Object.entries(crush(row))
                     .filter(([key]) => key !== id)
