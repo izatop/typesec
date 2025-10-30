@@ -16,6 +16,9 @@
     "./blank": {
       "import": "./src/blank.mts"
     },
+    "./bytes": {
+      "import": "./src/bytes.mts"
+    },
     "./date": {
       "import": "./src/date.mts"
     },
