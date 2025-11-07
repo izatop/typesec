@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "module": "./src/index.mts",
+  "main": "./src/index.mts",
   "exports": {
     ".": {
       "import": "./src/index.mts"

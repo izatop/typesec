@@ -1,18 +1,19 @@
-import {isFunction, type Rec} from "@typesec/the";
+import {type Rec} from "@typesec/the";
 import {assert} from "@typesec/the/assert";
-import {log} from "@typesec/tracer";
+import {is} from "@typesec/the/fn";
 import {resolveSync} from "bun";
 import type Module from "node:module";
 import path from "node:path";
 import type {Application, HandleEntry, Proto} from "./interfaces.mjs";
 import type {ProtoAbstract} from "./ProtoAbstract.mjs";
+import {tracer} from "./tracer.mts";
 
-export async function runApplication(location: string) {
-    log("try( location: %s )", location);
+export async function runApplication(location: string): Promise<void> {
+    tracer.log("runApplication( <%s> )", location);
 
     const realPath = resolveSync(location, process.cwd());
-    const app = getApplication(await import(realPath));
-    await app.proto.run({path: path.resolve(path.dirname(realPath), "app")});
+    const {proto} = getApplication(await import(realPath));
+    await proto.run({path: path.resolve(path.dirname(realPath), "app")});
 }
 
 export function getApplication<TContext, TProto extends ProtoAbstract<TIn>, TIn, TRet>(
@@ -27,7 +28,7 @@ export function getApplication<TContext, TProto extends ProtoAbstract<TIn>, TIn,
 export function isApplication<TContext, TProto extends ProtoAbstract<TIn>, TIn, TRet>(
     value: unknown,
 ): value is Application<TContext, TProto, TIn, TRet> {
-    return isFunction(value) && "proto" in value;
+    return is(value, "function") && "proto" in value;
 }
 
 export function getHandle<TProto extends ProtoAbstract<TIn>, TIn, TRet>(
@@ -44,5 +45,5 @@ export function getHandle<TProto extends ProtoAbstract<TIn>, TIn, TRet>(
 export function isHandleEntry<TProto extends ProtoAbstract<TIn>, TIn, TRet>(
     value: unknown,
 ): value is HandleEntry<TProto, TIn, TRet> {
-    return isFunction(value) && "proto" in value && "meta" in value;
+    return is(value, "function") && "proto" in value && "meta" in value;
 }

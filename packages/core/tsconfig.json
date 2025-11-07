@@ -1,4 +1,4 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["src", "src/lib/assert.mts"]
+  "include": ["src"]
 }

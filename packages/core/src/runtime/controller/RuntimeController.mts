@@ -38,14 +38,14 @@ export class RuntimeController extends AbortController implements Disposable {
     }
 
     public static start = (): RuntimeController => {
-        this.lifecycle.#trace.log("?.start()");
+        this.lifecycle.#trace.log("start()");
         this.signal.throwIfAborted();
 
         return this.lifecycle.trap();
     };
 
     public static clone = (id?: string): RuntimeController => {
-        this.lifecycle.#trace.log("?.clone(%s)", id);
+        this.lifecycle.#trace.log("clone(%s)", id);
 
         return this.lifecycle.clone(id);
     };
@@ -102,14 +102,16 @@ export class RuntimeController extends AbortController implements Disposable {
 
     public trap = (): this => {
         if (ExitSignals.some((signal) => process.listeners(signal).includes(this.abort))) {
-            this.#trace.warn("?.trap(): already registered");
+            this.#trace.warn("trap(): already registered");
         } else {
-            this.#trace.log("?.trap(%o)", ExitSignals);
+            const locker = setInterval(() => void 0, 1_000_000_000);
+            this.#trace.log("trap(%o)", ExitSignals);
             for (const signal of ExitSignals) {
                 process.once(signal, this.abort);
             }
 
             this.signal.addEventListener("abort", () => dispose(this), {once: true});
+            this.signal.addEventListener("abort", () => clearInterval(locker));
         }
 
         return this;
@@ -117,12 +119,12 @@ export class RuntimeController extends AbortController implements Disposable {
 
     public override abort = (reason?: unknown): this => {
         if (this.signal.aborted) {
-            this.#trace.warn("?.abort(%s): already aborted");
+            this.#trace.warn("abort(%s): already aborted");
 
             return this;
         }
 
-        this.#trace.log("?.abort(%s)", reason);
+        this.#trace.log("abort(%s)", reason);
 
         super.abort(reason);
         this.#parent?.detach(this);
@@ -132,19 +134,19 @@ export class RuntimeController extends AbortController implements Disposable {
     };
 
     public has = (child: AbortController): boolean => {
-        this.#trace.log("?.has(%s)", identify(child));
+        this.#trace.log("has(%s)", identify(child));
         return this.#children.has(child);
     };
 
     public enqueue = (child: AbortController, throwIfAborted = false): this => {
-        this.#trace.log("?.enqueue(%s)", identify(child));
+        this.#trace.log("enqueue(%s)", identify(child));
         if (throwIfAborted) {
-            assert(!this.signal.aborted, this.#trace.format("?.enqueue(%s): parent already aborted", identify(child)));
-            assert(!child.signal.aborted, this.#trace.format("?.enqueue(%s): child already aborted", identify(child)));
+            assert(!this.signal.aborted, this.#trace.format("enqueue(%s): parent already aborted", identify(child)));
+            assert(!child.signal.aborted, this.#trace.format("enqueue(%s): child already aborted", identify(child)));
         }
 
         if (this.signal.aborted) {
-            child.abort(this.#trace.format("?.enqueue(%s): parent instance already aborted", identify(child)));
+            child.abort(this.#trace.format("enqueue(%s): parent instance already aborted", identify(child)));
 
             return this;
         }
@@ -157,7 +159,7 @@ export class RuntimeController extends AbortController implements Disposable {
     };
 
     public detach = (child: AbortController) => {
-        this.#trace.log("?.detach(%s)", identify(child));
+        this.#trace.log("detach(%s)", identify(child));
         const onAbort = this.#children.get(child);
         if (onAbort) {
             this.signal.removeEventListener("abort", onAbort);

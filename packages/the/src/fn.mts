@@ -9,19 +9,9 @@ export function is(value: unknown, type: "bigint"): value is bigint;
 export function is(value: unknown, type: "number"): value is number;
 export function is(value: unknown, type: "boolean"): value is boolean;
 export function is(value: unknown, type: "string"): value is string;
-export function is<T extends Fn>(value: unknown, type: "function"): value is T;
+export function is<T extends Fn<any[], any>>(value: unknown, type: "function"): value is T;
 export function is<T extends TypeCheckcList>(value: unknown, type: T): boolean {
     return typeof value === type;
-}
-
-/**
- *
- * @deprecated use is(value, type)
- * @param value {unknown}
- * @returns boolean
- */
-export function isFunction<T extends Fn>(value: unknown): value is T {
-    return typeof value === "function";
 }
 
 export function isInstance<T extends Rec>(value: unknown): value is T {
@@ -94,11 +84,16 @@ function toStringValue(value: unknown): string {
     }
 }
 
+function arrow<F extends Fn<any[], any>>(name: string, fn: F): F {
+    return {[name]: (...args: any[]) => fn(...args)}[name] as F;
+}
+
 export const fn = {
     is,
     once,
     when,
     fnify,
+    arrow,
     defnify,
     invoke,
     isInstance,

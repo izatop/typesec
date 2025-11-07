@@ -1,7 +1,7 @@
 import type {Rec} from "@typesec/the";
 import type {Fn} from "@typesec/the/type";
-import * as tracer from "@typesec/tracer";
 import {Ref} from "../lib/Ref.mts";
+import {tracer} from "../tracer.mts";
 
 export type ExitFunction = Fn<[code: number, reason: unknown], void>;
 
@@ -11,10 +11,12 @@ const shutdown = new Ref<ExitFunction>(() => (code) => process.exit(code));
 export function exit(code: number = 0, reason: unknown = null): Timer {
     const finalize = shutdown.ensure();
     const log = code > 0 ? tracer.error : tracer.info;
-    log("exit(%d): %o", code, reason ? `${reason}` : reasons[code]);
 
-    // @TODO node.js/bun types are conflicting
-    return setImmediate(() => finalize(code, reason)) as unknown as Timer;
+    try {
+        return setImmediate(() => finalize(code, reason)) as unknown as Timer;
+    } finally {
+        log("exit(%d): %o", code, reason ? `${reason}` : reasons[code]);
+    }
 }
 
 export function setShutdownFunction(fn: ExitFunction): void {

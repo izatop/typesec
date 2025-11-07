@@ -22,7 +22,6 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "typescript.preferences.autoImportFileExcludePatterns": ["**/index.mts"],
   "typescript.preferences.importModuleSpecifier": "non-relative",
   "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": false,
   "typescript.preferences.preferTypeOnlyAutoImports": true,
@@ -43,6 +42,5 @@
     "**/.pnp.*": true
   },
   "npm.packageManager": "bun",
-  "npm.scriptRunner": "bun",
-  "CodeGPT.apiKey": "OpenAI"
+  "npm.scriptRunner": "bun"
 }

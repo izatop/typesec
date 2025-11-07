@@ -1,6 +1,7 @@
 import {dispose} from "@typesec/core";
 import type {Rec, StringKeyOf} from "@typesec/the";
 import {assert} from "@typesec/the/assert";
+import {wrap} from "@typesec/tracer";
 import {getHandle, ProtoAbstract, type MainArgs} from "@typesec/unit";
 import {FileSystemRouter, type MatchedRoute} from "bun";
 import path from "node:path";
@@ -40,6 +41,8 @@ export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
     }
 
     public static async run(args: MainArgs): Promise<void> {
+        const logger = wrap("cli");
+        logger.log("run( <%s> )", args.path);
         const router = new FileSystemRouter({
             dir: path.resolve(args.path),
             style: "nextjs",
@@ -48,12 +51,18 @@ export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
 
         const [p = "/"] = process.argv.slice(2);
         const route = router.match(p);
+        logger.log("match( <%s> ): %s", p, route?.src ?? null);
         assert(route, `Route "${p}" not found`);
 
+        logger.log("import( <%s> )", route.src);
         const module = await import(route.filePath);
         const handle = getHandle(this, module);
         const res = await args.ready?.();
+
+        logger.info("run( <%s> ): %s", route.pathname, handle.meta.name);
         await handle({request: process.argv, route});
+        logger.info("finish( <%s> )", route.src);
+
         await dispose(res);
     }
 

@@ -42,28 +42,30 @@ function getLogArgs(label: TracerLevel, ...args: TracerFunctionArgs): TracerFunc
         labels.unshift(
             ...stack
                 .slice(0, 1)
-                .flatMap((caller) => [
-                    chalk.gray(`% ${caller?.name} at ${caller?.relative}:${caller?.line}:${caller?.position}`),
-                ]),
+                .map((caller) =>
+                    chalk.gray(`| ${caller.name}() at ${caller.relative}:${caller.line}:${caller.position}`),
+                ),
             ...stack
                 .slice(1)
-                .flatMap((caller) => [
-                    chalk.gray(` > ${caller?.name} at ${caller?.relative}:${caller?.line}:${caller?.position}`),
-                ]),
+                .map((caller) =>
+                    chalk.gray(`|  > ${caller.name}() at ${caller.relative}:${caller.line}:${caller.position}`),
+                ),
+            "",
         );
     }
 
-    const tags = Object.entries({level: bgs[label].white(label), ...options.tags})
-        .map(([key, value]) => `${key}: ${value}`)
+    const tags = Object.entries(options.tags)
+        .map(([key, value]) => `${key}=${value}`)
         .join(", ");
 
+    const welcome = `| ${bgs[label].white(label)} { ${tags} }\n`;
+
     return [
-        chalk.gray(`% { ${tags} }`),
-        "\n",
+        chalk.gray(welcome),
         labels.join("\n"),
-        "\n",
+        chalk.gray("-".repeat(100)).concat("\n"),
         formatWithOptions({colors: true, compact: true}, ...args),
-        options.trace ? "\n" : "\n",
+        "\n",
     ];
 }
 
@@ -97,9 +99,7 @@ export function wrap(target: TracerWrapTarget): Tracer {
     return fromEntries(
         toEntries(tracer).map(([key, fn]) => [
             key,
-            (...[label, ...args]: TracerFunctionArgs) => {
-                return fn(is(label, "string") ? label.replace(/^\?/, name) : label, ...args);
-            },
+            (...[label, ...args]: TracerFunctionArgs) => fn(is(label, "string") ? `${name}> ${label}` : label, ...args),
         ]),
     ) as Tracer;
 }
