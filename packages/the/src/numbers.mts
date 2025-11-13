@@ -32,9 +32,16 @@ function lte(value: unknown, n: number): value is number {
     return lt(value, n + 1);
 }
 
+function toFinite(value: unknown, fallback: number): number {
+    const parsed = fn.is(value, "string") || is(value) ? +value : fallback;
+
+    return isFinite(parsed) ? parsed : fallback;
+}
+
 export const numbers = {
     is,
     isFinite,
+    toFinite,
     isInt,
     isUnsafe,
     gt,

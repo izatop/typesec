@@ -23,6 +23,10 @@ export function override<A extends Rec, B extends Rec>(a: A, b: B): Override<A, 
     return {...a, ...b} as unknown as Override<A, B>;
 }
 
+export function assign<A extends Rec, B extends Partial<A>>(a: A, b: B): void {
+    Object.assign(a, b);
+}
+
 export function drop<A extends Rec, V>(a: A, dropValue: V): Drop<A, V> {
     return fromEntries(toEntries(a).filter(([, value]) => dropValue !== value)) as unknown as Drop<A, V>;
 }
@@ -76,6 +80,7 @@ export function values<T extends Rec>(value: T): T[KeyOf<T>] {
 export const object = {
     prop,
     drop,
+    assign,
     identify,
     toEntries,
     fromEntries,
