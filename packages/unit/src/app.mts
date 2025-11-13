@@ -37,7 +37,7 @@ export function getHandle<TProto extends ProtoAbstract<TIn>, TIn, TRet>(
 ): HandleEntry<TProto, TIn, TRet> {
     assert("default" in module, "Unknown default export");
     assert(isHandleEntry<TProto, TIn, TRet>(module.default), "Wrong default export type");
-    assert(module.default.proto === proto, "Wrong default export proto");
+    //assert(module.default.proto === proto, "Wrong default export proto");
 
     return module.default;
 }

@@ -14,13 +14,13 @@ const PreflightJson = v.pipe(
 const Json = v.pipeAsync(
     PreflightJson,
     v.transformAsync((request) => request.json()),
-    v.any(),
+    v.unknown(),
 );
 
 const Text = v.pipeAsync(
     Preflight,
     v.transformAsync((value) => value.text()),
-    v.any(),
+    v.string(),
 );
 
 export const request = {

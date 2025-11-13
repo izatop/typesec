@@ -1,7 +1,7 @@
 import {dispose, runtime} from "@typesec/core";
-import {log, warn} from "@typesec/tracer";
+import {wrap} from "@typesec/tracer";
 import {getHandle, ProtoAbstract, type MainArgs} from "@typesec/unit";
-import {FileSystemRouter, type MatchedRoute, type Server} from "bun";
+import {FileSystemRouter, type MatchedRoute, type Serve, type Server} from "bun";
 import path from "node:path";
 import {ServeError} from "./ServeError.mjs";
 
@@ -11,6 +11,8 @@ export type ServeInput = {
 };
 
 export class ServeProto extends ProtoAbstract<ServeInput> {
+    public static routes: Serve.Routes<unknown, string> = {};
+
     public static readonly instances: Server<undefined>[] = [];
 
     public static validate(value: unknown): value is Response {
@@ -25,31 +27,46 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
         });
     }
 
-    public static async run(args: MainArgs): Promise<void> {
-        await runtime.run(async () => {
-            const router = this.createRouter(args);
+    public static withStaticRoutes(routes: Serve.Routes<unknown, string>): typeof ServeProto {
+        return class ServeProtoWithStaticRoutes extends this {
+            public static override routes = routes;
+        };
+    }
 
+    public static async run(args: MainArgs): Promise<void> {
+        const trace = wrap(this);
+
+        await runtime.run(async () => {
+            trace.info("run(%o)", args);
+
+            const router = this.createRouter(args);
             const server = Bun.serve({
                 port: 3000,
-                development: runtime.isDevelopment(),
+                development: runtime.isDevelopment()
+                    ? {
+                          hmr: true,
+                      }
+                    : false,
+                routes: this.routes,
                 fetch: async (request) => {
                     try {
                         const route = router.match(request);
-                        log("[ServeProto] fetch(%s): %s", request.url, Boolean(route));
+                        trace.log("[ServeProto] fetch(%s): %s", request.url, route?.src ?? null);
                         if (route) {
                             const handle = getHandle(ServeProto, await import(route.filePath));
 
                             return await handle({request, route});
                         }
                     } catch (reason) {
+                        trace.error(reason);
                         if (reason instanceof ServeError) {
-                            warn("[ServeProto] Server error", reason);
+                            trace.warn("[ServeProto] Server error", reason);
 
                             return new Response(reason.message, {status: reason.code});
                         }
 
                         if (reason instanceof Error) {
-                            warn("[ServeProto] Server error", reason);
+                            trace.warn("[ServeProto] Server error", reason);
 
                             return new Response(reason.message, {status: 500});
                         }

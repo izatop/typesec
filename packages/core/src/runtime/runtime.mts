@@ -21,6 +21,7 @@ export type Runtime = {
     abort: RuntimePick<"abort">;
     only: RuntimePick<"only">;
     wait: RuntimePick<"wait">;
+    signal: AbortSignal;
     increment: () => number;
     run<R>(task: Fn<[], R>, withContext?: RuntimeController): WithDisposablePending<R>;
 };
@@ -33,6 +34,9 @@ function use(): RuntimeController {
 
 export const runtime: Runtime = {
     use,
+    get signal() {
+        return this.use().signal;
+    },
     get lifecycle() {
         return lifecycle;
     },
