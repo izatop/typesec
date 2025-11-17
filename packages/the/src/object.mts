@@ -77,6 +77,19 @@ export function values<T extends Rec>(value: T): T[KeyOf<T>] {
     return Object.values(value) as T[KeyOf<T>];
 }
 
+function isPlain<T extends Rec>(value: unknown): value is T {
+    if (!isObject(value)) {
+        return false;
+    }
+
+    const proto = Object.getPrototypeOf(value);
+    if (proto === null || proto === Object.prototype) {
+        return true;
+    }
+
+    return proto.constructor === Object;
+}
+
 export const object = {
     prop,
     drop,
@@ -94,6 +107,7 @@ export const object = {
     keys,
     values,
     is: isObject,
+    isPlain,
 };
 
 export default object;
