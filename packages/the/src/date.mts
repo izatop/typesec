@@ -60,7 +60,11 @@ function fromTimestamp(timestamp: number): Date {
     return new Date(timestamp * 1000);
 }
 
-function toTimestamp(date: Date): number {
+function toTimestamp(date: Date | number = new Date()): number {
+    if (fn.is(date, "number")) {
+        date = new Date(date);
+    }
+
     return Math.floor(date.getTime() / 1000);
 }
 

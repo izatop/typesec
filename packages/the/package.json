@@ -46,6 +46,9 @@
     "./test": {
       "import": "./src/test.mts"
     },
+    "./ttl": {
+      "import": "./src/ttl.mts"
+    },
     "./type": {
       "import": "./src/type.mts"
     },
