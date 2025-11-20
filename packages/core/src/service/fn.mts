@@ -99,7 +99,7 @@ export function syncArray<T extends Service>(...ctors: ServiceCtor<T>[]): T[] {
 
 export function sync<T extends Service>(ctor: ServiceCtor<T>): T {
     const name = identify(ctor);
-    tracer.log("sync( <%s> ): %d", name, store.has(ctor));
+    tracer.log("sync( <%s> ): %s", name, store.has(ctor));
 
     const known = store.get(ctor);
     if (!known) {

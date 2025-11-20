@@ -40,7 +40,7 @@ export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
         return this.#argv.option(pattern, required);
     }
 
-    public static async run(args: MainArgs): Promise<void> {
+    public static async runWith(args: MainArgs, argv: string[]): Promise<void> {
         const logger = wrap("cli");
         logger.log("run( <%s> )", args.path);
         const router = new FileSystemRouter({
@@ -49,7 +49,7 @@ export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
             fileExtensions: [".mts", ".mjs"],
         });
 
-        const [p = "/"] = process.argv.slice(2);
+        const [p = "/"] = argv;
         const route = router.match(p);
         logger.log("match( <%s> ): %s", p, route?.src ?? null);
         assert(route, `Route "${p}" not found`);
@@ -64,6 +64,10 @@ export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
         logger.info("finish( <%s> )", route.src);
 
         await dispose(res);
+    }
+
+    public static async run(args: MainArgs): Promise<void> {
+        return this.runWith(args, process.argv.slice(2));
     }
 
     public table<T extends Rec>(name: string, table: T[], pick?: StringKeyOf<T>[]) {
