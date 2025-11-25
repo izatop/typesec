@@ -4,35 +4,46 @@ import {is} from "@typesec/the/fn";
 import {isPromise} from "node:util/types";
 import {isAsyncDisposable, isDisposable, PendingServiceList} from "../index.mjs";
 import {tracer} from "../tracer.mjs";
-import type {Service, ServiceCtor, ServiceFactory, ServiceState} from "./interfaces.mjs";
+import {type Service, type ServiceCtor, type ServiceFactory, type ServiceId, type ServiceState} from "./interfaces.mjs";
 import {PendingError} from "./PendingError.mjs";
 import {PendingService} from "./PendingService.mjs";
+import {ServiceRef} from "./ServiceRef.mts";
 
-const store = new WeakMap<ServiceCtor<any>, any>();
-const registry = new Map<ServiceCtor<any>, ServiceFactory<any>>();
-const pendings = new WeakMap<ServiceCtor<any>, Promisify<Service>>();
+const store = new WeakMap<ServiceRef<any>, any>();
+const registry = new Map<ServiceRef<any>, ServiceFactory<any>>();
+const pendings = new WeakMap<ServiceRef<any>, Promisify<Service>>();
+const latest = new WeakMap<ServiceCtor<any>, ServiceRef<any>>();
 
-export function service<T extends Service>(ctor: ServiceCtor<T>, value: ServiceFactory<T>, lazy = false) {
-    registry.set(ctor, value);
+export function service<T extends Service>(
+    ctor: ServiceCtor<NoInfer<T>>,
+    value: ServiceFactory<T>,
+    lazy = true,
+): ServiceRef<T> {
+    const ref = new ServiceRef(ctor);
+    registry.set(ref, value);
+    latest.set(ctor, ref);
     if (is(value, "function")) {
         if (!lazy) resolve(ctor);
 
-        return;
+        return ref;
     }
 
     if (isPromise(value)) {
         resolve(ctor);
 
-        return;
+        return ref;
     }
 
-    store.set(ctor, value);
+    store.set(ref, value);
+
+    return ref;
 }
 
-export function unload<T extends Service>(ctor: ServiceCtor<T>): void {
-    const current = state(ctor);
+export function unload<T extends Service>(ref: ServiceId<T>): void {
+    ref = ensureRef(ref);
+    const current = state(ref);
     if (current.resolved) {
-        store.delete(ctor);
+        store.delete(ref);
         if (isAsyncDisposable(current.instance)) {
             current.instance[Symbol.asyncDispose]();
         }
@@ -43,13 +54,21 @@ export function unload<T extends Service>(ctor: ServiceCtor<T>): void {
     }
 }
 
-export function state<T extends Service>(ctor: ServiceCtor<T>): ServiceState<T> {
-    const known = registry.has(ctor);
+export function ensureRef<T extends Service>(id: ServiceId<T>): ServiceRef<T> {
+    const ref = ServiceRef.is(id) ? id : latest.get(id);
+    assert(ref, "Unknown service reference");
+
+    return ref;
+}
+
+export function state<T extends Service>(ref: ServiceId<T>): ServiceState<T> {
+    ref = ensureRef(ref);
+    const known = registry.has(ref);
     if (!known) {
         return {known, resolved: false};
     }
 
-    const instance = store.get(ctor);
+    const instance = store.get(ref);
 
     return instance
         ? {
@@ -63,24 +82,24 @@ export function state<T extends Service>(ctor: ServiceCtor<T>): ServiceState<T> 
           };
 }
 
-export function syncArray<T1 extends Service, T2 extends Service>(t1: ServiceCtor<T1>, t2: ServiceCtor<T2>): [T1, T2];
+export function syncArray<T1 extends Service, T2 extends Service>(t1: ServiceId<T1>, t2: ServiceId<T2>): [T1, T2];
 export function syncArray<T1 extends Service, T2 extends Service, T3 extends Service>(
-    t1: ServiceCtor<T1>,
-    t2: ServiceCtor<T2>,
-    t3: ServiceCtor<T3>,
+    t1: ServiceId<T1>,
+    t2: ServiceId<T2>,
+    t3: ServiceId<T3>,
 ): [T1, T2, T3];
 export function syncArray<T1 extends Service, T2 extends Service, T3 extends Service, T4 extends Service>(
-    t1: ServiceCtor<T1>,
-    t2: ServiceCtor<T2>,
-    t3: ServiceCtor<T3>,
-    t4: ServiceCtor<T4>,
+    t1: ServiceId<T1>,
+    t2: ServiceId<T2>,
+    t3: ServiceId<T3>,
+    t4: ServiceId<T4>,
 ): [T1, T2, T3, T4];
-export function syncArray<T extends Service>(...ctors: ServiceCtor<T>[]): T[] {
+export function syncArray<T extends Service>(...refs: ServiceId<T>[]): T[] {
     const catches: PendingService<T>[] = [];
     const services: T[] = [];
-    for (const ctor of ctors) {
+    for (const ref of refs) {
         try {
-            services.push(sync(ctor));
+            services.push(sync(ref));
         } catch (reason) {
             if (reason instanceof PendingService) {
                 catches.push(reason);
@@ -97,57 +116,65 @@ export function syncArray<T extends Service>(...ctors: ServiceCtor<T>[]): T[] {
     return services;
 }
 
-export function sync<T extends Service>(ctor: ServiceCtor<T>): T {
-    const name = identify(ctor);
-    tracer.log("sync( <%s> ): %s", name, store.has(ctor));
+export function sync<T extends Service>(ref: ServiceId<T>): T {
+    ref = ensureRef(ref);
+    const name = identify(ref);
+    tracer.log("sync( <%s> ): %s", name, store.has(ref));
 
-    const known = store.get(ctor);
+    const known = store.get(ref);
     if (!known) {
         tracer.log("throw PendingService( <%s> )", name);
-        throw new PendingService(ctor, resolve(ctor));
+        throw new PendingService(ref, resolve(ref));
     }
 
     return known;
 }
 
-export function resolveArray<T1 extends Service, T2 extends Service>(
-    t1: ServiceCtor<T1>,
-    t2: ServiceCtor<T2>,
-): Promise<[T1, T2]>;
-export function resolveArray<T1 extends Service, T2 extends Service, T3 extends Service>(
-    t1: ServiceCtor<T1>,
-    t2: ServiceCtor<T2>,
-    t3: ServiceCtor<T3>,
-): Promise<[T1, T2, T3]>;
-export function resolveArray<T1 extends Service, T2 extends Service, T3 extends Service, T4 extends Service>(
-    t1: ServiceCtor<T1>,
-    t2: ServiceCtor<T2>,
-    t3: ServiceCtor<T3>,
-    t4: ServiceCtor<T4>,
-): Promise<[T1, T2, T3, T4]>;
-export function resolveArray<T extends Service>(...ctors: ServiceCtor<T>[]): Promise<T[]> {
-    return Promise.all(ctors.map((ctor) => resolve(ctor)));
+export function resolveArray<T extends Service>(...refs: ServiceId<T>[]): Promise<T[]> {
+    return Promise.all(refs.map((ref) => resolve(ref)));
 }
 
-export function resolve<T extends Service>(ctor: ServiceCtor<T>): Promise<T> {
-    const name = identify(ctor);
-    tracer.log("resolve( <%s> ): %d", name, store.has(ctor));
-    const known = store.get(ctor);
+export function resolve<T extends Service>(ref: ServiceId<T>): Promise<T>;
+export function resolve<T1 extends Service, T2 extends Service>(
+    t1: ServiceId<T1>,
+    t2: ServiceId<T2>,
+): Promise<[T1, T2]>;
+export function resolve<T1 extends Service, T2 extends Service, T3 extends Service>(
+    t1: ServiceId<T1>,
+    t2: ServiceId<T2>,
+    t3: ServiceId<T3>,
+): Promise<[T1, T2, T3]>;
+export function resolve<T1 extends Service, T2 extends Service, T3 extends Service, T4 extends Service>(
+    t1: ServiceId<T1>,
+    t2: ServiceId<T2>,
+    t3: ServiceId<T3>,
+    t4: ServiceId<T4>,
+): Promise<[T1, T2, T3, T4]>;
+export function resolve<T extends Service>(...refs: [ServiceId<T>, ...ServiceId<T>[]]): Promise<T | T[]> {
+    if (refs.length > 1) {
+        return resolveArray(...refs);
+    }
+
+    const ref = ensureRef(refs[0]);
+    const name = identify(ref);
+
+    tracer.log("resolve( <%s> ): %d", name, store.has(ref));
+    const known = store.get(ref);
     if (known) {
         return known;
     }
 
-    const value = registry.get(ctor);
+    const value = registry.get(ref);
     assert(is(value, "function") || isPromise(value), `Unknown service ${name}`);
 
-    tracer.log("factory( <%s> ): %d", name, pendings.has(ctor));
-    const pending = Promise.resolve(pendings.get(ctor) ?? defnify(value));
-    pendings.set(ctor, pending);
+    tracer.log("factory( <%s> ): %d", name, pendings.has(ref));
+    const pending = Promise.resolve(pendings.get(ref) ?? defnify(value));
+    pendings.set(ref, pending);
 
     pending.then((instance) => {
         tracer.log("register( <%s> )", name);
-        store.set(ctor, instance);
-        pendings.delete(ctor);
+        store.set(ref, instance);
+        pendings.delete(ref);
 
         return instance;
     });
@@ -164,7 +191,7 @@ export async function locator<F extends Fn<[], any>>(fn: F): Promise<ReturnType<
         return await fn();
     } catch (reason) {
         if (reason instanceof PendingError) {
-            tracer.log("await <PendingError>", id);
+            tracer.log("await PendingError<%s>", id);
             await reason;
 
             tracer.log("repeat <%s>", id);

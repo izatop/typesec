@@ -5,7 +5,7 @@ export type DeFnify<T> = T extends Fn<[], infer R> ? R : T;
 export type Rec<K extends keyof any = any, T = any> = Record<K, T>;
 export type Prop<T extends Rec, K extends keyof T> = T[K];
 export type ReMap<T extends Rec, V> = {[K in keyof T]: V};
-export type Entries<T> = {[K in keyof T]: [K, T[K]]}[keyof T];
+export type Entries<T, K extends keyof T = keyof T> = {[K in keyof T]: [K, T[K]]}[K];
 export type FromEntries<T extends Entries<any>[]> = T extends Entries<infer R>[] ? R : never;
 export type StrictRec<T extends Rec> = Drop<T, undefined>;
 export type Drop<T extends Rec, V> = {[K in keyof T as V extends T[K] ? never : K]: T[K]};

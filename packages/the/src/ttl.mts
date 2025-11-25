@@ -2,7 +2,7 @@ import {assert} from "./assert.mts";
 import {fn} from "./fn.mts";
 import {numbers} from "./numbers.mts";
 
-export type TTLUnit = "s" | "m" | "h" | "D" | "W" | "M" | "Y";
+export type TTLUnit = "ms" | "s" | "m" | "h" | "D" | "W" | "M" | "Y";
 
 export type TTLString = `${number}${TTLUnit}`;
 export type TTLValue = TTLString | number;
@@ -22,6 +22,8 @@ function parseString(ttl: TTLString): number {
     assert(numbers.isInt(value) && value > 0, "Wrong TTL value");
 
     switch (unit) {
+        case "ms":
+            return value * MS;
         case "s":
             return value * SEC;
         case "m":
@@ -41,6 +43,11 @@ function parseString(ttl: TTLString): number {
     }
 }
 
+/**
+ *
+ * @param ttl {TTLValue} TTL expression or milliseconds
+ * @returns number milliseconds
+ */
 function parse(ttl: TTLValue): number {
     if (fn.is(ttl, "string")) {
         return parseString(ttl);
@@ -49,4 +56,12 @@ function parse(ttl: TTLValue): number {
     return ttl;
 }
 
-export const ttl = {parse, parseString};
+function toSeconds(ttl: TTLValue): number {
+    if (fn.is(ttl, "string")) {
+        return Math.floor(parseString(ttl) / SEC);
+    }
+
+    return Math.floor(ttl / SEC);
+}
+
+export const ttl = {parse, toSeconds, parseString};

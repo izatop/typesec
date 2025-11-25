@@ -1,4 +1,4 @@
-import {type Rec} from "@typesec/the";
+import {object, type Rec} from "@typesec/the";
 import {assert} from "@typesec/the/assert";
 import {is} from "@typesec/the/fn";
 import {resolveSync} from "bun";
@@ -37,7 +37,7 @@ export function getHandle<TProto extends ProtoAbstract<TIn>, TIn, TRet>(
 ): HandleEntry<TProto, TIn, TRet> {
     assert("default" in module, "Unknown default export");
     assert(isHandleEntry<TProto, TIn, TRet>(module.default), "Wrong default export type");
-    //assert(module.default.proto === proto, "Wrong default export proto");
+    assert(isProtoOf(proto, module.default.proto), "Wrong default export proto");
 
     return module.default;
 }
@@ -46,4 +46,19 @@ export function isHandleEntry<TProto extends ProtoAbstract<TIn>, TIn, TRet>(
     value: unknown,
 ): value is HandleEntry<TProto, TIn, TRet> {
     return is(value, "function") && "proto" in value && "meta" in value;
+}
+
+function isProtoOf<TProto extends ProtoAbstract<TIn>, TIn, TRet>(proto: Proto<TProto, TIn, TRet>, input: unknown) {
+    if (proto === proto) {
+        return true;
+    }
+
+    let next = Object.getPrototypeOf(input);
+    do {
+        if (next === proto) {
+            return true;
+        }
+    } while (object.isNull(next));
+
+    return false;
 }

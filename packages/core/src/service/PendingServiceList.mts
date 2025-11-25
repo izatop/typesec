@@ -13,7 +13,7 @@ export class PendingServiceList<T extends PendingService<any>> extends PendingEr
         onfulfilled?: ((value: T[]) => TResult1 | PromiseLike<TResult1>) | null | undefined,
         onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined,
     ): PromiseLike<TResult1 | TResult2> {
-        log("[PendingServiceList]: resolve(%d)", this.pendings.length);
+        log("[PendingServiceList]: then(%d)", this.pendings.length);
 
         return Promise.all(this.pendings).then(onfulfilled, onrejected);
     }

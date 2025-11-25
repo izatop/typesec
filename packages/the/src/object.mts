@@ -13,6 +13,10 @@ export function fromEntries<K extends PropertyKey, V>(value: [K, V][]): Rec<K, V
     return Object.fromEntries(value) as Rec<K, V>;
 }
 
+export function reverseEntries<T>(value: Entries<T>[]): T {
+    return Object.fromEntries(value) as T;
+}
+
 export async function fromAsyncEntries<K extends PropertyKey, V>(value: [K, Promise<V>][]): Promise<Rec<K, V>> {
     const entries = await Promise.all(value.map(([key, entry]) => entry.then((value) => [key, value])));
 
@@ -29,6 +33,10 @@ export function assign<A extends Rec, B extends Partial<A>>(a: A, b: B): void {
 
 export function drop<A extends Rec, V>(a: A, dropValue: V): Drop<A, V> {
     return fromEntries(toEntries(a).filter(([, value]) => dropValue !== value)) as unknown as Drop<A, V>;
+}
+
+export function omit<T extends Rec, K extends keyof T>(target: T, ...keys: K[]): Omit<T, K> {
+    return reverseEntries(toEntries(target).filter(([key]) => !keys.some((k) => k === key)));
 }
 
 export function isNull(value: unknown): value is null {
@@ -96,6 +104,7 @@ export const object = {
     assign,
     identify,
     toEntries,
+    reverseEntries,
     fromEntries,
     fromAsyncEntries,
     override,
@@ -108,6 +117,7 @@ export const object = {
     values,
     is: isObject,
     isPlain,
+    omit,
 };
 
 export default object;

@@ -1,21 +1,22 @@
 import {xmap} from "@typesec/core";
+import type {BunRequest} from "bun";
 
 const cache = xmap(new WeakMap<Request, ReuseRequest>());
 
 export class ReuseRequest {
     #text: Promise<string> | null = null;
 
-    readonly #request: Request;
+    readonly #request: BunRequest;
 
-    constructor(request: Request) {
+    constructor(request: BunRequest) {
         this.#request = request;
     }
 
-    public static factory(req: Request): ReuseRequest {
+    public static factory(req: BunRequest): ReuseRequest {
         return cache.ensure(req, () => new this(req));
     }
 
-    public get request(): Request {
+    public get request(): BunRequest {
         return this.#request;
     }
 
