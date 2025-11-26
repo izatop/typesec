@@ -1,5 +1,12 @@
+import {assert} from "./assert.mts";
 import {is} from "./fn.mts";
 import type {Drop, Entries, KeyOf, Override, Rec, RecKey} from "./type.mjs";
+
+export function key<T extends Rec, K extends KeyOf<T, string>>(value: T, key: K): K {
+    assert(has(value, key), `Unknown key ${key} in ${identify(value)}`);
+
+    return key;
+}
 
 export function prop<T extends Rec, K extends keyof T>(value: T, key: K): T[K] {
     return value[key];
@@ -99,6 +106,7 @@ function isPlain<T extends Rec>(value: unknown): value is T {
 }
 
 export const object = {
+    key,
     prop,
     drop,
     assign,
