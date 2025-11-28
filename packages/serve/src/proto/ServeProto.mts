@@ -10,8 +10,13 @@ export type ServeInput = {
     route: MatchedRoute;
 };
 
+export type ServeProtoConfig = {
+    lookup: string[];
+    routes?: Serve.Routes<unknown, string>;
+};
+
 export class ServeProto extends ProtoAbstract<ServeInput> {
-    public static routes: Serve.Routes<unknown, string> = {};
+    public static config: ServeProtoConfig = {lookup: ["/*"]};
 
     public static readonly instances: Server<undefined>[] = [];
 
@@ -27,9 +32,9 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
         });
     }
 
-    public static withStaticRoutes(routes: Serve.Routes<unknown, string>): typeof ServeProto {
-        return class ServeProtoWithStaticRoutes extends this {
-            public static override routes = routes;
+    public static configure(config: ServeProtoConfig): typeof ServeProto {
+        return class ServeProtoConfigured extends this {
+            public static override config = config;
         };
     }
 
@@ -40,43 +45,47 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
             trace.info("run(%o)", args);
 
             const router = this.createRouter(args);
+            const routes: Serve.Routes<unknown, string> = this.config.routes ?? {};
+            const resolver = async (request: BunRequest) => {
+                try {
+                    const route = router.match(request);
+                    trace.log("[ServeProto] fetch(%s): %s", request.url, route?.src ?? null);
+                    if (route) {
+                        const handle = getHandle(ServeProto, await import(route.filePath));
+                        return await handle({request, route});
+                    }
+                } catch (reason) {
+                    trace.error(reason);
+                    if (reason instanceof ServeError) {
+                        trace.warn("[ServeProto] Server error", reason);
+
+                        return new Response(reason.message, {status: reason.code});
+                    }
+
+                    if (reason instanceof Error) {
+                        trace.warn("[ServeProto] Server error", reason);
+
+                        return new Response(reason.message, {status: 500});
+                    }
+
+                    return new Response("Internal Server Error", {status: 500});
+                }
+
+                return new Response("Not found", {status: 404});
+            };
+
+            for (const path of this.config.lookup) {
+                routes[path] = resolver;
+            }
+
             const server = Bun.serve({
+                routes,
                 port: 3000,
                 development: runtime.isDevelopment()
                     ? {
                           hmr: true,
                       }
                     : false,
-                routes: {
-                    ...this.routes,
-                    "/*": async (request) => {
-                        try {
-                            const route = router.match(request);
-                            trace.log("[ServeProto] fetch(%s): %s", request.url, route?.src ?? null);
-                            if (route) {
-                                const handle = getHandle(ServeProto, await import(route.filePath));
-                                return await handle({request, route});
-                            }
-                        } catch (reason) {
-                            trace.error(reason);
-                            if (reason instanceof ServeError) {
-                                trace.warn("[ServeProto] Server error", reason);
-
-                                return new Response(reason.message, {status: reason.code});
-                            }
-
-                            if (reason instanceof Error) {
-                                trace.warn("[ServeProto] Server error", reason);
-
-                                return new Response(reason.message, {status: 500});
-                            }
-
-                            return new Response("Internal Server Error", {status: 500});
-                        }
-
-                        return new Response("Not found", {status: 404});
-                    },
-                },
             });
 
             this.instances.push(server);

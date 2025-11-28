@@ -25,7 +25,9 @@ export type InferArray<T extends any[]> = T extends (infer A)[] ? A : never;
 export type Promisify<T> = T | Promise<T> | PromiseLike<T>;
 
 export type KeyOf<T extends Rec, I extends string | number | symbol = string | number | symbol> = Extract<keyof T, I>;
-export type KeyOfValue<T extends Rec, TExtends> = ValueOf<{[K in keyof T]: TExtends extends T[K] ? K : never}>;
+export type KeyOfValue<T extends Rec, TExtends> = ValueOf<{
+    [K in keyof T]: TExtends extends T[K] ? K : never;
+}>;
 export type ValueOf<T extends Rec> = T[keyof T];
 export type StringKeyOf<T extends Rec> = KeyOf<T, string>;
 export type PairKeyOf<
