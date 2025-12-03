@@ -10,6 +10,10 @@ function arraify<T>(value: T | T[]): T[] {
     return Array.isArray(value) ? value : [value];
 }
 
+function dearraify<T>(value: T | T[]): T | undefined {
+    return Array.isArray(value) ? value[0] : value;
+}
+
 async function asyncShift<T>(input: Promisify<T[]> | Fn<[], Promisify<T[]>>): Promise<T | undefined> {
     const [first] = await (fn.is(input, "function") ? input() : input);
 
@@ -19,6 +23,7 @@ async function asyncShift<T>(input: Promisify<T[]> | Fn<[], Promisify<T[]>>): Pr
 export const array = {
     uniq,
     arraify,
+    dearraify,
     async: {
         shift: asyncShift,
     },

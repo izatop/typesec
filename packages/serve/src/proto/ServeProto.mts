@@ -52,6 +52,7 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
                     trace.log("[ServeProto] fetch(%s): %s", request.url, route?.src ?? null);
                     if (route) {
                         const handle = getHandle(ServeProto, await import(route.filePath));
+
                         return await handle({request, route});
                     }
                 } catch (reason) {
