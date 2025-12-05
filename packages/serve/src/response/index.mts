@@ -1,10 +1,6 @@
-import * as v from "valibot";
+import z from "zod";
 
-const Json = v.pipe(
-    v.unknown(),
-    v.transform((value) => JSON.stringify(value)),
-    v.transform((value) => new Response(value, {headers: {"content-type": "application/json"}})),
-);
+const Json = z.any().transform((v) => new Response(JSON.stringify(v), {headers: {"content-type": "application/json"}}));
 
 export const response = {
     Json,

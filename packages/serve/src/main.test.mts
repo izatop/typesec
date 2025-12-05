@@ -2,7 +2,6 @@ import {runtime} from "@typesec/core";
 import {getApplication} from "@typesec/unit";
 import {describe, expect, test} from "bun:test";
 import {resolve} from "node:path";
-import {parse} from "valibot";
 import {response} from "./index.mjs";
 
 describe("Main", () => {
@@ -36,7 +35,7 @@ describe("Main", () => {
     });
 
     test("Response", async () => {
-        const resp = parse(response.Json, 1);
+        const resp = response.Json.parse(1);
         expect(resp.headers.has("content-type")).toBeTrue();
         expect(resp.headers.get("content-type")).toBe("application/json");
         expect(await resp.json()).toBe(1);

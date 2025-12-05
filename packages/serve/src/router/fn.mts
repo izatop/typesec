@@ -1,6 +1,6 @@
-import type {Fn, Rec} from "@typesec/the";
+import type {Fn} from "@typesec/the";
 import type {Meta, ProtoAbstract} from "@typesec/unit";
-import {parse, parseAsync, type BaseSchema, type BaseSchemaAsync, type InferOutput} from "valibot";
+import {z, type ZodObject, type ZodType} from "zod";
 import type {ServeInput} from "../index.mjs";
 import {Router} from "./Router.mjs";
 import type {
@@ -25,37 +25,35 @@ export function rest<TContext, TProto extends ProtoAbstract<ServeInput>>(
     return (meta: Meta): Router<TContext, {}, RestResponse> => route({...args, ...meta});
 }
 
-export function useQuery<S extends BaseSchema<Rec, any, any>>(transform: S): UseTransform<S> {
+export function useQuery<S extends ZodObject>(transform: S): UseTransform<S> {
     return ({request}) => {
         const {searchParams} = new URL(request.url);
         const rec = Object.fromEntries(searchParams.entries());
 
-        return parse(transform, rec);
+        return z.parse(transform, rec);
     };
 }
 
-export function useParams<S extends BaseSchema<Rec, any, any>>(transform: S): UseTransform<S> {
+export function useParams<S extends ZodType>(transform: S): UseTransform<S> {
     return ({route}) => {
-        return parse(transform, route.params);
+        return z.parse(transform, route.params);
     };
 }
 
-export function useRequest<S extends BaseSchema<Request, any, any>>(transform: S): UseTransform<S> {
+export function useRequest<S extends ZodType<Request>>(transform: S): UseTransform<S> {
     return ({request}) => {
-        return parse(transform, request);
+        return z.parse(transform, request);
     };
 }
 
-export function useRequestAsync<S extends BaseSchemaAsync<Request, any, any>>(transform: S): UseTransformAsync<S> {
+export function useRequestAsync<S extends ZodType<Request>>(transform: S): UseTransformAsync<S> {
     return ({request}) => {
-        return parseAsync(transform, request);
+        return z.parseAsync(transform, request);
     };
 }
 
-export function useBody<S extends BaseSchemaAsync<Request, any, any>>(
-    schema: S,
-): Fn<[ServeInput], Promise<InferOutput<S>>> {
+export function useBody<S extends ZodType<unknown, Request>>(schema: S): Fn<[ServeInput], Promise<z.output<S>>> {
     return ({request}) => {
-        return parseAsync(schema, request);
+        return z.parseAsync(schema, request);
     };
 }

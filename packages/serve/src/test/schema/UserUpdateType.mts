@@ -1,5 +1,5 @@
-import * as v from "valibot";
+import z from "zod";
 
-export const UserUpdateType = v.strictObject({
-    name: v.string(),
+export const UserUpdateType = z.strictObject({
+    name: z.string(),
 });

@@ -1,9 +1,3 @@
-import * as v from "valibot";
+import z from "zod";
 
-export const ParamsWithId = v.strictObject({
-    id: v.pipe(
-        v.string(),
-        v.transform((v) => Number(v)),
-        v.number(),
-    ),
-});
+export const ParamsWithId = z.object({id: z.coerce.number()});

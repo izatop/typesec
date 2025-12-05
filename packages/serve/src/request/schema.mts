@@ -1,27 +1,16 @@
-import * as v from "valibot";
+import type {BunRequest} from "bun";
+import z from "zod";
 import {ReuseRequest} from "./ReuseRequest.mjs";
 
-const Preflight = v.pipe(
-    v.instance(Request),
-    v.transform((request) => ReuseRequest.factory(request)),
+const Preflight = z.instanceof(Request).transform((request) => ReuseRequest.factory(request as BunRequest));
+
+const PreflightJson = Preflight.refine(
+    ({request: {headers}}) => headers.get("content-type")?.startsWith("application/json") === true,
 );
 
-const PreflightJson = v.pipe(
-    Preflight,
-    v.check(({request: {headers}}) => headers.get("content-type")?.startsWith("application/json") === true),
-);
+const Json = PreflightJson.transform<unknown>((r) => r.json());
 
-const Json = v.pipeAsync(
-    PreflightJson,
-    v.transformAsync((request) => request.json()),
-    v.unknown(),
-);
-
-const Text = v.pipeAsync(
-    Preflight,
-    v.transformAsync((value) => value.text()),
-    v.string(),
-);
+const Text = PreflightJson.transform<string>((r) => r.text());
 
 export const request = {
     Json,

@@ -1,6 +1,6 @@
-import * as v from "valibot";
+import z from "zod";
 
-export const UserType = v.strictObject({
-    id: v.number(),
-    name: v.string(),
+export const UserType = z.object({
+    id: z.number(),
+    name: z.string(),
 });

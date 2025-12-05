@@ -1,19 +1,19 @@
 import {locator} from "@typesec/core";
 import {override, type Override} from "@typesec/the";
 import type {Application, Handle, HandleEntry, Meta, ProtoAbstract} from "@typesec/unit";
-import {parse, type BaseSchema, type InferInput} from "valibot";
+import {z} from "zod";
 import {type ServeInput, type ServeProto} from "../index.mjs";
 import {RestProto} from "./RestProto.mjs";
-import type {RestOnError, RestResponse, RestTransforms, RouteArgs} from "./interfaces.mjs";
+import type {RestOnError, RestTransforms, RouteArgs} from "./interfaces.mjs";
 
-export class Router<TContext, TTransforms extends RestTransforms = {}, TRet extends RestResponse = RestResponse> {
+export class Router<TContext, TTransforms extends RestTransforms = {}, TRet = Response> {
     readonly #meta: Meta;
     readonly #app: Application<TContext, ProtoAbstract<ServeInput>, ServeInput, Response>;
     readonly #map: TTransforms;
-    readonly #as?: BaseSchema<any, any, any>;
+    readonly #as?: z.ZodType;
     readonly #error?: RestOnError;
 
-    constructor({app, error, ...meta}: RouteArgs<TContext>, map: TTransforms, as?: BaseSchema<any, any, any>) {
+    constructor({app, error, ...meta}: RouteArgs<TContext>, map: TTransforms, as?: z.ZodType) {
         this.#app = app;
         this.#error = error;
         this.#meta = meta;
@@ -37,8 +37,8 @@ export class Router<TContext, TTransforms extends RestTransforms = {}, TRet exte
         );
     }
 
-    public as<S extends BaseSchema<any, any, any>>(as: S): Router<TContext, TTransforms, InferInput<S>> {
-        return new Router<TContext, TTransforms, InferInput<S>>(
+    public as<S extends z.ZodType>(as: S): Router<TContext, TTransforms, z.input<S>> {
+        return new Router<TContext, TTransforms, z.input<S>>(
             {app: this.#app, error: this.#error, ...this.#meta},
             this.#map,
             as,
@@ -59,7 +59,7 @@ export class Router<TContext, TTransforms extends RestTransforms = {}, TRet exte
                     proto,
                 });
 
-                return this.#as ? parse(this.#as, response) : new Response(`${response}`);
+                return this.#as ? z.parse(this.#as, response) : (new Response(`${response}`) as any);
             }),
         });
     }
@@ -78,7 +78,7 @@ export class Router<TContext, TTransforms extends RestTransforms = {}, TRet exte
                     proto,
                 });
 
-                return this.#as ? parse(this.#as, response) : new Response(`${response}`);
+                return this.#as ? z.parse(this.#as, response) : (new Response(`${response}`) as any);
             }),
         });
     }
