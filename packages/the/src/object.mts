@@ -55,15 +55,15 @@ export function isObject<T extends Rec>(value: unknown): value is T {
 }
 
 export function has<T extends Rec, K extends string>(value: T, ...keys: K[]): value is T & Rec<K, unknown> {
-    return keys.every((key) => Object.hasOwn(value, key));
+    return keys.every((key) => Reflect.has(value, key));
 }
 
 export function hasKeyOf<T extends Rec>(value: T, key: RecKey): key is KeyOf<T> {
-    return Object.hasOwn(value, key);
+    return Reflect.has(value, key);
 }
 
 export function hasKeyListOf<T extends Rec>(value: T, keys: RecKey[]): keys is KeyOf<T>[] {
-    return keys.every((key) => Object.hasOwn(value, key));
+    return keys.every((key) => Reflect.has(value, key));
 }
 
 export function keys<T extends Rec>(value: T): KeyOf<T>[];
