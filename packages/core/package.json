@@ -12,8 +12,8 @@
   "dependencies": {
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
-    "@typesec/the": "catalog:",
-    "@typesec/tracer": "catalog:",
+    "@typesec/the": "workspace:*",
+    "@typesec/tracer": "workspace:*",
     "radash": "catalog:"
   },
   "license": "MIT"

@@ -43,7 +43,7 @@
   "devDependencies": {
     "@types/bun": "catalog:",
     "@prettier/plugin-oxc": "catalog:build",
-    "@typesec/bootstrap": "catalog:",
+    "@typesec/bootstrap": "workspace:*",
     "oxlint": "catalog:build",
     "prettier": "catalog:build",
     "typescript": "catalog:build"
