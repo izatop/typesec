@@ -1,10 +1,9 @@
 import {runtime} from "@typesec/core";
-import {assert} from "@typesec/the/assert";
 import {getApplication} from "@typesec/unit";
 import {describe, expect, test} from "bun:test";
 import {resolve} from "node:path";
 import {parse} from "valibot";
-import {response, ServeProto} from "./index.mjs";
+import {response} from "./index.mjs";
 
 describe("Main", () => {
     test("Server", async () => {
@@ -14,22 +13,17 @@ describe("Main", () => {
         const app = getApplication(await import("./test/index.mjs"));
         app.proto.run({path});
 
-        const {
-            instances: [server],
-        } = ServeProto;
-
-        assert(server, "Unexpected error");
-        const r200 = await server.fetch(new Request("http://localhost:3000/"));
+        const r200 = await fetch(new Request("http://localhost:3000/"));
         expect(r200.status).toBe(200);
 
-        const r404 = await server.fetch(new Request("http://localhost:3000/404"));
+        const r404 = await fetch(new Request("http://localhost:3000/404"));
         expect(r404.status).toBe(404);
 
-        const userId = await server.fetch(new Request("http://localhost:3000/user/1"));
+        const userId = await fetch(new Request("http://localhost:3000/user/1"));
         expect(userId.status).toBe(200);
         expect(await userId.json()).toEqual({id: 1, name: "Dave"});
 
-        const update = await server.fetch(
+        const update = await fetch(
             new Request("http://localhost:3000/user/1/update", {
                 method: "post",
                 body: JSON.stringify({name: "Mike"}),

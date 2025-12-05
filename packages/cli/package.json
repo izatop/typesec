@@ -12,14 +12,15 @@
     }
   },
   "dependencies": {
-    "@commander-js/extra-typings": "^14.0.0",
-    "@types/bun": "^1.3.2",
-    "@typesec/core": "workspace:*",
-    "@typesec/the": "workspace:*",
-    "@typesec/tracer": "workspace:*",
-    "@typesec/unit": "workspace:*",
-    "commander": "^14.0.1",
-    "radash": "^12.1.1"
+    "@commander-js/extra-typings": "catalog:",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "@typesec/core": "catalog:",
+    "@typesec/the": "catalog:",
+    "@typesec/tracer": "catalog:",
+    "@typesec/unit": "catalog:",
+    "commander": "catalog:",
+    "radash": "catalog:"
   },
   "license": "MIT"
 }
