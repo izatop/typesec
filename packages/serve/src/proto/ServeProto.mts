@@ -32,9 +32,9 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
         });
     }
 
-    public static configure(config: ServeProtoConfig): typeof ServeProto {
+    public static configure(config: Partial<ServeProtoConfig>): typeof ServeProto {
         return class ServeProtoConfigured extends this {
-            public static override config = config;
+            public static override config = {...ServeProto.config, ...config};
         };
     }
 
