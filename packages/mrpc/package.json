@@ -1,0 +1,19 @@
+{
+  "name": "@typesec/mrpc",
+  "version": "0.1.0",
+  "type": "module",
+  "module": "./src/index.mts",
+  "exports": {
+    ".": {
+      "import": "./src/index.mts"
+    }
+  },
+  "dependencies": {
+    "@types/bun": "catalog:",
+    "@typesec/core": "workspace:*",
+    "@typesec/the": "workspace:*",
+    "radash": "catalog:",
+    "zod": "catalog:"
+  },
+  "license": "MIT"
+}
