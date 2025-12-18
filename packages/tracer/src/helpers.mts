@@ -12,7 +12,7 @@ export function parseLine(str: string): TracerStackLine {
         file,
         line: +line,
         position: +position,
-        relative: relative(pathname, file.replace("file://", "")).replaceAll("../", ""),
+        relative: relative(pathname, file.replace("file://", "")).replace(/\.\.\//g, ""),
     };
 }
 

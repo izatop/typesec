@@ -56,7 +56,7 @@ export function unload<T extends Service>(ref: ServiceId<T>): void {
 
 export function ensureRef<T extends Service>(id: ServiceId<T>): ServiceRef<T> {
     const ref = ServiceRef.is(id) ? id : latest.get(id);
-    assert(ref, "Unknown service reference");
+    assert(ref, `Unknown service reference ${id}`);
 
     return ref;
 }
