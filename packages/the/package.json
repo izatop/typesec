@@ -13,6 +13,9 @@
     "./assert": {
       "import": "./src/assert.mts"
     },
+    "./async": {
+      "import": "./src/async.mts"
+    },
     "./blank": {
       "import": "./src/blank.mts"
     },

@@ -1,8 +1,8 @@
-import type {KeyOf, Promisify, Rec} from "@typesec/the";
+import type {KeyOf, Rec} from "@typesec/the";
 import z from "zod";
 import type {Backend} from "./class/Backend.mts";
 import type {Contract} from "./class/Contract.mts";
-import type {Procedure} from "./class/Procedure.mts";
+import type {ProcedureAbstract} from "./class/ProcedureAbstract.mts";
 
 export type ContractDomain<TIn extends z.ZodType, TOut extends z.ZodType> = {
     input: TIn;
@@ -14,9 +14,9 @@ export type ProcedureHandlerArgs<TContext, TIn> = {
     input: z.output<TIn>;
 };
 
-export type ProcedureHandler<TContext, TIn extends z.ZodType, TOut extends z.ZodType> = (
+export type ProcedureHandler<TContext, TIn extends z.ZodType, TRet> = (
     input: ProcedureHandlerArgs<TContext, TIn>,
-) => Promisify<z.output<TOut>>;
+) => TRet;
 
 export type Domain<N extends string, T extends Rec<string, unknown>> = {
     name: N;
@@ -29,17 +29,17 @@ export namespace Domain {
 
 export type Implementation<TContext, T extends Rec<string, unknown>> = {
     [K in KeyOf<T, string>]: T[K] extends Contract<infer TIn, infer TOut>
-        ? Procedure<TContext, TIn, TOut>
+        ? ProcedureAbstract<TContext, TIn, TOut, any, any>
         : T[K] extends Rec<string, any>
           ? Implementation<TContext, T[K]>
           : never;
 };
 
-export type StaticHandler<TIn, TOut> = (input: z.output<TIn>) => Promisify<z.output<TOut>>;
+export type StaticHandler<TIn, TOut> = (input: TIn) => TOut;
 
 export type StaticResolvers<T extends Rec<string, unknown>> = {
-    [K in KeyOf<T, string>]: T[K] extends Procedure<any, infer TIn, infer TOut>
-        ? StaticHandler<TIn, TOut>
+    [K in KeyOf<T, string>]: T[K] extends ProcedureAbstract<any, infer TIn, any, infer TOut, any>
+        ? StaticHandler<z.output<TIn>, TOut>
         : T[K] extends Rec
           ? StaticResolvers<T[K]>
           : never;

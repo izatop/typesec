@@ -1,7 +1,9 @@
-import {assert, fn, object, type Fn, type Fnify, type Promisify, type Rec} from "@typesec/the";
+import {assert, fn, object, type Fn, type Promisify, type Rec} from "@typesec/the";
+import {async} from "@typesec/the/async";
 import {construct, crush} from "radash";
 import type {Domain, Implementation, StaticResolvers} from "../interfaces.mts";
-import {Procedure} from "./Procedure.mts";
+import {ProcedureAbstract} from "./ProcedureAbstract.mts";
+import {ProcedureAsync} from "./ProcedureAsync.mts";
 
 export class Backend<
     TContext,
@@ -10,12 +12,12 @@ export class Backend<
 > {
     readonly #domain: TDomain;
     readonly #impl: TImpl;
-    readonly #procedures: Rec<string, Procedure<TContext, any, any>>;
+    readonly #procedures: Rec<string, ProcedureAsync<TContext, any, any>>;
 
     constructor(domain: TDomain, impl: TImpl) {
         this.#domain = domain;
         this.#impl = impl;
-        this.#procedures = crush(this.#impl) as Rec<string, Procedure<TContext, any, any>>;
+        this.#procedures = crush(this.#impl) as Rec<string, ProcedureAsync<TContext, any, any>>;
     }
 
     public get implementation(): TImpl {
@@ -47,8 +49,9 @@ export class Backend<
             const next = prev ? prev.concat(".", key) : key;
             if (Array.isArray(subquery)) {
                 const proc = this.#procedures[next];
-                assert(proc instanceof Procedure, `Unknown path ${key}, query failed`);
-                yield [next, proc.encode(subquery[0], context).then((res) => res ?? null)];
+                assert(proc instanceof ProcedureAbstract, `Unknown path ${key}, query failed`);
+                const value = proc.encode(context, subquery[0]);
+                yield [next, async.isPromise(value) ? value.then((n) => (fn.is(n, "undefined") ? null : n)) : value];
 
                 continue;
             }
@@ -67,8 +70,11 @@ export class Backend<
             const next = prev ? prev.concat(".", key) : key;
             if (Array.isArray(subquery)) {
                 const proc = this.#procedures[next];
-                assert(proc instanceof Procedure, `Unknown path ${key}, query failed`);
-                res[next] = await proc.encode(subquery[0], context).then((res) => res ?? null);
+                assert(proc instanceof ProcedureAbstract, `Unknown path ${key}, query failed`);
+                res[next] = await proc.encode(context, subquery[0]);
+                if (fn.is(res[next], "undefined")) {
+                    res[next] = null;
+                }
 
                 continue;
             }
@@ -79,20 +85,22 @@ export class Backend<
         return res;
     }
 
-    async #run(proc: any, arg1: any, arg2: any): Promise<any> {
-        return await proc.encode(arg1, arg2).then((res: any) => res ?? null);
-    }
+    public createStatic(context: TContext): StaticResolvers<TImpl>;
+    public createStatic(context: Fn<[], Promise<TContext>>): Promise<StaticResolvers<TImpl>>;
+    public createStatic(context: TContext | Fn<[], Promise<TContext>>): Promisify<StaticResolvers<TImpl>> {
+        if (fn.is(context, "function")) {
+            return context().then((ctx) => this.#createStaticResolvers(ctx, this.#impl));
+        }
 
-    public createStatic(context: TContext | Fn<[], Promisify<TContext>>): StaticResolvers<TImpl> {
         return this.#createStaticResolvers(context, this.#impl);
     }
 
-    #createStaticResolvers(context: Fnify<Promisify<TContext>>, impl: Rec): StaticResolvers<TImpl> {
+    #createStaticResolvers(context: TContext, impl: Rec): StaticResolvers<TImpl> {
         const resolvers: Rec = {};
-        const resolveContext = this.#createContextResolver(context);
+
         for (const [key, value] of object.toEntries(impl)) {
-            if (value instanceof Procedure) {
-                resolvers[key] = async (input: unknown) => value.run(input, await resolveContext());
+            if (value instanceof ProcedureAbstract) {
+                resolvers[key] = (input: unknown) => value.run(context, input);
 
                 continue;
             }
@@ -102,9 +110,5 @@ export class Backend<
         }
 
         return resolvers as StaticResolvers<TImpl>;
-    }
-
-    #createContextResolver(context: Fnify<Promisify<TContext>>): Fn<[], Promisify<TContext>> {
-        return fn.is(context, "function") ? context : () => context;
     }
 }

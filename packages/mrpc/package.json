@@ -9,8 +9,6 @@
     }
   },
   "dependencies": {
-    "@types/bun": "catalog:",
-    "@typesec/core": "workspace:*",
     "@typesec/the": "workspace:*",
     "radash": "catalog:",
     "zod": "catalog:"
