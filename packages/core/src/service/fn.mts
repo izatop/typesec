@@ -167,7 +167,7 @@ export function resolve<T1 extends Service, T2 extends Service, T3 extends Servi
     t3: ServiceId<T3>,
     t4: ServiceId<T4>,
 ): Promise<[T1, T2, T3, T4]>;
-export function resolve<T extends Service>(...refs: [ServiceId<T>, ...ServiceId<T>[]]): Promise<T | T[]> {
+export async function resolve<T extends Service>(...refs: [ServiceId<T>, ...ServiceId<T>[]]): Promise<T | T[]> {
     if (refs.length > 1) {
         return resolveArray(...refs);
     }

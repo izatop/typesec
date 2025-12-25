@@ -12,6 +12,8 @@ export type ServiceCtor<T extends Service> = {
 
 export type ServiceId<T extends Service> = ServiceCtor<T> | ServiceRef<T>;
 
+export type ServiceInfer<T> = T extends ServiceId<infer V> ? V : never;
+
 export type ServiceFactory<T extends Service> = Fnify<Promisify<T>>;
 
 export type ServiceOptions<T extends Service> = {

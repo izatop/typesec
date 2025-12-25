@@ -32,16 +32,6 @@ export class Backend<
         return construct(await this.#deepRun(context, query)) as Rec<string, unknown>;
     }
 
-    public async execute2(context: TContext, query: unknown): Promise<Rec<string, unknown>> {
-        const entries: [string, Promise<unknown>][] = [];
-
-        for (const op of this.#deepQuery(context, query)) {
-            entries.push(op);
-        }
-
-        return construct(await object.fromAsyncEntries(entries)) as Rec<string, unknown>;
-    }
-
     *#deepQuery(context: TContext, query: unknown, prev?: string): Generator<[path: string, value: Promise<unknown>]> {
         assert(object.isPlain(query), "Wrong query");
 
