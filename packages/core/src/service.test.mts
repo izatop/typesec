@@ -1,14 +1,28 @@
 import {beforeEach, describe, expect, test} from "bun:test";
-import {locator, resolve, service, state, sync, syncArray, unload} from "./service/fn.mjs";
+import {define, locator, resolve, service, state, sync, syncArray, unload} from "./service/fn.mjs";
 import {TestService} from "./test/TestService.mjs";
 import {TestService2} from "./test/TestService2.mjs";
 
-service(TestService, async () => new TestService());
+const MyServiceDef = define("MyServiceDef", () => new TestService());
 service(TestService2, async () => new TestService2());
+service(TestService, async () => new TestService());
 
 describe("Service", () => {
     beforeEach(() => unload(TestService));
     beforeEach(() => unload(TestService2));
+
+    test("define", async () => {
+        const stage1 = state(MyServiceDef);
+        expect(stage1.resolved).toBeFalse();
+
+        const value1 = await resolve(MyServiceDef);
+        const stage2 = state(MyServiceDef);
+        expect(stage2.resolved).toBeTrue();
+        expect(stage2.resolved === true ? stage2.instance : null).toBeInstanceOf(TestService);
+
+        const value2 = await resolve(MyServiceDef);
+        expect(value1.randomNumber).toBe(value2.randomNumber);
+    });
 
     test("state", async () => {
         const stage1 = state(TestService);

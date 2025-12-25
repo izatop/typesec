@@ -14,6 +14,11 @@ export type ServiceId<T extends Service> = ServiceCtor<T> | ServiceRef<T>;
 
 export type ServiceFactory<T extends Service> = Fnify<Promisify<T>>;
 
+export type ServiceOptions<T extends Service> = {
+    ctor?: ServiceCtor<T>;
+    lazy?: boolean;
+};
+
 export type ServiceStateKnonwn = {
     known: boolean;
     resolved: false;

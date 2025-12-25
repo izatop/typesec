@@ -88,12 +88,19 @@ function arrow<F extends Fn<any[], any>>(name: string, fn: F): F {
     return {[name]: (...args: any[]) => fn(...args)}[name] as F;
 }
 
+export type NamedObject = Fn<any[], any> | {new (): unknown};
+
+function named<T extends NamedObject>(name: string, target: T): T {
+    return is(target, "function") ? arrow(name, target) : ({[name]: class extends (target as any) {}}[name] as T);
+}
+
 export const fn = {
     is,
     once,
     when,
     fnify,
     arrow,
+    named,
     defnify,
     invoke,
     isInstance,

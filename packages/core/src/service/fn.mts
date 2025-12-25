@@ -1,10 +1,17 @@
 import {defnify, identify, type Fn, type Promisify} from "@typesec/the";
 import {assert} from "@typesec/the/assert";
-import {is} from "@typesec/the/fn";
+import {fn, is} from "@typesec/the/fn";
 import {isPromise} from "node:util/types";
 import {isAsyncDisposable, isDisposable, PendingServiceList} from "../index.mjs";
 import {tracer} from "../tracer.mjs";
-import {type Service, type ServiceCtor, type ServiceFactory, type ServiceId, type ServiceState} from "./interfaces.mjs";
+import {
+    type Service,
+    type ServiceCtor,
+    type ServiceFactory,
+    type ServiceId,
+    type ServiceOptions,
+    type ServiceState,
+} from "./interfaces.mjs";
 import {PendingError} from "./PendingError.mjs";
 import {PendingService} from "./PendingService.mjs";
 import {ServiceRef} from "./ServiceRef.mts";
@@ -13,6 +20,16 @@ const store = new WeakMap<ServiceRef<any>, any>();
 const registry = new Map<ServiceRef<any>, ServiceFactory<any>>();
 const pendings = new WeakMap<ServiceRef<any>, Promisify<Service>>();
 const latest = new WeakMap<ServiceCtor<any>, ServiceRef<any>>();
+
+export function define<T extends Service>(
+    name: string,
+    factory: ServiceFactory<T>,
+    options?: ServiceOptions<NoInfer<T>>,
+): ServiceRef<T> {
+    const ctor = options?.ctor ?? (fn.named(name, class {}) as ServiceCtor<T>);
+
+    return service(ctor, factory, options?.lazy);
+}
 
 export function service<T extends Service>(
     ctor: ServiceCtor<NoInfer<T>>,
