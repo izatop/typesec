@@ -2,6 +2,7 @@ import {dispose, runtime} from "@typesec/core";
 import {wrap} from "@typesec/tracer";
 import {getHandle, ProtoAbstract, type MainArgs} from "@typesec/unit";
 import {FileSystemRouter, type BunRequest, type MatchedRoute, type Serve, type Server} from "bun";
+import {hostname} from "node:os";
 import path from "node:path";
 import {ServeError} from "./ServeError.mjs";
 
@@ -41,6 +42,10 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
     public static async run(args: MainArgs): Promise<void> {
         const trace = wrap(this);
 
+        const serverId = hostname();
+        const xServiceId = "x-service-id";
+        const staticHeaders: Record<string, string> = false === runtime.isProduction() ? {[xServiceId]: serverId} : {};
+
         await runtime.run(async () => {
             trace.info("run(%o)", args);
 
@@ -53,26 +58,31 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
                     if (route) {
                         const handle = getHandle(ServeProto, await import(route.filePath));
 
-                        return await handle({request, route});
+                        const response = await handle({request, route});
+                        if (false === runtime.isProduction()) {
+                            response.headers.append(xServiceId, serverId);
+                        }
+
+                        return response;
                     }
                 } catch (reason) {
                     trace.error(reason);
                     if (reason instanceof ServeError) {
                         trace.warn("[ServeProto] Server error", reason);
 
-                        return new Response(reason.message, {status: reason.code});
+                        return new Response(reason.message, {status: reason.code, headers: staticHeaders});
                     }
 
                     if (reason instanceof Error) {
                         trace.warn("[ServeProto] Server error", reason);
 
-                        return new Response(reason.message, {status: 500});
+                        return new Response(reason.message, {status: 500, headers: staticHeaders});
                     }
 
-                    return new Response("Internal Server Error", {status: 500});
+                    return new Response("Internal Server Error", {status: 500, headers: staticHeaders});
                 }
 
-                return new Response("Not found", {status: 404});
+                return new Response("Not found", {status: 404, headers: staticHeaders});
             };
 
             for (const path of this.config.lookup) {

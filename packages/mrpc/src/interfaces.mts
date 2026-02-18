@@ -46,10 +46,10 @@ export type StaticResolvers<T extends Rec<string, unknown>> = {
 };
 
 export type ContextualBackend<TContext> = {
-    <TDomain extends Domain<any, any>>(
+    <TDomain extends Domain<any, any>, TImpl extends Implementation<TContext, Domain.Infer<TDomain>>>(
         domain: TDomain,
-        impl: Implementation<TContext, Domain.Infer<TDomain>>,
-    ): Backend<TContext, TDomain, Implementation<TContext, Domain.Infer<TDomain>>>;
+        impl: TImpl,
+    ): Backend<TContext, TDomain, TImpl>;
 };
 
 export type ProtocolRequest = {

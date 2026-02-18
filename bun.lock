@@ -108,16 +108,6 @@
         "radash": "catalog:",
       },
     },
-    "packages/~graph": {
-      "name": "@typesec/graph",
-      "version": "0.1.0",
-      "dependencies": {
-        "@types/bun": "^1.3.9",
-        "@typesec/core": "workspace:*",
-        "@typesec/the": "workspace:*",
-        "@typesec/tracer": "workspace:*",
-      },
-    },
   },
   "catalog": {
     "@commander-js/extra-typings": "14.0.0",
@@ -241,8 +231,6 @@
     "@typesec/cli": ["@typesec/cli@workspace:packages/cli"],
 
     "@typesec/core": ["@typesec/core@workspace:packages/core"],
-
-    "@typesec/graph": ["@typesec/graph@workspace:packages/~graph"],
 
     "@typesec/gup": ["@typesec/gup@workspace:packages/gup"],
 

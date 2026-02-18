@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@types/bun": "catalog:",
-    "@types/node": "catalog:",
     "@typesec/the": "workspace:*",
     "@typesec/core": "workspace:*",
     "@typesec/tracer": "workspace:*",

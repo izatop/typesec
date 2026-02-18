@@ -11,7 +11,6 @@
   "dependencies": {
     "@types/chalk": "catalog:",
     "@types/bun": "catalog:",
-    "@types/node": "catalog:",
     "@typesec/the": "workspace:*",
     "chalk": "catalog:",
     "radash": "catalog:"

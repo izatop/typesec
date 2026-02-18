@@ -2,13 +2,7 @@ import z from "zod";
 import type {ProcedureHandler} from "../interfaces.mts";
 import type {Contract} from "./Contract.mts";
 
-export abstract class ProcedureAbstract<
-    TContext,
-    TIn extends z.ZodType,
-    TOut extends z.ZodType,
-    TRet = z.input<TOut>,
-    TRetEncoded = z.output<TOut>,
-> {
+export abstract class ProcedureAbstract<TContext, TIn extends z.ZodType, TOut extends z.ZodType, TRet, TRetEncoded> {
     readonly #contract: Contract<TIn, TOut>;
     readonly #handler: ProcedureHandler<TContext, TIn, TRet>;
 

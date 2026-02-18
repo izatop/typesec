@@ -14,7 +14,6 @@
   "dependencies": {
     "@commander-js/extra-typings": "catalog:",
     "@types/bun": "catalog:",
-    "@types/node": "catalog:",
     "@typesec/core": "workspace:*",
     "@typesec/the": "workspace:*",
     "@typesec/tracer": "workspace:*",
