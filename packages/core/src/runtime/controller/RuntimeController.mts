@@ -70,7 +70,7 @@ export class RuntimeController extends AbortController implements Disposable {
         return this.mode === "test";
     };
 
-    public heartbeat = <R = void,>(dispose?: Fn<[], R>): Promise<R> => {
+    public heartbeat = <R extends any = void>(dispose?: Fn<[], R>): Promise<R> => {
         return heartbeat(this).then(dispose);
     };
 
