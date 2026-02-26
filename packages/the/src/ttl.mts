@@ -64,4 +64,12 @@ function toSeconds(ttl: TTLValue): number {
     return Math.floor(ttl / SEC);
 }
 
-export const ttl = {parse, toSeconds, parseString};
+function toMinutes(ttl: TTLValue): number {
+    if (fn.is(ttl, "string")) {
+        return Math.floor(parseString(ttl) / SEC / MIN);
+    }
+
+    return Math.floor(ttl / SEC / MIN);
+}
+
+export const ttl = {parse, toSeconds, toMinutes, parseString};
