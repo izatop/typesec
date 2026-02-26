@@ -167,6 +167,34 @@ export function resolve<T1 extends Service, T2 extends Service, T3 extends Servi
     t3: ServiceId<T3>,
     t4: ServiceId<T4>,
 ): Promise<[T1, T2, T3, T4]>;
+export function resolve<
+    T1 extends Service,
+    T2 extends Service,
+    T3 extends Service,
+    T4 extends Service,
+    T5 extends Service,
+>(
+    t1: ServiceId<T1>,
+    t2: ServiceId<T2>,
+    t3: ServiceId<T3>,
+    t4: ServiceId<T4>,
+    t5: ServiceId<T5>,
+): Promise<[T1, T2, T3, T4, T5]>;
+export function resolve<
+    T1 extends Service,
+    T2 extends Service,
+    T3 extends Service,
+    T4 extends Service,
+    T5 extends Service,
+    T6 extends Service,
+>(
+    t1: ServiceId<T1>,
+    t2: ServiceId<T2>,
+    t3: ServiceId<T3>,
+    t4: ServiceId<T4>,
+    t5: ServiceId<T5>,
+    t6: ServiceId<T5>,
+): Promise<[T1, T2, T3, T4, T5, T6]>;
 export async function resolve<T extends Service>(...refs: [ServiceId<T>, ...ServiceId<T>[]]): Promise<T | T[]> {
     if (refs.length > 1) {
         return resolveArray(...refs);
