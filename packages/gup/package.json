@@ -10,9 +10,7 @@
   },
   "dependencies": {
     "@types/bun": "catalog:",
-    "@typesec/the": "workspace:*",
-    "@typesec/core": "workspace:*",
-    "@typesec/tracer": "workspace:*"
+    "@typesec/the": "workspace:*"
   },
   "license": "MIT"
 }

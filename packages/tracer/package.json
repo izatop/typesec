@@ -9,11 +9,9 @@
     }
   },
   "dependencies": {
-    "@types/chalk": "catalog:",
     "@types/bun": "catalog:",
     "@typesec/the": "workspace:*",
-    "chalk": "catalog:",
-    "radash": "catalog:"
+    "chalk": "catalog:"
   },
   "license": "MIT"
 }
