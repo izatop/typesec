@@ -12,6 +12,7 @@ export type Runtime = {
     readonly lifecycle: RuntimeController;
     readonly controller: RuntimeController;
     readonly mode: RuntimePick<"mode">;
+    readonly hmr: RuntimePick<"hmr">;
     isRunning: RuntimePick<"isRunning">;
     isTest: RuntimePick<"isTest">;
     isDevelopment: RuntimePick<"isDevelopment">;
@@ -45,6 +46,9 @@ export const runtime: Runtime = {
     },
     get mode() {
         return this.controller.mode;
+    },
+    get hmr() {
+        return this.controller.hmr;
     },
     isRunning() {
         return this.controller.isRunning();

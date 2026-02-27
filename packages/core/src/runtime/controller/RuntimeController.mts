@@ -66,6 +66,10 @@ export class RuntimeController extends AbortController implements Disposable {
         return process.env["NODE_ENV"] ?? "development";
     }
 
+    public get hmr(): boolean {
+        return process.env["NODE_HMR"] === "Y";
+    }
+
     public isTest = (): boolean => {
         return this.mode === "test";
     };

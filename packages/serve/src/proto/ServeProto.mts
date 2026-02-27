@@ -92,7 +92,7 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
             const server = Bun.serve({
                 routes,
                 port: 3000,
-                development: runtime.isDevelopment() ? {hmr: true} : false,
+                development: runtime.isDevelopment() ? {hmr: runtime.hmr} : false,
             });
 
             this.instances.push(server);
