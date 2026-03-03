@@ -9,6 +9,7 @@ export type RuntimePick<K extends keyof RuntimeController> = Prop<RuntimeControl
 
 export type Runtime = {
     use(): RuntimeController;
+    readonly name: string;
     readonly lifecycle: RuntimeController;
     readonly controller: RuntimeController;
     readonly mode: RuntimePick<"mode">;
@@ -35,6 +36,9 @@ function use(): RuntimeController {
 
 export const runtime: Runtime = {
     use,
+    get name() {
+        return process.cwd().split("/").slice(3).join("_");
+    },
     get signal() {
         return this.use().signal;
     },
