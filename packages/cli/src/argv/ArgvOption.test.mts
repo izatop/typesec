@@ -1,5 +1,4 @@
-import {expect, test} from "bun:test";
-import {describe} from "node:test";
+import {describe, expect, test} from "bun:test";
 import {ArgvOption} from "./ArgvOption.mts";
 
 describe("ArgvOption", () => {

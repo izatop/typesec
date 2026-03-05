@@ -1,5 +1,4 @@
-import {expect, test} from "bun:test";
-import {describe} from "node:test";
+import {describe, expect, test} from "bun:test";
 import {persist} from "./cache.mts";
 
 describe("cache", () => {
