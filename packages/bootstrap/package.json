@@ -1,15 +1,15 @@
 {
   "name": "@typesec/bootstrap",
   "version": "0.1.0",
-  "type": "module",
-  "module": "./src/index.mts",
+  "license": "MIT",
   "bin": {
     "typesec-sync": "bin/typesec-sync"
   },
+  "type": "module",
+  "module": "./src/index.mts",
   "exports": {
     ".": {
       "import": "./src/index.mts"
     }
-  },
-  "license": "MIT"
+  }
 }

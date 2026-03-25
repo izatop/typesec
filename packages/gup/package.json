@@ -1,6 +1,7 @@
 {
   "name": "@typesec/gup",
   "version": "0.1.0",
+  "license": "MIT",
   "type": "module",
   "module": "./src/index.mts",
   "exports": {
@@ -11,6 +12,5 @@
   "dependencies": {
     "@types/bun": "catalog:",
     "@typesec/the": "workspace:*"
-  },
-  "license": "MIT"
+  }
 }

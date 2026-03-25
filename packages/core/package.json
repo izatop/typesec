@@ -1,9 +1,10 @@
 {
   "name": "@typesec/core",
   "version": "0.1.0",
+  "license": "MIT",
   "type": "module",
-  "module": "./src/index.mts",
   "main": "./src/index.mts",
+  "module": "./src/index.mts",
   "exports": {
     ".": {
       "import": "./src/index.mts"
@@ -14,6 +15,5 @@
     "@typesec/the": "workspace:*",
     "@typesec/tracer": "workspace:*",
     "radash": "catalog:"
-  },
-  "license": "MIT"
+  }
 }

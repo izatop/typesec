@@ -1,5 +1,6 @@
 {
   "name": "typesec",
+  "private": true,
   "workspaces": {
     "packages": [
       "packages/*"
@@ -46,6 +47,5 @@
     "oxfmt": "catalog:build",
     "oxlint": "catalog:build",
     "typescript": "catalog:build"
-  },
-  "private": true
+  }
 }

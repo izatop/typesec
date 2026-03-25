@@ -1,6 +1,7 @@
 {
   "name": "@typesec/mrpc",
   "version": "0.1.0",
+  "license": "MIT",
   "type": "module",
   "module": "./src/index.mts",
   "exports": {
@@ -12,6 +13,5 @@
     "@typesec/the": "workspace:*",
     "radash": "catalog:",
     "zod": "catalog:"
-  },
-  "license": "MIT"
+  }
 }

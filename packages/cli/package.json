@@ -1,11 +1,12 @@
 {
   "name": "@typesec/cli",
   "version": "0.1.0",
-  "type": "module",
-  "module": "./src/index.mts",
+  "license": "MIT",
   "bin": {
     "typesec-cli": "bin"
   },
+  "type": "module",
+  "module": "./src/index.mts",
   "exports": {
     ".": {
       "import": "./src/index.mts"
@@ -20,6 +21,5 @@
     "@typesec/unit": "workspace:*",
     "commander": "catalog:",
     "radash": "catalog:"
-  },
-  "license": "MIT"
+  }
 }

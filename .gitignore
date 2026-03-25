@@ -10,5 +10,6 @@ tsconfig.tsbuildinfo
 /coverage
 
 # excludes
+/docker-compose.yml
 .env
 ~*

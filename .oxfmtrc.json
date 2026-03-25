@@ -5,6 +5,6 @@
   "bracketSameLine": true,
   "endOfLine": "lf",
   "semi": true,
-  "experimentalSortPackageJson": false,
+  "experimentalSortPackageJson": true,
   "ignorePatterns": ["node_modules/", "bun.lock"]
 }

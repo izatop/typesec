@@ -1,6 +1,7 @@
 {
   "name": "@typesec/the",
   "version": "0.1.0",
+  "license": "MIT",
   "type": "module",
   "module": "./src/index.mts",
   "exports": {
@@ -58,6 +59,5 @@
     "./numbers": {
       "import": "./src/numbers.mts"
     }
-  },
-  "license": "MIT"
+  }
 }

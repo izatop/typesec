@@ -1,6 +1,7 @@
 {
   "name": "@typesec/serve",
   "version": "0.1.0",
+  "license": "MIT",
   "type": "module",
   "module": "./src/index.mts",
   "exports": {
@@ -10,11 +11,10 @@
   },
   "dependencies": {
     "@types/bun": "catalog:",
-    "@typesec/the": "workspace:*",
     "@typesec/core": "workspace:*",
+    "@typesec/the": "workspace:*",
     "@typesec/tracer": "workspace:*",
     "@typesec/unit": "workspace:*",
     "zod": "catalog:"
-  },
-  "license": "MIT"
+  }
 }
