@@ -10,4 +10,5 @@ tsconfig.tsbuildinfo
 /coverage
 
 # excludes
+.env
 ~*

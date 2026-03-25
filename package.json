@@ -34,15 +34,17 @@
     "check:watch": "bun tsc -b packages -w",
     "test": "bun test",
     "test:watch": "bun test --watch",
-    "lint": "oxlint",
+    "lint": "oxlint --quiet",
     "sync": "bun typesec-sync",
-    "up": "bun update -ri --latest"
+    "up": "bun update -ri --latest",
+    "fmt:check": "oxfmt . --check",
+    "fmt:write": "oxfmt . --write"
   },
   "devDependencies": {
     "@types/bun": "catalog:",
     "@typesec/bootstrap": "workspace:*",
-    "oxlint": "catalog:build",
     "oxfmt": "catalog:build",
+    "oxlint": "catalog:build",
     "typescript": "catalog:build"
   },
   "private": true

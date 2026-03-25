@@ -1,2 +1,4 @@
 [install]
+linker = hoisted
+
 minimumReleaseAge = 259200

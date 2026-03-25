@@ -7,15 +7,17 @@ fail() {
 }
 
 TARGET="$(pwd)"
-SOURCE="$(realpath "${0}/../..")/files"
+SOURCE="$(realpath "${0}/../../src")/files"
 test -f "${TARGET}/package.json" || fail "No project's package.json found"
 
-bun i --dev @types/bun @prettier/plugin-oxc oxlint prettier typescript
+bun i --dev @types/bun@catalog: oxlint@catalog:build oxfmt@catalog:build typescript@catalog:build "@typesec/bootstrap@workspace:*"
 cp -r "${SOURCE}/" "${TARGET}/"
 
 bunx npm-add-script --force -k "check" -v "bun tsc -b packages"
 bunx npm-add-script --force -k "check:watch" -v "bun tsc -b packages -w"
 bunx npm-add-script --force -k "test" -v "bun test"
 bunx npm-add-script --force -k "test:watch" -v "bun test --watch"
-bunx npm-add-script --force -k "lint" -v "oxlint"
+bunx npm-add-script --force -k "lint" -v "oxlint --quiet"
+bunx npm-add-script --force -k "fmt:check" -v "oxfmt . --check"
+bunx npm-add-script --force -k "fmt:write" -v "oxfmt . --write"
 bunx npm-add-script --force -k "up" -v "bun update -ri --latest"

@@ -1,0 +1,10 @@
+# it excludes * by default
+*
+
+# include only matter files
+!bun.lock
+!bunfig.toml
+!package.json
+!tsconfig.json
+!packages/*/src
+!packages/*/bin
