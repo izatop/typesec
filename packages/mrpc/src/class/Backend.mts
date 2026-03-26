@@ -1,6 +1,7 @@
 import {assert, fn, object, type Fn, type Promisify, type Rec} from "@typesec/the";
 import {async} from "@typesec/the/async";
 import {construct, crush} from "radash";
+import type {ClientQuery, ClientResult} from "../index.mts";
 import type {Domain, Implementation, StaticResolvers} from "../interfaces.mts";
 import {ProcedureAbstract} from "./ProcedureAbstract.mts";
 import {ProcedureAsync} from "./ProcedureAsync.mts";
@@ -30,6 +31,13 @@ export class Backend<
 
     public async execute(context: TContext, query: unknown): Promise<Rec<string, unknown>> {
         return construct(await this.#deepRun(context, query)) as Rec<string, unknown>;
+    }
+
+    public async query<Q extends ClientQuery<Domain.Infer<TDomain>>>(
+        context: TContext,
+        query: Q,
+    ): Promise<ClientResult<Domain.Infer<TDomain>, Q>> {
+        return this.execute(context, query) as Promise<ClientResult<Domain.Infer<TDomain>, Q>>;
     }
 
     *#deepQuery(context: TContext, query: unknown, prev?: string): Generator<[path: string, value: Promise<unknown>]> {
