@@ -1,5 +1,4 @@
 import {assert, fn, object, type Fn, type Promisify, type Rec} from "@typesec/the";
-import {async} from "@typesec/the/async";
 import {construct, crush} from "radash";
 import type {ClientQuery, ClientResult} from "../index.mts";
 import type {Domain, Implementation, StaticResolvers} from "../interfaces.mts";
@@ -30,37 +29,17 @@ export class Backend<
     }
 
     public async execute(context: TContext, query: unknown): Promise<Rec<string, unknown>> {
-        return construct(await this.#deepRun(context, query)) as Rec<string, unknown>;
+        return construct(await this.#deepExecuteAndEncode(context, query)) as Rec<string, unknown>;
     }
 
     public async query<Q extends ClientQuery<Domain.Infer<TDomain>>>(
         context: TContext,
         query: Q,
     ): Promise<ClientResult<Domain.Infer<TDomain>, Q>> {
-        return this.execute(context, query) as Promise<ClientResult<Domain.Infer<TDomain>, Q>>;
+        return this.#deepQuery(context, query) as Promise<ClientResult<Domain.Infer<TDomain>, Q>>;
     }
 
-    *#deepQuery(context: TContext, query: unknown, prev?: string): Generator<[path: string, value: Promise<unknown>]> {
-        assert(object.isPlain(query), "Wrong query");
-
-        for (const [key, subquery] of Object.entries(query)) {
-            const next = prev ? prev.concat(".", key) : key;
-            if (Array.isArray(subquery)) {
-                const proc = this.#procedures[next];
-                assert(proc instanceof ProcedureAbstract, `Unknown path ${key}, query failed`);
-                const value = proc.encode(context, subquery[0]);
-                yield [next, async.isPromise(value) ? value.then((n) => (fn.is(n, "undefined") ? null : n)) : value];
-
-                continue;
-            }
-
-            for (const op of this.#deepQuery(context, subquery, next)) {
-                yield op;
-            }
-        }
-    }
-
-    async #deepRun(context: TContext, query: unknown, prev?: string): Promise<Rec> {
+    async #deepExecuteAndEncode(context: TContext, query: unknown, prev?: string): Promise<Rec> {
         assert(object.isPlain(query), "Wrong query");
         const res: Rec = {};
 
@@ -77,7 +56,30 @@ export class Backend<
                 continue;
             }
 
-            Object.assign(res, await this.#deepRun(context, subquery, next));
+            Object.assign(res, await this.#deepExecuteAndEncode(context, subquery, next));
+        }
+
+        return res;
+    }
+
+    async #deepQuery(context: TContext, query: unknown, prev?: string): Promise<Rec> {
+        assert(object.isPlain(query), "Wrong query");
+        const res: Rec = {};
+
+        for (const [key, subquery] of Object.entries(query)) {
+            const next = prev ? prev.concat(".", key) : key;
+            if (Array.isArray(subquery)) {
+                const proc = this.#procedures[next];
+                assert(proc instanceof ProcedureAbstract, `Unknown path ${key}, query failed`);
+                res[next] = await proc.run(context, subquery[0]);
+                if (fn.is(res[next], "undefined")) {
+                    res[next] = null;
+                }
+
+                continue;
+            }
+
+            Object.assign(res, await this.#deepQuery(context, subquery, next));
         }
 
         return res;
