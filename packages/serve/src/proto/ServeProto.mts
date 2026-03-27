@@ -49,6 +49,7 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
         await runtime.run(async () => {
             trace.info("run(%o)", args);
 
+            const preload = this.preload(args);
             const router = this.createRouter(args);
             const routes: Serve.Routes<unknown, string> = this.config.routes ?? {};
             const matcher = async (request: BunRequest) => {
@@ -98,6 +99,8 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
             this.instances.push(server);
 
             const res = await args.ready?.();
+
+            await preload;
             await runtime.heartbeat(() => dispose(res));
 
             return {
@@ -107,5 +110,16 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
                 },
             };
         });
+    }
+
+    private static async preload(args: MainArgs) {
+        const dir = path.resolve(args.path);
+        const glob = new Bun.Glob("*.{mts,mjs}");
+        const preloading = [];
+        for await (const file of glob.scan(dir)) {
+            preloading.push(import(path.resolve(dir, file)));
+        }
+
+        Promise.all(preloading);
     }
 }
