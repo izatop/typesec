@@ -1,4 +1,4 @@
 [install]
-linker = hoisted
+linker = isolated
 
 minimumReleaseAge = 259200
