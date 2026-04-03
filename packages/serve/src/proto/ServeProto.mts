@@ -29,7 +29,7 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
         return new FileSystemRouter({
             dir: path.resolve(args.path),
             style: "nextjs",
-            fileExtensions: [".mjs", ".mjs"],
+            fileExtensions: [".mts", ".mjs"],
         });
     }
 
