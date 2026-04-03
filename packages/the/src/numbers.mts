@@ -1,4 +1,4 @@
-import {fn} from "./fn.mts";
+import {fn} from "./fn.mjs";
 
 function is(value: unknown): value is number {
     return fn.is(value, "number") && !isNaN(value);

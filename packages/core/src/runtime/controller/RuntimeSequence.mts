@@ -1,4 +1,4 @@
-import {xmap} from "../../lib/xmap.mts";
+import {xmap} from "../../lib/xmap.mjs";
 
 export class RuntimeSequence {
     static #map = xmap(new WeakMap<WeakKey, RuntimeSequence>(), () => new this());

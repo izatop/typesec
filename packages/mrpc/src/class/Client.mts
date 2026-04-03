@@ -1,10 +1,10 @@
 import {assert, object, type Rec} from "@typesec/the";
 import z from "zod";
-import type {ClientQuery, ClientResult} from "../index.mts";
-import type {Domain, IClientProtocol} from "../interfaces.mts";
-import {ClientError} from "./ClientError.mts";
-import {ClientLazyQuery} from "./ClientLazyQuery.mts";
-import {Contract} from "./Contract.mts";
+import type {ClientQuery, ClientResult} from "../index.mjs";
+import type {Domain, IClientProtocol} from "../interfaces.mjs";
+import {ClientError} from "./ClientError.mjs";
+import {ClientLazyQuery} from "./ClientLazyQuery.mjs";
+import {Contract} from "./Contract.mjs";
 
 export class Client<TDomain extends Domain<string, Rec<string, unknown>>> {
     readonly #protocol: IClientProtocol;

@@ -1,5 +1,5 @@
-import {Backend} from "./class/Backend.mts";
-import {type ContextualBackend, type Domain, type Implementation} from "./interfaces.mts";
+import {Backend} from "./class/Backend.mjs";
+import {type ContextualBackend, type Domain, type Implementation} from "./interfaces.mjs";
 
 export function backend<
     TContext,

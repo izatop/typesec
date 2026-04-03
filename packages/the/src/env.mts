@@ -1,8 +1,8 @@
-import {assert} from "./assert.mts";
-import {isBlank} from "./blank.mts";
-import {is} from "./fn.mts";
-import object from "./object.mts";
-import type {HasUndefined, KeyOf, RequiresKeysOf} from "./type.mts";
+import {assert} from "./assert.mjs";
+import {isBlank} from "./blank.mjs";
+import {is} from "./fn.mjs";
+import object from "./object.mjs";
+import type {HasUndefined, KeyOf, RequiresKeysOf} from "./type.mjs";
 
 export type RuntimeEnv = "bun" | "node" | "browser" | "unknown";
 

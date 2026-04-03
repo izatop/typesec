@@ -1,4 +1,4 @@
-import type {Constraint} from "../constraints.mts";
+import type {Constraint} from "../constraints.mjs";
 
 export class ConstraintException extends Error {
     constructor(

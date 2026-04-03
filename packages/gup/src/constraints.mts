@@ -1,7 +1,7 @@
 import {invoke} from "@typesec/the/fn";
 import type {Fn} from "@typesec/the/type";
-import {ConstraintException} from "./exceptions/ConstraintException.mts";
-import type {Proto} from "./proto.mts";
+import {ConstraintException} from "./exceptions/ConstraintException.mjs";
+import type {Proto} from "./proto.mjs";
 
 export type Constraints<T> = {
     rules: Constraint.Rule<T>[];

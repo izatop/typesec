@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "license": "MIT",
   "type": "module",
-  "module": "./src/index.mts",
+  "module": "./src/index.mjs",
   "exports": {
     ".": {
-      "import": "./src/index.mts"
+      "import": "./src/index.mjs"
     }
   },
   "dependencies": {

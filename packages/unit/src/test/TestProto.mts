@@ -1,4 +1,4 @@
-import {ProtoAbstract} from "../ProtoAbstract.mts";
+import {ProtoAbstract} from "../ProtoAbstract.mjs";
 
 export class TestProto extends ProtoAbstract<unknown[]> {
     public static readonly disposed = "disposed";

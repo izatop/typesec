@@ -1,7 +1,7 @@
 import {type Rec} from "@typesec/the";
-import type {ClientQuery, ClientResult} from "../index.mts";
-import type {Domain} from "../interfaces.mts";
-import type {Client} from "./Client.mts";
+import type {ClientQuery, ClientResult} from "../index.mjs";
+import type {Domain} from "../interfaces.mjs";
+import type {Client} from "./Client.mjs";
 
 export class ClientLazyQuery<
     TDomain extends Domain<string, Rec<string, unknown>>,

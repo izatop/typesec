@@ -1,5 +1,5 @@
 import z from "zod";
-import {Contract} from "./class/Contract.mts";
+import {Contract} from "./class/Contract.mjs";
 
 export type ContractArgs<TInput extends z.ZodType, TOutput extends z.ZodType> = {
     input?: TInput;

@@ -1,5 +1,5 @@
 import type {Fnify, Promisify} from "@typesec/the";
-import type {ServiceRef} from "./ServiceRef.mts";
+import type {ServiceRef} from "./ServiceRef.mjs";
 
 export interface IService {}
 

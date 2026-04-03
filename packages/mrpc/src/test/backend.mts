@@ -1,7 +1,7 @@
-import {procedure} from "../procedure.mts";
-import {backend} from "./context.mts";
-import {AsyncContract, StringCountContract} from "./contracts.mts";
-import {TestDomain} from "./domain.mts";
+import {procedure} from "../procedure.mjs";
+import {backend} from "./context.mjs";
+import {AsyncContract, StringCountContract} from "./contracts.mjs";
+import {TestDomain} from "./domain.mjs";
 
 export const MyBackend = backend(TestDomain, {
     strings: {

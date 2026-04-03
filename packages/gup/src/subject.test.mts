@@ -1,8 +1,8 @@
 import {isXEqualToY} from "@typesec/the/test";
 import type {Prop} from "@typesec/the/type";
 import {describe, expect, it} from "bun:test";
-import type {Member} from "./member.mts";
-import type {Subject} from "./subject.mts";
+import type {Member} from "./member.mjs";
+import type {Subject} from "./subject.mjs";
 
 describe("Subject", () => {
     it("should declare primitive members", () => {

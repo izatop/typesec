@@ -1,5 +1,5 @@
 import {describe, expect, test} from "bun:test";
-import {RuntimeSequence} from "./RuntimeSequence.mts";
+import {RuntimeSequence} from "./RuntimeSequence.mjs";
 
 describe("RuntimeSequence", () => {
     test("should increement", async () => {

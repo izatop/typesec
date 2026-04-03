@@ -1,5 +1,5 @@
 import z from "zod";
-import {ProcedureAbstract} from "./ProcedureAbstract.mts";
+import {ProcedureAbstract} from "./ProcedureAbstract.mjs";
 
 export class ProcedureSync<TContext, TIn extends z.ZodType, TOut extends z.ZodType> extends ProcedureAbstract<
     TContext,

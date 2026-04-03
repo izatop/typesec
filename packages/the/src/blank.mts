@@ -1,5 +1,5 @@
-import {is} from "./fn.mts";
-import {isNull} from "./object.mts";
+import {is} from "./fn.mjs";
+import {isNull} from "./object.mjs";
 
 export type BankTypeList = "string" | "number" | "object";
 

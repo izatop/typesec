@@ -1,4 +1,4 @@
-import type {Fn} from "./type.mts";
+import type {Fn} from "./type.mjs";
 
 function isPromise<R>(value: unknown): value is Promise<R> {
     return value instanceof Promise;

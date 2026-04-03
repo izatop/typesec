@@ -1,7 +1,7 @@
 import {describe, expect, test} from "bun:test";
 import {context} from "./index.mjs";
-import {TestProto} from "./test/TestProto.mts";
-import {createContext} from "./test/context.mts";
+import {TestProto} from "./test/TestProto.mjs";
+import {createContext} from "./test/context.mjs";
 
 describe("Unit", () => {
     test("test", async () => {

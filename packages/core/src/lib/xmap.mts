@@ -1,5 +1,5 @@
 import {type Fn} from "@typesec/the";
-import {assert} from "./assert.mts";
+import {assert} from "./assert.mjs";
 
 export type XMap<K, V, M, W extends boolean> = M & XMapEnsure<K, V, W>;
 export type XMapEnsure<K, V, W extends boolean> = W extends true

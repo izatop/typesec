@@ -1,6 +1,6 @@
 import {isXEqualToY} from "@typesec/the";
 import {describe, expect, test} from "bun:test";
-import {MyBackend} from "./test/backend.mts";
+import {MyBackend} from "./test/backend.mjs";
 
 describe("Backend", () => {
     test("createStatic(ctx)", async () => {

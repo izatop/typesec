@@ -1,9 +1,9 @@
 import {assert, fn, object, type Fn, type Promisify, type Rec} from "@typesec/the";
 import {construct, crush} from "radash";
-import type {ClientQuery, ClientResult} from "../index.mts";
-import type {Domain, Implementation, StaticResolvers} from "../interfaces.mts";
-import {ProcedureAbstract} from "./ProcedureAbstract.mts";
-import {ProcedureAsync} from "./ProcedureAsync.mts";
+import type {ClientQuery, ClientResult} from "../index.mjs";
+import type {Domain, Implementation, StaticResolvers} from "../interfaces.mjs";
+import {ProcedureAbstract} from "./ProcedureAbstract.mjs";
+import {ProcedureAsync} from "./ProcedureAsync.mjs";
 
 export class Backend<
     TContext,

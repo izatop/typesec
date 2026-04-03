@@ -12,7 +12,7 @@ import type {
     TracerOptions,
     TracerVerbosity,
     TracerWrapTarget,
-} from "./interfaces.mts";
+} from "./interfaces.mjs";
 import {options} from "./options.mjs";
 
 const instance = new Console({stdout: process.stdout, stderr: process.stderr, colorMode: "auto"});

@@ -6,10 +6,10 @@
     "typesec-sync": "bin/typesec-sync"
   },
   "type": "module",
-  "module": "./src/index.mts",
+  "module": "./src/index.mjs",
   "exports": {
     ".": {
-      "import": "./src/index.mts"
+      "import": "./src/index.mjs"
     }
   }
 }

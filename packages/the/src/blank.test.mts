@@ -1,5 +1,5 @@
 import {describe, expect, test} from "bun:test";
-import {isBlank} from "./blank.mts";
+import {isBlank} from "./blank.mjs";
 
 describe("isBlank", async () => {
     test("should work with strings", () => {

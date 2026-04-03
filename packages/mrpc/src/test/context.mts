@@ -1,3 +1,3 @@
-import {contextual} from "../backend.mts";
+import {contextual} from "../backend.mjs";
 
 export const backend = contextual<Math>();

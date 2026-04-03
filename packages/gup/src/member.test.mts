@@ -1,7 +1,7 @@
 import {isXEqualToY} from "@typesec/the/test";
 import type {Fn} from "@typesec/the/type";
 import {describe, expect, it} from "bun:test";
-import type {Member} from "./member.mts";
+import type {Member} from "./member.mjs";
 
 describe("Member", () => {
     it("Member<T> should wrap a type T to the Fn<[], T>", () => {

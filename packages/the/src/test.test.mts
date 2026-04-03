@@ -1,5 +1,5 @@
 import {describe, expect, test} from "bun:test";
-import {isXEqualToY, isXExtendsOfY, isXHasNull, isXHasUndefined} from "./test.mts";
+import {isXEqualToY, isXExtendsOfY, isXHasNull, isXHasUndefined} from "./test.mjs";
 
 describe("test", () => {
     test("isXEqualToY<X, Y>(equal: Equal<X, Y>)", async () => {

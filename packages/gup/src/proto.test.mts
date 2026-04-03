@@ -3,8 +3,8 @@ import object from "@typesec/the/object";
 import {isXEqualToY} from "@typesec/the/test";
 import {type Fn, type Guard, type GuardUnion, type Nullable, type Promisify, type Rec} from "@typesec/the/type";
 import {describe, expect, it} from "bun:test";
-import {codec, complex, list, scalar, tuple, union, type Proto} from "./proto.mts";
-import {scalars} from "./scalars.mts";
+import {codec, complex, list, scalar, tuple, union, type Proto} from "./proto.mjs";
+import {scalars} from "./scalars.mjs";
 
 describe("Proto Types", () => {
     it("Base exposes id/kind and guards", () => {

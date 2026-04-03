@@ -1,6 +1,6 @@
 import z from "zod";
-import {contract} from "../contract.mts";
-import {subscription} from "../subscription.mts";
+import {contract} from "../contract.mjs";
+import {subscription} from "../subscription.mjs";
 
 export const StringCountContract = contract({input: z.string(), output: z.number()});
 

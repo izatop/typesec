@@ -1,5 +1,5 @@
 import {expect, mock, test} from "bun:test";
-import {main} from "./main.mts";
+import {main} from "./main.mjs";
 
 test("main", async () => {
     const task = mock(async function task() {});

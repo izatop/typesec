@@ -1,6 +1,6 @@
 import {describe, expect, test} from "bun:test";
-import {contract} from "./contract.mts";
-import {domain} from "./domain.mts";
+import {contract} from "./contract.mjs";
+import {domain} from "./domain.mjs";
 
 describe("Domain", () => {
     test("should work", async () => {

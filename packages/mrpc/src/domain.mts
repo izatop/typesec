@@ -1,6 +1,6 @@
 import {assert, fn, object, type Rec} from "@typesec/the";
-import {Contract} from "./class/Contract.mts";
-import type {Domain} from "./interfaces.mts";
+import {Contract} from "./class/Contract.mjs";
+import type {Domain} from "./interfaces.mjs";
 
 const registry = new Map();
 

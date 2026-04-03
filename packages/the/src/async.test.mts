@@ -1,5 +1,5 @@
 import {describe, expect, it} from "bun:test";
-import {async} from "./async.mts";
+import {async} from "./async.mjs";
 
 const agf = async function* () {};
 const ag = agf();

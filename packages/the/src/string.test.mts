@@ -1,5 +1,5 @@
 import {describe, expect, it} from "bun:test";
-import {string} from "./string.mts";
+import {string} from "./string.mjs";
 
 describe("string", () => {
     it("cmp(a, b) should work", () => {

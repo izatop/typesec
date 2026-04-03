@@ -1,5 +1,5 @@
 import type {Fn, Promisify} from "@typesec/the";
-import {Ref} from "./Ref.mts";
+import {Ref} from "./Ref.mjs";
 
 export type CacheUpdater<T> = Fn<[], Promisify<T>>;
 

@@ -1,7 +1,7 @@
 import {isXEqualToY} from "@typesec/the/test";
 import type {Arrayify} from "@typesec/the/type";
 import {describe, expect, it} from "bun:test";
-import type {PrimitiveAny, Primitives} from "./interfaces.mts";
+import type {PrimitiveAny, Primitives} from "./interfaces.mjs";
 
 describe("interfaces", () => {
     it("should fix primitives", () => {

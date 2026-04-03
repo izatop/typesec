@@ -4,13 +4,13 @@ import {task} from "@typesec/the/task";
 import type {Fn} from "@typesec/the/type";
 import {type Tracer, wrap} from "@typesec/tracer";
 import {scheduler} from "node:timers/promises";
-import {ExitSignals} from "../../const.mts";
-import type {EnvModeType} from "../../env.mts";
-import {withDisposablePending, type WithDisposablePending} from "../../lib/dispostable.mts";
-import {Ref} from "../../lib/Ref.mts";
-import {dispose} from "../dispose.mts";
-import {heartbeat} from "../heartbeat.mts";
-import {RuntimeSequence} from "./RuntimeSequence.mts";
+import {ExitSignals} from "../../const.mjs";
+import type {EnvModeType} from "../../env.mjs";
+import {withDisposablePending, type WithDisposablePending} from "../../lib/dispostable.mjs";
+import {Ref} from "../../lib/Ref.mjs";
+import {dispose} from "../dispose.mjs";
+import {heartbeat} from "../heartbeat.mjs";
+import {RuntimeSequence} from "./RuntimeSequence.mjs";
 
 export class RuntimeController extends AbortController implements Disposable {
     public readonly id: string;

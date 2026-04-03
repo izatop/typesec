@@ -1,6 +1,6 @@
 import {describe, expect, mock, test} from "bun:test";
 import {scheduler} from "timers/promises";
-import {exit, setShutdownFunction} from "./exit.mts";
+import {exit, setShutdownFunction} from "./exit.mjs";
 
 describe("exit(code, reason)", () => {
     test("should exit", async () => {

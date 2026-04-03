@@ -3,61 +3,61 @@
   "version": "0.1.0",
   "license": "MIT",
   "type": "module",
-  "module": "./src/index.mts",
+  "module": "./src/index.mjs",
   "exports": {
     ".": {
-      "import": "./src/index.mts"
+      "import": "./src/index.mjs"
     },
     "./array": {
-      "import": "./src/array.mts"
+      "import": "./src/array.mjs"
     },
     "./assert": {
-      "import": "./src/assert.mts"
+      "import": "./src/assert.mjs"
     },
     "./async": {
-      "import": "./src/async.mts"
+      "import": "./src/async.mjs"
     },
     "./blank": {
-      "import": "./src/blank.mts"
+      "import": "./src/blank.mjs"
     },
     "./bytes": {
-      "import": "./src/bytes.mts"
+      "import": "./src/bytes.mjs"
     },
     "./date": {
-      "import": "./src/date.mts"
+      "import": "./src/date.mjs"
     },
     "./env": {
-      "import": "./src/env.mts"
+      "import": "./src/env.mjs"
     },
     "./fn": {
-      "import": "./src/fn.mts"
+      "import": "./src/fn.mjs"
     },
     "./guard": {
-      "import": "./src/guard.mts"
+      "import": "./src/guard.mjs"
     },
     "./object": {
-      "import": "./src/object.mts"
+      "import": "./src/object.mjs"
     },
     "./primitives": {
-      "import": "./src/primitives.mts"
+      "import": "./src/primitives.mjs"
     },
     "./string": {
-      "import": "./src/string.mts"
+      "import": "./src/string.mjs"
     },
     "./task": {
-      "import": "./src/task.mts"
+      "import": "./src/task.mjs"
     },
     "./test": {
-      "import": "./src/test.mts"
+      "import": "./src/test.mjs"
     },
     "./ttl": {
-      "import": "./src/ttl.mts"
+      "import": "./src/ttl.mjs"
     },
     "./type": {
-      "import": "./src/type.mts"
+      "import": "./src/type.mjs"
     },
     "./numbers": {
-      "import": "./src/numbers.mts"
+      "import": "./src/numbers.mjs"
     }
   }
 }

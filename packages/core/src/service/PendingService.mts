@@ -2,7 +2,7 @@ import {identify, type Promisify} from "@typesec/the";
 import {log} from "@typesec/tracer";
 import type {Service} from "./interfaces.mjs";
 import {PendingError} from "./PendingError.mjs";
-import type {ServiceRef} from "./ServiceRef.mts";
+import type {ServiceRef} from "./ServiceRef.mjs";
 
 export class PendingService<T extends Service> extends PendingError<T> {
     constructor(

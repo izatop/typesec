@@ -1,5 +1,5 @@
 import {describe, expect, test} from "bun:test";
-import {isAsyncDisposable, isDisposable} from "./dispostable.mts";
+import {isAsyncDisposable, isDisposable} from "./dispostable.mjs";
 
 describe("disposable", () => {
     test("isAsyncDisposable(value)", async () => {

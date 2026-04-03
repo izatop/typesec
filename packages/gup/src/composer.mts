@@ -2,8 +2,8 @@ import {assert} from "@typesec/the/assert";
 import object from "@typesec/the/object";
 import type {Rec} from "@typesec/the/type";
 import {AssertionError} from "node:assert";
-import type {ConstraintException} from "./exceptions/ConstraintException.mts";
-import {proto, type Proto} from "./proto.mts";
+import type {ConstraintException} from "./exceptions/ConstraintException.mjs";
+import {proto, type Proto} from "./proto.mjs";
 
 export namespace Composer {
     export type PackageScalar<T> = {

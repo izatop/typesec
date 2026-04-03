@@ -1,5 +1,5 @@
 import {describe, expect, it} from "bun:test";
-import {array} from "./array.mts";
+import {array} from "./array.mjs";
 
 describe("array", () => {
     it("uniq(T[]) should work", () => {

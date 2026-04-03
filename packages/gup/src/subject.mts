@@ -1,6 +1,6 @@
 import type {KeyOf, Rec, ToNullish} from "@typesec/the/type";
-import type {PrimitiveAny} from "./interfaces.mts";
-import type {Member} from "./member.mts";
+import type {PrimitiveAny} from "./interfaces.mjs";
+import type {Member} from "./member.mjs";
 
 export type Subject<T extends Rec> = {
     [K in KeyOf<T>]-?: Subject.MemberFactory<ToNullish<T[K]>>;

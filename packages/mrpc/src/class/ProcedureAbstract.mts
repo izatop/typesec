@@ -1,6 +1,6 @@
 import z from "zod";
-import type {ProcedureHandler} from "../interfaces.mts";
-import type {Contract} from "./Contract.mts";
+import type {ProcedureHandler} from "../interfaces.mjs";
+import type {Contract} from "./Contract.mjs";
 
 export abstract class ProcedureAbstract<TContext, TIn extends z.ZodType, TOut extends z.ZodType, TRet, TRetEncoded> {
     readonly #contract: Contract<TIn, TOut>;

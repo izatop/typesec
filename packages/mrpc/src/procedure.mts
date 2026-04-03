@@ -1,12 +1,12 @@
 import {fn} from "@typesec/the";
 import type z from "zod";
-import type {Contract} from "./class/Contract.mts";
-import type {ProcedureAbstract} from "./class/ProcedureAbstract.mts";
-import {ProcedureAsync} from "./class/ProcedureAsync.mts";
-import {ProcedureFactory} from "./class/ProcedureFactory.mts";
-import type {ProcedureSync} from "./class/ProcedureSync.mts";
-import type {ProcedureAsyncGenerator, ZodSubscription} from "./index.mts";
-import type {ProcedureHandler} from "./interfaces.mts";
+import type {Contract} from "./class/Contract.mjs";
+import type {ProcedureAbstract} from "./class/ProcedureAbstract.mjs";
+import {ProcedureAsync} from "./class/ProcedureAsync.mjs";
+import {ProcedureFactory} from "./class/ProcedureFactory.mjs";
+import type {ProcedureSync} from "./class/ProcedureSync.mjs";
+import type {ProcedureAsyncGenerator, ZodSubscription} from "./index.mjs";
+import type {ProcedureHandler} from "./interfaces.mjs";
 
 export type ContextualProcedure<TContext> = {
     <TIn extends z.ZodType, TOut extends z.ZodType>(

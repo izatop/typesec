@@ -1,5 +1,5 @@
-import {assert} from "./assert.mts";
-import {is} from "./fn.mts";
+import {assert} from "./assert.mjs";
+import {is} from "./fn.mjs";
 import type {Drop, Entries, KeyOf, Override, Rec, RecKey} from "./type.mjs";
 
 export function key<T extends Rec, K extends KeyOf<T, string>>(value: T, key: K): K {

@@ -1,5 +1,5 @@
 import {context} from "@typesec/unit";
-import {CommandLineInterfaceProto} from "../index.mts";
+import {CommandLineInterfaceProto} from "../index.mjs";
 
 export const testContext = {version: 1, count: 0};
 

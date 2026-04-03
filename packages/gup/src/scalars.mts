@@ -1,7 +1,7 @@
 import {date} from "@typesec/the/date";
 import {is} from "@typesec/the/fn";
 import {numbers} from "@typesec/the/numbers";
-import {codec, proto, scalar} from "./proto.mts";
+import {codec, proto, scalar} from "./proto.mjs";
 
 const string = scalar({
     id: "string",

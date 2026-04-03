@@ -1,6 +1,6 @@
-import {assert} from "./assert.mts";
-import {fn} from "./fn.mts";
-import {numbers} from "./numbers.mts";
+import {assert} from "./assert.mjs";
+import {fn} from "./fn.mjs";
+import {numbers} from "./numbers.mjs";
 
 export type TTLUnit = "ms" | "s" | "m" | "h" | "D" | "W" | "M" | "Y";
 

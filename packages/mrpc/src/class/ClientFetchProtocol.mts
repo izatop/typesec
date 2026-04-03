@@ -1,5 +1,5 @@
 import {assert, object} from "@typesec/the";
-import type {IClientProtocol, ProtocolRequest, ProtocolResponse} from "../interfaces.mts";
+import type {IClientProtocol, ProtocolRequest, ProtocolResponse} from "../interfaces.mjs";
 
 export class ClientFetchProtocol implements IClientProtocol {
     readonly #url: string;

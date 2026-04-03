@@ -1,7 +1,7 @@
 import type {Rec} from "@typesec/the";
 import type {Fn} from "@typesec/the/type";
-import {Ref} from "../lib/Ref.mts";
-import {tracer} from "../tracer.mts";
+import {Ref} from "../lib/Ref.mjs";
+import {tracer} from "../tracer.mjs";
 
 export type ExitFunction = Fn<[code: number, reason: unknown], void>;
 

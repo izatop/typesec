@@ -1,7 +1,7 @@
 import {describe, expect, test} from "bun:test";
-import {client} from "./client.mts";
-import {MyBackend} from "./test/backend.mts";
-import {TestDomain} from "./test/domain.mts";
+import {client} from "./client.mjs";
+import {MyBackend} from "./test/backend.mjs";
+import {TestDomain} from "./test/domain.mjs";
 
 describe("Client", () => {
     test("test", async () => {

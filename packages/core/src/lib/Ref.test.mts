@@ -1,5 +1,5 @@
 import {expect, test} from "bun:test";
-import {Ref} from "./Ref.mts";
+import {Ref} from "./Ref.mjs";
 
 test("ensure()", async () => {
     const ref = new Ref(() => Math.random());

@@ -1,5 +1,5 @@
 import {describe, expect, test} from "bun:test";
-import {persist} from "./cache.mts";
+import {persist} from "./cache.mjs";
 
 describe("cache", () => {
     test("should persist string key", async () => {

@@ -1,7 +1,7 @@
 import {describe, expect, test} from "bun:test";
 import z from "zod";
-import {subscription} from "./subscription.mts";
-import {MyBackend} from "./test/backend.mts";
+import {subscription} from "./subscription.mjs";
+import {MyBackend} from "./test/backend.mjs";
 
 describe("iterator", () => {
     test("test", async () => {

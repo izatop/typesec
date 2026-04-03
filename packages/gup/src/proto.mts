@@ -3,8 +3,8 @@ import {assert} from "@typesec/the/assert";
 import {fn, isNullable} from "@typesec/the/fn";
 import object from "@typesec/the/object";
 import type {Arrayify, Fn, Guard, GuardUnion, KeyOf, Nullable, Promisify, Rec} from "@typesec/the/type";
-import type {Constraints} from "./constraints.mts";
-import type {Primitives} from "./interfaces.mts";
+import type {Constraints} from "./constraints.mjs";
+import type {Primitives} from "./interfaces.mjs";
 
 export namespace Proto {
     export type ScalarKind = "string" | "boolean" | "number";

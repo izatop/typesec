@@ -1,6 +1,6 @@
 import {describe, expect, test} from "bun:test";
-import {procedure} from "./procedure.mts";
-import {StringCountContract} from "./test/contracts.mts";
+import {procedure} from "./procedure.mjs";
+import {StringCountContract} from "./test/contracts.mjs";
 
 describe("Procedure", () => {
     test("procedure", async () => {

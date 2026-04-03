@@ -1,4 +1,4 @@
-import type {Service, ServiceCtor, ServiceId} from "./interfaces.mts";
+import type {Service, ServiceCtor, ServiceId} from "./interfaces.mjs";
 
 export class ServiceRef<T extends Service> {
     readonly #ctor: ServiceCtor<T>;

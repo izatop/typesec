@@ -1,8 +1,8 @@
 import {describe, expect, it} from "bun:test";
 import {AssertionError} from "node:assert";
-import {compose, composer} from "./composer.mts";
-import {proto} from "./proto.mts";
-import {scalars} from "./scalars.mts";
+import {compose, composer} from "./composer.mjs";
+import {proto} from "./proto.mjs";
+import {scalars} from "./scalars.mjs";
 
 describe("Composer", async () => {
     it("test", async () => {

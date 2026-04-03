@@ -1,5 +1,5 @@
 import type z from "zod";
-import type {ContractDomain} from "../interfaces.mts";
+import type {ContractDomain} from "../interfaces.mjs";
 
 export class Contract<TIn extends z.ZodType, TOut extends z.ZodType> {
     #input: TIn;

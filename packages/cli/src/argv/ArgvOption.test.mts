@@ -1,5 +1,5 @@
 import {describe, expect, test} from "bun:test";
-import {ArgvOption} from "./ArgvOption.mts";
+import {ArgvOption} from "./ArgvOption.mjs";
 
 describe("ArgvOption", () => {
     test("should create an option", () => {

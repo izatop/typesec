@@ -1,7 +1,7 @@
 import {describe, expect, test} from "bun:test";
-import {ExitSignals} from "../../const.mts";
-import {lifecycle} from "../runtime.mts";
-import {RuntimeController} from "./RuntimeController.mts";
+import {ExitSignals} from "../../const.mjs";
+import {lifecycle} from "../runtime.mjs";
+import {RuntimeController} from "./RuntimeController.mjs";
 
 describe("RuntimeController", () => {
     test("lifecycle should be initalized", async () => {

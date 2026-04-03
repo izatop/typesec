@@ -1,5 +1,5 @@
 import {describe, expect, mock, test} from "bun:test";
-import {dispose} from "../index.mts";
+import {dispose} from "../index.mjs";
 
 describe("dispose", () => {
     test("should async dispose", async () => {

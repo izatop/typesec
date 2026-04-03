@@ -1,5 +1,5 @@
 import {describe, expect, test} from "bun:test";
-import {createStrict, detectRuntime, type RuntimeEnv} from "./env.mts";
+import {createStrict, detectRuntime, type RuntimeEnv} from "./env.mjs";
 
 describe("env", () => {
     test("createStatic(requires, payload?)", () => {

@@ -1,6 +1,6 @@
 import z from "zod";
-import {response, useParams} from "../../../index.mts";
-import {route} from "../../../router/route.mts";
+import {response, useParams} from "../../../index.mjs";
+import {route} from "../../../router/route.mjs";
 import app from "../../index.mjs";
 import {ParamsWithId} from "../../schema/ParamsWithId.mjs";
 import {UserType} from "../../schema/UserType.mjs";

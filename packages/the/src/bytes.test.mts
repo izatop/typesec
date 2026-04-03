@@ -1,6 +1,6 @@
 import {describe, expect, test} from "bun:test";
-import type {ByteUnit} from "./bytes.mts";
-import {bytes} from "./bytes.mts";
+import type {ByteUnit} from "./bytes.mjs";
+import {bytes} from "./bytes.mjs";
 
 describe("bytes", () => {
     test("size() returns expected values for each unit", () => {

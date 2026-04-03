@@ -2,8 +2,8 @@ import {array} from "@typesec/the/array";
 import {fn} from "@typesec/the/fn";
 import type {Arrayify, KeyOf} from "@typesec/the/type";
 import {describe, expect, it} from "bun:test";
-import type {Proto} from "./proto.mts";
-import {scalars} from "./scalars.mts";
+import type {Proto} from "./proto.mjs";
+import {scalars} from "./scalars.mjs";
 
 type ScalarsType = typeof scalars;
 

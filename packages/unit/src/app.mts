@@ -6,7 +6,7 @@ import type Module from "node:module";
 import path from "node:path";
 import type {Application, HandleEntry, Proto} from "./interfaces.mjs";
 import type {ProtoAbstract} from "./ProtoAbstract.mjs";
-import {tracer} from "./tracer.mts";
+import {tracer} from "./tracer.mjs";
 
 export async function runApplication(location: string): Promise<void> {
     tracer.log("runApplication( <%s> )", location);

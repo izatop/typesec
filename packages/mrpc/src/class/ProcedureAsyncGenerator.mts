@@ -1,6 +1,6 @@
 import z from "zod";
-import type {ZodSubscription} from "../subscription.mts";
-import {ProcedureAbstract} from "./ProcedureAbstract.mts";
+import type {ZodSubscription} from "../subscription.mjs";
+import {ProcedureAbstract} from "./ProcedureAbstract.mjs";
 
 export class ProcedureAsyncGenerator<
     TContext,

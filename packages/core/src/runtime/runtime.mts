@@ -1,9 +1,9 @@
 import type {Fn, Prop} from "@typesec/the/type";
 import {AsyncLocalStorage} from "node:async_hooks";
-import {withDisposablePending, type WithDisposablePending} from "../lib/dispostable.mts";
+import {withDisposablePending, type WithDisposablePending} from "../lib/dispostable.mjs";
 import lifecycle, {RuntimeController} from "./controller/RuntimeController.mjs";
-import {RuntimeSequence} from "./controller/RuntimeSequence.mts";
-import {dispose} from "./dispose.mts";
+import {RuntimeSequence} from "./controller/RuntimeSequence.mjs";
+import {dispose} from "./dispose.mjs";
 
 export type RuntimePick<K extends keyof RuntimeController> = Prop<RuntimeController, K>;
 

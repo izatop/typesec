@@ -14,7 +14,7 @@ import {
 } from "./interfaces.mjs";
 import {PendingError} from "./PendingError.mjs";
 import {PendingService} from "./PendingService.mjs";
-import {ServiceRef} from "./ServiceRef.mts";
+import {ServiceRef} from "./ServiceRef.mjs";
 
 const store = new WeakMap<ServiceRef<any>, any>();
 const registry = new Map<ServiceRef<any>, ServiceFactory<any>>();

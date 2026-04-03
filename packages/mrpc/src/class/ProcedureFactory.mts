@@ -1,11 +1,11 @@
 import {async} from "@typesec/the/async";
 import type z from "zod";
-import type {ProcedureHandler} from "../interfaces.mts";
-import type {ZodSubscription} from "../subscription.mts";
-import type {Contract} from "./Contract.mts";
-import {ProcedureAsync} from "./ProcedureAsync.mts";
-import {ProcedureAsyncGenerator} from "./ProcedureAsyncGenerator.mts";
-import {ProcedureSync} from "./ProcedureSync.mts";
+import type {ProcedureHandler} from "../interfaces.mjs";
+import type {ZodSubscription} from "../subscription.mjs";
+import type {Contract} from "./Contract.mjs";
+import {ProcedureAsync} from "./ProcedureAsync.mjs";
+import {ProcedureAsyncGenerator} from "./ProcedureAsyncGenerator.mjs";
+import {ProcedureSync} from "./ProcedureSync.mjs";
 
 export class ProcedureFactory<TContext, TIn extends z.ZodType, TOut extends z.ZodType> {
     readonly #contract: Contract<TIn, TOut>;

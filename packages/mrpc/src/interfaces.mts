@@ -1,8 +1,8 @@
 import type {KeyOf, Rec} from "@typesec/the";
 import z from "zod";
-import type {Backend} from "./class/Backend.mts";
-import type {Contract} from "./class/Contract.mts";
-import type {ProcedureAbstract} from "./class/ProcedureAbstract.mts";
+import type {Backend} from "./class/Backend.mjs";
+import type {Contract} from "./class/Contract.mjs";
+import type {ProcedureAbstract} from "./class/ProcedureAbstract.mjs";
 
 export type ContractDomain<TIn extends z.ZodType, TOut extends z.ZodType> = {
     input: TIn;

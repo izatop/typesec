@@ -1,6 +1,6 @@
 import {describe, expect, test} from "bun:test";
 import z from "zod";
-import {contract} from "./contract.mts";
+import {contract} from "./contract.mjs";
 
 describe("Contract", () => {
     test("test", async () => {

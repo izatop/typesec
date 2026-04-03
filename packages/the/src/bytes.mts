@@ -1,4 +1,4 @@
-import type {KeyOf, Rec} from "./type.mts";
+import type {KeyOf, Rec} from "./type.mjs";
 
 export type ByteUnit = "b" | "Kb" | "Mb" | "Gb" | "Tb" | "Pb";
 export type ByteGrade = Rec<ByteUnit, number>;

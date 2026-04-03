@@ -1,6 +1,6 @@
 import {describe, expect, it} from "bun:test";
-import {constraints, defaultConstraintMessage} from "./constraints.mts";
-import {scalars} from "./scalars.mts";
+import {constraints, defaultConstraintMessage} from "./constraints.mjs";
+import {scalars} from "./scalars.mjs";
 
 describe("Constraints<T>", () => {
     it("should pass", () => {

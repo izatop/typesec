@@ -1,11 +1,11 @@
 import {identify} from "@typesec/the/object";
 import {get} from "radash";
-import {tracer} from "../tracer.mts";
-import {dispose} from "./dispose.mts";
-import {exit} from "./exit.mts";
-import type {MainTask} from "./interfaces.mts";
-import {run} from "./run.mts";
-import {lifecycle} from "./runtime.mts";
+import {tracer} from "../tracer.mjs";
+import {dispose} from "./dispose.mjs";
+import {exit} from "./exit.mjs";
+import type {MainTask} from "./interfaces.mjs";
+import {run} from "./run.mjs";
+import {lifecycle} from "./runtime.mjs";
 
 export async function main(task: MainTask): Promise<Timer> {
     const name = get(task, "meta.name") ?? identify(task);

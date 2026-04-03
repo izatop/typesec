@@ -1,4 +1,4 @@
-import {compose} from "./composer.mts";
+import {compose} from "./composer.mjs";
 
 export const factory = {
     compose,

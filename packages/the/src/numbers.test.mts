@@ -1,5 +1,5 @@
 import {describe, expect, test} from "bun:test";
-import {numbers} from "./numbers.mts";
+import {numbers} from "./numbers.mjs";
 
 describe("numbers", () => {
     test("is(number)", () => {

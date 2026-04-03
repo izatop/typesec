@@ -1,4 +1,4 @@
-import type {ProtocolErrorIssue, ProtocolErrorReason} from "../interfaces.mts";
+import type {ProtocolErrorIssue, ProtocolErrorReason} from "../interfaces.mjs";
 
 export class ClientError extends Error {
     readonly #code: number;

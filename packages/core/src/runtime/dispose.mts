@@ -1,6 +1,6 @@
 import {identify} from "@typesec/the";
 import {isAsyncDisposable, isDisposable} from "../index.mjs";
-import {tracer} from "../tracer.mts";
+import {tracer} from "../tracer.mjs";
 
 export async function dispose(res: unknown): Promise<void> {
     if (isAsyncDisposable(res)) {
