@@ -1,7 +1,6 @@
-import {xmap} from "@typesec/core";
 import type {BunRequest} from "bun";
 
-const cache = xmap(new WeakMap<Request, ReuseRequest>());
+const cache = new WeakMap<Request, ReuseRequest>();
 
 export class ReuseRequest {
     #text: Promise<string> | null = null;
@@ -13,7 +12,7 @@ export class ReuseRequest {
     }
 
     public static factory(req: BunRequest): ReuseRequest {
-        return cache.ensure(req, () => new this(req));
+        return cache.getOrInsertComputed(req, () => new this(req));
     }
 
     public get request(): BunRequest {

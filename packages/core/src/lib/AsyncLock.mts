@@ -1,10 +1,8 @@
-import {xmap} from "./xmap.mjs";
-
 export class AsyncLock {
-    private static readonly map = xmap(new WeakMap<WeakKey, Promise<unknown>>());
+    private static readonly map = new WeakMap<WeakKey, Promise<unknown>>();
 
     public static acquire<T>(key: WeakKey, factory: (release: () => void) => Promise<T>): Promise<T> {
-        return this.map.ensure(key, () =>
+        return this.map.getOrInsertComputed(key, () =>
             factory(() => this.release(key)).finally(() => this.release(key)),
         ) as Promise<T>;
     }

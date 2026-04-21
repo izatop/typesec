@@ -20,10 +20,22 @@ async function asyncShift<T>(input: Promisify<T[]> | Fn<[], Promisify<T[]>>): Pr
     return first;
 }
 
+function group<T, R>(values: T[], by: (value: T) => R): Map<R, T[]> {
+    const groups = new Map<R, T[]>();
+    for (const value of values) {
+        const key = by(value);
+        const group = groups.getOrInsertComputed(key, () => []);
+        group.push(value);
+    }
+
+    return groups;
+}
+
 export const array = {
     uniq,
     arraify,
     dearraify,
+    group,
     async: {
         shift: asyncShift,
     },

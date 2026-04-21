@@ -1,14 +1,14 @@
-import {xmap} from "../../lib/xmap.mjs";
-
 export class RuntimeSequence {
-    static #map = xmap(new WeakMap<WeakKey, RuntimeSequence>(), () => new this());
+    static #map = new WeakMap<WeakKey, RuntimeSequence>();
 
     #sequence: number = 0;
+
+    static #factory = () => new RuntimeSequence();
 
     private constructor() {}
 
     public static increment(ref: WeakKey): number {
-        return this.#map.ensure(ref).increment();
+        return this.#map.getOrInsertComputed(ref, this.#factory).increment();
     }
 
     public increment(): number {
