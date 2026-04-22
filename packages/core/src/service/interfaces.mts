@@ -6,7 +6,7 @@ export interface IService {}
 export type Service = IService | AsyncDisposable | Disposable;
 
 export type ServiceCtor<T extends Service> = {
-    new (...args: any[]): T;
+    new?(...args: any[]): T;
     name: string;
 };
 
