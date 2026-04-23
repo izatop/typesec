@@ -1,4 +1,5 @@
 import {fn, type Fn, type Promisify} from "@typesec/the";
+import "./type.d";
 
 function uniq<T>(values: T[]): T[];
 function uniq<T, R>(values: T[], map: (value: T) => R): R[];

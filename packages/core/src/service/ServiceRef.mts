@@ -1,6 +1,10 @@
 import type {Service, ServiceCtor, ServiceId} from "./interfaces.mjs";
 
+const ServiceRefSymbol = Symbol();
+
 export class ServiceRef<T extends Service> {
+    readonly [ServiceRefSymbol] = true;
+
     readonly #ctor: ServiceCtor<T>;
 
     constructor(ctor: ServiceCtor<T>) {
