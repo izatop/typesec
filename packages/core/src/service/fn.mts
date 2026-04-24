@@ -10,6 +10,7 @@ import {
     type ServiceFactory,
     type ServiceId,
     type ServiceOptions,
+    type ServicePrivateCtor,
     type ServiceState,
 } from "./interfaces.mjs";
 import {PendingError} from "./PendingError.mjs";
@@ -19,7 +20,7 @@ import {ServiceRef} from "./ServiceRef.mjs";
 const store = new WeakMap<ServiceRef<any>, any>();
 const registry = new Map<ServiceRef<any>, ServiceFactory<any>>();
 const pendings = new WeakMap<ServiceRef<any>, Promisify<Service>>();
-const latest = new WeakMap<ServiceCtor<any>, ServiceRef<any>>();
+const latest = new WeakMap<ServiceCtor<any> | ServicePrivateCtor<any>, ServiceRef<any>>();
 
 export function define<T extends Service>(
     name: string,
@@ -32,7 +33,7 @@ export function define<T extends Service>(
 }
 
 export function service<T extends Service>(
-    ctor: ServiceCtor<NoInfer<T>>,
+    ctor: ServiceCtor<NoInfer<T>> | ServicePrivateCtor<NoInfer<T>>,
     value: ServiceFactory<T>,
     lazy = true,
 ): ServiceRef<T> {

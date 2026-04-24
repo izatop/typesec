@@ -7,11 +7,15 @@ export type Service = IService | AsyncDisposable | Disposable;
 
 export type ServiceCtor<T extends Service> = {
     new (...args: any[]): T;
-    new?(...args: any[]): T;
     name: string;
 };
 
-export type ServiceId<T extends Service> = ServiceCtor<T> | ServiceRef<T>;
+export type ServicePrivateCtor<T extends Service> = Function & {
+    prototype: T;
+    name: string;
+};
+
+export type ServiceId<T extends Service> = ServicePrivateCtor<T> | ServiceCtor<T> | ServiceRef<T>;
 
 export type ServiceInfer<T> = T extends ServiceId<infer V> ? V : never;
 
