@@ -24,8 +24,8 @@
     },
     "catalogs": {
       "build": {
-        "oxlint": "^1.60.0",
-        "oxfmt": "^0.45.0",
+        "oxlint": "^1.61.0",
+        "oxfmt": "^0.46.0",
         "typescript": "6.0.3"
       }
     }
