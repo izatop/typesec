@@ -34,6 +34,14 @@ const bgs: Rec<TracerLevel, Color> = {
     log: chalk.bgBlue,
 };
 
+function formatArg(arg: unknown): unknown {
+    if (arg instanceof ResolveMessage) {
+        return arg.toString();
+    }
+
+    return arg;
+}
+
 function getLogArgs(label: TracerLevel, ...args: TracerFunctionArgs): TracerFunctionArgs {
     const labels = [];
 
@@ -64,7 +72,7 @@ function getLogArgs(label: TracerLevel, ...args: TracerFunctionArgs): TracerFunc
         chalk.gray(welcome),
         labels.join("\n"),
         chalk.gray("-".repeat(100)).concat("\n"),
-        formatWithOptions({colors: true, compact: true}, ...args),
+        formatWithOptions({colors: true, compact: true}, ...args.map(formatArg)),
         "\n",
     ];
 }
