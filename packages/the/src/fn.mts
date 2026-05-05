@@ -14,6 +14,10 @@ export function is<T extends TypeCheckcList>(value: unknown, type: T): boolean {
     return typeof value === type;
 }
 
+export function truify<T>(value: T): value is NonNullable<T> {
+    return Boolean(value);
+}
+
 export function isInstance<T extends Rec>(value: unknown): value is T {
     return typeof value === "object" && value !== null;
 }
@@ -113,4 +117,5 @@ export const fn = {
     isNullable,
     toStringValue,
     construct,
+    truify,
 };
