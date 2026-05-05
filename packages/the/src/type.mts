@@ -68,3 +68,7 @@ export type Exact<T, Shape> = T extends Shape ? (Exclude<keyof T, keyof Shape> e
 
 export type Guard<T> = (value: unknown) => value is T;
 export type GuardUnion<T, U = T> = (value: T | U) => value is T;
+
+export type Constructor<T, A extends any[] = any[], P extends Rec = Rec> = {
+    new (...args: A): T;
+} & P;

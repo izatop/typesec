@@ -1,4 +1,4 @@
-import type {Fn, Fnify, Nullable, Rec} from "./type.mjs";
+import type {Constructor, Fn, Fnify, Nullable, Rec} from "./type.mjs";
 
 export type TypeCheckcList = "function" | "string" | "boolean" | "number" | "bigint" | "object" | "symbol";
 
@@ -94,6 +94,12 @@ function named<T extends NamedObject>(name: string, target: T): T {
     return is(target, "function") ? arrow(name, target) : ({[name]: class extends (target as any) {}}[name] as T);
 }
 
+function construct<T extends {constructor: Function} | Function, A extends any[]>(target: T, ...args: A): T {
+    const ctor = (is(target, "function") ? target : target.constructor) as Constructor<T>;
+
+    return new ctor(...args);
+}
+
 export const fn = {
     is,
     once,
@@ -106,4 +112,5 @@ export const fn = {
     isInstance,
     isNullable,
     toStringValue,
+    construct,
 };
