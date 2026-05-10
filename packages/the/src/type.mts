@@ -72,3 +72,5 @@ export type GuardUnion<T, U = T> = (value: T | U) => value is T;
 export type Constructor<T, A extends any[] = any[], P extends Rec = Rec> = {
     new (...args: A): T;
 } & P;
+
+export type ConstructorAbstract<T, A extends any[] = any[], P extends Rec = Rec> = (abstract new (...args: A) => T) & P;
