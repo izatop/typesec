@@ -1,15 +1,16 @@
-import {assert, object} from "@typesec/the";
+import {assert, is, object} from "@typesec/the";
 import type {IClientProtocol, ProtocolRequest, ProtocolResponse} from "../interfaces.mjs";
+import {ClientURLStore} from "./ClientURLStore.mts";
 
 export class ClientFetchProtocol implements IClientProtocol {
-    readonly #url: string;
+    readonly #url: ClientURLStore;
 
-    constructor(url: string) {
-        this.#url = url;
+    constructor(url: string | ClientURLStore) {
+        this.#url = is(url, "string") ? new ClientURLStore(url) : url;
     }
 
     public async query(request: ProtocolRequest): Promise<ProtocolResponse> {
-        const res = await fetch(this.#url, {
+        const res = await fetch(this.#url.get(), {
             body: JSON.stringify(request.query),
             method: "POST",
             headers: {

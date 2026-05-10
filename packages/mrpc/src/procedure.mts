@@ -1,4 +1,4 @@
-import {fn} from "@typesec/the";
+import {fn, type Promisify} from "@typesec/the";
 import type z from "zod";
 import type {Contract} from "./class/Contract.mjs";
 import type {ProcedureAbstract} from "./class/ProcedureAbstract.mjs";
@@ -7,6 +7,8 @@ import {ProcedureFactory} from "./class/ProcedureFactory.mjs";
 import type {ProcedureSync} from "./class/ProcedureSync.mjs";
 import type {ProcedureAsyncGenerator, ZodSubscription} from "./index.mjs";
 import type {ProcedureHandler} from "./interfaces.mjs";
+
+export type UseContextFn<TContext, TNextContext> = (context: TContext) => Promisify<TNextContext>;
 
 export type ContextualProcedure<TContext> = {
     <TIn extends z.ZodType, TOut extends z.ZodType>(
@@ -54,14 +56,41 @@ function producer(
     return new ProcedureFactory(contract);
 }
 
-function contextual<TContext>(): ContextualProcedure<TContext> {
-    return producer;
-}
-
-export type ProcedureProducer = typeof producer & {
-    contextual: <TContext>() => ContextualProcedure<TContext>;
+export type Use<TContext> = {
+    <TNextContext>(): ProcedureProducer<TNextContext>;
+    <TNextContext>(fn: UseContextFn<TContext, TNextContext>): ProcedureProducer<TNextContext>;
 };
 
-const procedure: ProcedureProducer = Object.assign(producer, {contextual});
+export type ProcedureProducerParams<TContext> = {
+    /**
+     * @deprecated Use `use` instead.
+     */
+    contextual: <TContext>() => ProcedureProducer<TContext>;
+    use: Use<TContext>;
+};
+
+export type ProcedureProducer<TContext> = ContextualProcedure<TContext> & ProcedureProducerParams<TContext>;
+
+function use<TContext>(): ProcedureProducer<TContext>;
+function use<TContext, TNextContext>(fn: UseContextFn<TContext, TNextContext>): ProcedureProducer<TNextContext>;
+function use<TContext, TNextContext>(
+    fn?: UseContextFn<TContext, TNextContext>,
+): ProcedureProducer<TContext | TNextContext> {
+    const params = {contextual: use, use} as unknown as ProcedureProducerParams<TContext | TNextContext>;
+
+    if (fn) {
+        const middleware = (contract: Contract<any, any>, handle?: ProcedureHandler<TNextContext, any, any>) => {
+            const factory = producer<TContext, any, any>(contract).use(fn);
+
+            return handle ? factory.create(handle) : factory;
+        };
+
+        return Object.assign(middleware, params) as ProcedureProducer<TContext | TNextContext>;
+    }
+
+    return Object.assign(producer, params);
+}
+
+const procedure = use<never>();
 
 export {procedure};

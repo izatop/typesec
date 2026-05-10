@@ -5,6 +5,7 @@ export * from "./class/client/interfaces.mjs";
 export * from "./class/ClientError.mjs";
 export * from "./class/ClientFetchProtocol.mjs";
 export * from "./class/ClientLazyQuery.mjs";
+export * from "./class/ClientURLStore.mjs";
 export * from "./class/Contract.mjs";
 export * from "./class/ProcedureAbstract.mjs";
 export * from "./class/ProcedureAsync.mjs";

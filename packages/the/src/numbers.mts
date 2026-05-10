@@ -38,6 +38,10 @@ function toFinite(value: unknown, fallback: number): number {
     return isFinite(parsed) ? parsed : fallback;
 }
 
+function random(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 export const numbers = {
     is,
     isFinite,
@@ -48,4 +52,5 @@ export const numbers = {
     gte,
     lt,
     lte,
+    random,
 };

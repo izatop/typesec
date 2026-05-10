@@ -49,4 +49,9 @@ describe("numbers", () => {
         expect(numbers.lte(0, 0)).toBeTrue();
         expect(numbers.lte(1, 1)).toBeTrue();
     });
+
+    test("random(min, max)", () => {
+        expect(numbers.random(0, 10)).toBeGreaterThanOrEqual(0);
+        expect(numbers.random(0, 10)).toBeLessThanOrEqual(10);
+    });
 });
