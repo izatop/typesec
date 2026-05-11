@@ -71,7 +71,7 @@ export type ProcedureProducerParams<TContext> = {
 
 export type ProcedureProducer<TContext> = ContextualProcedure<TContext> & ProcedureProducerParams<TContext>;
 
-function use<TContext>(): ProcedureProducer<TContext>;
+function use(): typeof producer & ProcedureProducerParams<unknown>;
 function use<TContext, TNextContext>(fn: UseContextFn<TContext, TNextContext>): ProcedureProducer<TNextContext>;
 function use<TContext, TNextContext>(
     fn?: UseContextFn<TContext, TNextContext>,
@@ -91,6 +91,6 @@ function use<TContext, TNextContext>(
     return Object.assign(producer, params);
 }
 
-const procedure = use<never>();
+const procedure = use();
 
 export {procedure};
