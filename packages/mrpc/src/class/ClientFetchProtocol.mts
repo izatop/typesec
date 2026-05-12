@@ -1,6 +1,6 @@
 import {assert, is, object} from "@typesec/the";
 import type {IClientProtocol, ProtocolRequest, ProtocolResponse} from "../interfaces.mjs";
-import {ClientURLStore} from "./ClientURLStore.mts";
+import {ClientURLStore} from "./ClientURLStore.mjs";
 
 export class ClientFetchProtocol implements IClientProtocol {
     readonly #url: ClientURLStore;
