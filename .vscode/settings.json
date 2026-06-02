@@ -26,12 +26,6 @@
   "[sql]": {
     "editor.defaultFormatter": "sqlfluff.vscode-sqlfluff"
   },
-  "js/ts.preferences.includePackageJsonAutoImports": "on",
-  "js/ts.preferences.importModuleSpecifier": "project-relative",
-  "js/ts.preferences.importModuleSpecifierEnding": "minimal",
-  "js/ts.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": false,
-  "js/ts.preferences.preferTypeOnlyAutoImports": true,
-  "js/ts.updateImportsOnFileMove.enabled": "always",
   "npm.exclude": "**/node_modules/**",
   "search.exclude": {
     "**/node_modules/**": true,
@@ -47,10 +41,10 @@
   },
   "npm.packageManager": "bun",
   "npm.scriptRunner": "bun",
-  "bun.runtime": "/Users/ab/.bun/bin/bun",
+  "bun.runtime": "bun",
+  "oxc.enable.oxfmt": true,
   "bun.debugTerminal.enabled": true,
   "bun.debugTerminal.stopOnEntry": false,
   "bun.test.filePattern": "**/*{.test.,.spec.,_test_,_spec_}{js,ts,tsx,jsx,mts,cts,cjs,mjs}",
-  "bun.test.customScript": "bun test",
-  "sqlfluff.excludeRules": ["RF04"]
+  "bun.test.customScript": "bun test"
 }

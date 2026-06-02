@@ -12,9 +12,6 @@
       "path": "./core"
     },
     {
-      "path": "./gup"
-    },
-    {
       "path": "./mrpc"
     },
     {

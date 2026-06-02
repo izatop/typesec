@@ -21,14 +21,13 @@
     "catalogs": {
       "build": {
         "oxlint": "^1.67.0",
-        "oxfmt": "^0.52.0",
-        "typescript": "6.0.3"
+        "oxfmt": "^0.52.0"
       }
     }
   },
   "scripts": {
-    "check": "bun tsc -b packages",
-    "check:watch": "bun tsc -b packages -w",
+    "check": "bun tsgo -b packages",
+    "check:watch": "bun tsgo -b packages -w",
     "test": "bun test",
     "test:watch": "bun test --watch",
     "lint": "oxlint --quiet",
@@ -42,7 +41,6 @@
     "@typescript/native-preview": "^7.0.0-dev.20260527.2",
     "@typesec/bootstrap": "catalog:",
     "oxfmt": "catalog:build",
-    "oxlint": "catalog:build",
-    "typescript": "catalog:build"
+    "oxlint": "catalog:build"
   }
 }
