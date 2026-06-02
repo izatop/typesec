@@ -21,7 +21,7 @@ function gt(value: unknown, n: number): value is number {
 }
 
 function gte(value: unknown, n: number): value is number {
-    return gt(value, n - 1);
+    return is(value) && value >= n;
 }
 
 function lt(value: unknown, n: number): value is number {
@@ -29,7 +29,7 @@ function lt(value: unknown, n: number): value is number {
 }
 
 function lte(value: unknown, n: number): value is number {
-    return lt(value, n + 1);
+    return is(value) && value <= n;
 }
 
 function toFinite(value: unknown, fallback: number): number {
