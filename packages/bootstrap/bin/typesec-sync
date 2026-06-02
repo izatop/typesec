@@ -10,7 +10,7 @@ TARGET="$(pwd)"
 SOURCE="$(realpath "${0}/../../src")/files"
 test -f "${TARGET}/package.json" || fail "No project's package.json found"
 
-bun i --dev @types/bun@catalog: oxlint@catalog:build oxfmt@catalog:build typescript@catalog:build "@typesec/bootstrap@workspace:*"
+bun i --dev @types/bun@catalog: oxlint@catalog:build oxfmt@catalog:build typescript@catalog:build "@typesec/bootstrap@catalog:"
 cp -r "${SOURCE}/" "${TARGET}/"
 
 bunx npm-add-script --force -k "check" -v "bun tsc -b packages"

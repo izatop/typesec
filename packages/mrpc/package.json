@@ -10,7 +10,7 @@
     }
   },
   "dependencies": {
-    "@typesec/the": "workspace:*",
+    "@typesec/the": "catalog:",
     "radash": "catalog:",
     "zod": "catalog:"
   }

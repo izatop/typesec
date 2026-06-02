@@ -10,7 +10,6 @@
     }
   },
   "dependencies": {
-    "@types/bun": "catalog:",
-    "@typesec/the": "workspace:*"
+    "@typesec/the": "catalog:"
   }
 }

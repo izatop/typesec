@@ -15,10 +15,10 @@
   "dependencies": {
     "@commander-js/extra-typings": "catalog:",
     "@types/bun": "catalog:",
-    "@typesec/core": "workspace:*",
-    "@typesec/the": "workspace:*",
-    "@typesec/tracer": "workspace:*",
-    "@typesec/unit": "workspace:*",
+    "@typesec/core": "catalog:",
+    "@typesec/the": "catalog:",
+    "@typesec/tracer": "catalog:",
+    "@typesec/unit": "catalog:",
     "commander": "catalog:",
     "radash": "catalog:"
   }
