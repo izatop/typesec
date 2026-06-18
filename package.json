@@ -20,8 +20,8 @@
     },
     "catalogs": {
       "build": {
-        "oxlint": "^1.67.0",
-        "oxfmt": "^0.52.0"
+        "oxlint": "^1.69.0",
+        "oxfmt": "^0.54.0"
       }
     }
   },
@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@types/bun": "catalog:",
-    "@typescript/native-preview": "^7.0.0-dev.20260527.2",
+    "@typescript/native-preview": "^7.0.0-dev.20260614.1",
     "@typesec/bootstrap": "catalog:",
     "oxfmt": "catalog:build",
     "oxlint": "catalog:build"
