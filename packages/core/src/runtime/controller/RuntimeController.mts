@@ -82,8 +82,16 @@ export class RuntimeController extends AbortController implements Disposable {
         return this.mode === "production";
     };
 
+    public isNotProduction = (): boolean => {
+        return !this.isProduction();
+    };
+
     public isDevelopment = (): boolean => {
-        return this.mode !== "production";
+        return this.mode === "development";
+    };
+
+    public isStage = (): boolean => {
+        return this.mode !== "stage";
     };
 
     public only = (mode?: EnvModeType, message?: string): void => {

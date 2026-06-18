@@ -16,8 +16,10 @@ export type Runtime = {
     readonly hmr: RuntimePick<"hmr">;
     isRunning: RuntimePick<"isRunning">;
     isTest: RuntimePick<"isTest">;
+    isStage: RuntimePick<"isStage">;
     isDevelopment: RuntimePick<"isDevelopment">;
     isProduction: RuntimePick<"isProduction">;
+    isNotProduction: RuntimePick<"isNotProduction">;
     enqueue: RuntimePick<"enqueue">;
     heartbeat: RuntimePick<"heartbeat">;
     abort: RuntimePick<"abort">;
@@ -63,8 +65,14 @@ export const runtime: Runtime = {
     isProduction() {
         return this.controller.isProduction();
     },
+    isNotProduction() {
+        return this.controller.isNotProduction();
+    },
     isTest() {
         return this.controller.isTest();
+    },
+    isStage() {
+        return this.controller.isStage();
     },
     only(mode) {
         return this.controller.only(mode);
