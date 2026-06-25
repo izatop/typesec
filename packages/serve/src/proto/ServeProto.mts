@@ -14,6 +14,7 @@ export type ServeInput = {
 export type ServeProtoConfig = {
     lookup: string[];
     routes?: Serve.Routes<unknown, string>;
+    cors?: "auto-allow-any";
 };
 
 export class ServeProto extends ProtoAbstract<ServeInput> {
@@ -44,7 +45,7 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
 
         const serverId = hostname();
         const xServiceId = "x-service-id";
-        const staticHeaders: Record<string, string> = false === runtime.isProduction() ? {[xServiceId]: serverId} : {};
+        const staticHeaders: Record<string, string> = runtime.isNotProduction() ? {[xServiceId]: serverId} : {};
 
         await runtime.run(async () => {
             trace.info("run(%o)", args);
@@ -52,6 +53,23 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
             const preload = this.preload(args);
             const router = this.createRouter(args);
             const routes: Serve.Routes<unknown, string> = this.config.routes ?? {};
+
+            if (this.config.cors === "auto-allow-any") {
+                staticHeaders["Access-Control-Allow-Origin"] = "*";
+                routes["/**"] = {
+                    OPTIONS: (ctx) => {
+                        return new Response(null, {
+                            status: 200,
+                            headers: {
+                                "Access-Control-Allow-Origin": "*",
+                                "Access-Control-Allow-Methods": ctx.headers.get("access-control-request-method") ?? "",
+                                "Access-Control-Allow-Headers": ctx.headers.get("access-control-request-headers") ?? "",
+                            },
+                        });
+                    },
+                };
+            }
+
             const matcher = async (request: BunRequest) => {
                 try {
                     const route = router.match(request);
@@ -60,8 +78,8 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
                         const handle = getHandle(ServeProto, await import(route.filePath));
 
                         const response = await handle({request, route});
-                        if (false === runtime.isProduction()) {
-                            response.headers.append(xServiceId, serverId);
+                        for (const [key, value] of Object.entries(staticHeaders)) {
+                            response.headers.append(key, value);
                         }
 
                         return response;
