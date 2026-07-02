@@ -1,6 +1,6 @@
 import {array} from "@typesec/the/array";
 import {assert} from "@typesec/the/assert";
-import {fn, isNullable} from "@typesec/the/fn";
+import {fn, isNullish} from "@typesec/the/fn";
 import object from "@typesec/the/object";
 import type {Arrayify, Fn, Guard, GuardUnion, KeyOf, Nullable, Promisify, Rec} from "@typesec/the/type";
 import type {Constraints} from "./constraints.mjs";
@@ -230,8 +230,8 @@ export function maybe<T>(
         subject,
         id: `Maybe<${subject.id}>`,
         kind: "maybe",
-        isKind: (value) => null === isNullable(value) || subject.isKind(value),
-        isValid: (value): value is T => isNullable(value) || subject.isValid(value),
+        isKind: (value) => subject.isKind(value),
+        isValid: (value): value is T => isNullish(value) || subject.isValid(value),
     };
 
     return refine(type);

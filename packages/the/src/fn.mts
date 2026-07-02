@@ -1,4 +1,4 @@
-import type {Constructor, Fn, Fnify, Nullable, Rec} from "./type.mjs";
+import type {Constructor, Fn, Fnify, Nullable, Nullish, Rec} from "./type.mjs";
 
 export type TypeCheckcList = "function" | "string" | "boolean" | "number" | "bigint" | "object" | "symbol";
 
@@ -15,6 +15,10 @@ export function is<T extends TypeCheckcList>(value: unknown, type: T): boolean {
 }
 
 export function truify<T>(value: T): value is NonNullable<T> {
+    return Boolean(value);
+}
+
+export function valueable<T>(value: T): value is NonNullable<T> {
     return Boolean(value);
 }
 
@@ -40,11 +44,17 @@ export function defnify<R>(value: Fnify<R>): R {
     return is(value, "function") ? value() : value;
 }
 
-export function isNullable<T>(value: Nullable<T>): value is null | undefined {
-    return value === null || is(value, "undefined");
+export function isNullable<T>(value: Nullable<T>): value is null {
+    return value === null;
 }
 
-export function invoke<T extends Fn<A, string> | string, A extends any[]>(target: T, ...args: A): string {
+export function isNullish<T>(value: Nullish<T>): value is null | undefined {
+    return value === null || value === undefined;
+}
+
+export function invoke<T>(target: T): T;
+export function invoke<T, A extends any[]>(target: Fn<A, T>, ...args: A): T;
+export function invoke<T, A extends any[]>(target: Fn<A, T> | T, ...args: A): T {
     return is(target, "function") ? target(...args) : target;
 }
 
@@ -115,6 +125,7 @@ export const fn = {
     invoke,
     isInstance,
     isNullable,
+    isNullish,
     toStringValue,
     construct,
     truify,

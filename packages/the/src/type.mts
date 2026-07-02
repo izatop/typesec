@@ -40,8 +40,9 @@ export type HasKeyOf<T extends Rec, K> = [K] extends [KeyOf<T>] ? true : false;
 
 export type PartialKeys<T extends Rec, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
-export type Nullish<T> = T | null;
-export type Nullable<T> = T | null | undefined;
+export type Nullable<T> = T | null;
+export type Nullish<T> = T | null | undefined;
+export type Optional<T> = T | undefined;
 
 export type ToAny<T, E> = Equal<T, any> extends true ? any : E;
 export type ToNullish<T> = IsNullable<T> extends true ? Nullish<NonNullable<T>> : T;
