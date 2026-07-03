@@ -45,7 +45,7 @@ export type Nullish<T> = T | null | undefined;
 export type Optional<T> = T | undefined;
 
 export type ToAny<T, E> = Equal<T, any> extends true ? any : E;
-export type ToNullish<T> = IsNullable<T> extends true ? Nullish<NonNullable<T>> : T;
+export type ToNullable<T> = IsNullable<T> extends true ? Nullable<NonNullable<T>> : T;
 
 export type Expect<T extends true> = T;
 export type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? true : false;

@@ -1,6 +1,6 @@
 import {deepEquals} from "bun";
 import {describe, expect, it} from "bun:test";
-import {defnify, fn, fnify, invoke, is, isInstance, isNullable, isNullish, when} from "./fn.mjs";
+import {defnify, fn, fnify, invoke, is, isInstance, isNullable, when} from "./fn.mjs";
 
 describe("fn utils", () => {
     it("is(value, type)", () => {
@@ -31,11 +31,11 @@ describe("fn utils", () => {
         expect(isNullable("" as unknown)).toBeFalse();
     });
 
-    it("isNullish(value)", () => {
-        expect(isNullish(null)).toBeTrue();
-        expect(isNullish(undefined)).toBeTrue();
-        expect(isNullish(0 as unknown)).toBeFalse();
-        expect(isNullish("" as unknown)).toBeFalse();
+    it("isNullable(value)", () => {
+        expect(isNullable(null)).toBeTrue();
+        expect(isNullable(undefined)).toBeTrue();
+        expect(isNullable(0 as unknown)).toBeFalse();
+        expect(isNullable("" as unknown)).toBeFalse();
     });
 
     it("fnify(value)", () => {

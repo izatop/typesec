@@ -28,7 +28,6 @@ import type {
     Label,
     LikeString,
     Nullable,
-    Nullish,
     Override,
     PairKeyOf,
     PartialKeys,
@@ -42,7 +41,7 @@ import type {
     StrictRec,
     StringKeyOf,
     ToAny,
-    ToNullish,
+    ToNullable,
     ValueOf,
 } from "./type.mjs";
 
@@ -172,8 +171,8 @@ describe("Type", () => {
         expect(isXEqualToY<T1, number | null | undefined>(true)).toBeTrue();
     });
 
-    test("Nullish<T>", () => {
-        type T1 = Nullish<number>;
+    test("Nullable<T>", () => {
+        type T1 = Nullable<number>;
         expect(isXEqualToY<T1, number | null>(true)).toBeTrue();
     });
 
@@ -182,10 +181,10 @@ describe("Type", () => {
         expect(isXEqualToY<ToAny<number | any, 1>, any>(true)).toBeTrue();
     });
 
-    test("ToNullish<T>", () => {
-        expect(isXEqualToY<ToNullish<string>, string>(true)).toBeTrue();
-        expect(isXEqualToY<ToNullish<string | null>, string | null>(true)).toBeTrue();
-        expect(isXEqualToY<ToNullish<string | undefined>, string | null>(true)).toBeTrue();
+    test("ToNullable<T>", () => {
+        expect(isXEqualToY<ToNullable<string>, string>(true)).toBeTrue();
+        expect(isXEqualToY<ToNullable<string | null>, string | null>(true)).toBeTrue();
+        expect(isXEqualToY<ToNullable<string | undefined>, string | null>(true)).toBeTrue();
     });
 
     test("HasNull<T>", () => {
