@@ -28,6 +28,7 @@ import type {
     Label,
     LikeString,
     Nullable,
+    Nullish,
     Override,
     PairKeyOf,
     PartialKeys,
@@ -44,8 +45,6 @@ import type {
     ToNullable,
     ValueOf,
 } from "./type.mjs";
-
-// type T1 = Expect<Equal<A, B>>;
 
 describe("Type", () => {
     test("Fn<A, R>", () => {
@@ -168,12 +167,14 @@ describe("Type", () => {
 
     test("Nullable<T>", () => {
         type T1 = Nullable<number>;
-        expect(isXEqualToY<T1, number | null | undefined>(true)).toBeTrue();
+        expect(isXEqualToY<T1, number | null>(true)).toBeTrue();
+        expect(isXEqualToY<T1, number | null | undefined>(false)).toBeFalse();
     });
 
-    test("Nullable<T>", () => {
-        type T1 = Nullable<number>;
-        expect(isXEqualToY<T1, number | null>(true)).toBeTrue();
+    test("Nullish<T>", () => {
+        type T1 = Nullish<number>;
+        expect(isXEqualToY<T1, number | null | undefined>(true)).toBeTrue();
+        expect(isXEqualToY<T1, number | null>(false)).toBeFalse();
     });
 
     test("ToAny<T>", () => {

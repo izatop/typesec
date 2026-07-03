@@ -52,8 +52,8 @@ export function isNullish<T>(value: Nullish<T>): value is null | undefined {
     return value === null || value === undefined;
 }
 
+export function invoke<T, A extends any[]>(target: Fn<A, T>, ...args: A): T;
 export function invoke<T>(target: T, ...args: any[]): T;
-export function invoke<T, F extends Fn<A, T>, A extends any[]>(target: F, ...args: A): T;
 export function invoke(target: any, ...args: any[]): any {
     return is(target, "function") ? target(...args) : target;
 }
