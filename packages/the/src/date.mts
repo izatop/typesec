@@ -16,8 +16,8 @@ const factor: Rec<DatePart, Fn<[value: number, date: Date], number>> = {
     m: (v) => v * 60 * 1000,
     h: (v) => v * 60 * 60 * 1000,
     d: (v) => v * 60 * 60 * 24 * 1000,
-    M: (v, d) => d.getTime() - new Date(d).setMonth(d.getMonth() + v),
-    Y: (v, d) => d.getTime() - new Date(d).setFullYear(d.getFullYear() + v),
+    M: (v, d) => new Date(d).setMonth(d.getMonth() + v) - d.getTime(),
+    Y: (v, d) => new Date(d).setFullYear(d.getFullYear() + v) - d.getTime(),
 };
 
 const regex = /^([+-]\d+)([smhdMY])$/;

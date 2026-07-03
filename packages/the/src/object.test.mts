@@ -1,5 +1,6 @@
 import {describe, expect, test} from "bun:test";
 import {
+    assign,
     drop,
     fromAsyncEntries,
     fromEntries,
@@ -9,10 +10,15 @@ import {
     identify,
     isNull,
     isObject,
+    key,
     keys,
+    object,
+    omit,
     override,
     prop,
+    reverseEntries,
     toEntries,
+    values,
 } from "./object.mjs";
 
 describe("Object", () => {
@@ -29,6 +35,8 @@ describe("Object", () => {
         expect(identify(class Foo {})).toBe("Foo");
         expect(identify(new (class Baz {})())).toBe("Baz");
         expect(identify("bar")).toBe("bar");
+        expect(identify("")).toBe("anonymous");
+        expect(identify(undefined, "fallback")).toBe("fallback");
     });
 
     test("toEntries", () => {
@@ -49,6 +57,15 @@ describe("Object", () => {
         expect(actual).toEqual({a: 1, b: 2});
     });
 
+    test("reverseEntries", () => {
+        const actual = reverseEntries<{a: number; b: number}>([
+            ["a", 1],
+            ["b", 2],
+        ]);
+
+        expect(actual).toEqual({a: 1, b: 2});
+    });
+
     test("fromAsyncEntries", async () => {
         const actual = await fromAsyncEntries([
             ["a", Promise.resolve(1)],
@@ -62,8 +79,19 @@ describe("Object", () => {
         expect(override({a: 1}, {a: 2})).toEqual({a: 2});
     });
 
+    test("assign", () => {
+        const target = {a: 1, b: 2};
+        assign(target, {b: 3});
+
+        expect(target).toEqual({a: 1, b: 3});
+    });
+
     test("drop", () => {
         expect(drop({a: 1, b: 2, c: 3}, 2)).toEqual({a: 1, c: 3});
+    });
+
+    test("omit", () => {
+        expect(omit({a: 1, b: 2, c: 3}, "b", "c")).toEqual({a: 1});
     });
 
     test("isNull", () => {
@@ -83,6 +111,13 @@ describe("Object", () => {
     test("has", () => {
         expect(has({a: 1}, "a")).toBeTrue();
         expect(has({a: 1}, "b")).toBeFalse();
+        expect(has({a: 1, b: 2}, "a", "b")).toBeTrue();
+        expect(has({a: 1, b: 2}, "a", "c")).toBeFalse();
+    });
+
+    test("key", () => {
+        expect(key({a: 1}, "a")).toBe("a");
+        expect(() => key({a: 1}, "b" as any)).toThrow("Unknown key b in Object");
     });
 
     test("hasKeyOf", () => {
@@ -97,9 +132,20 @@ describe("Object", () => {
 
     test("keys", () => {
         expect(keys({a: 1})).toEqual(["a"]);
+        const sym = Symbol("s");
+        const data = {[sym]: 1, a: 2};
+        expect(keys(data, "string")).toEqual(["a"]);
+        expect(keys(data, "symbol")).toEqual([sym]);
     });
 
-    test("overwrite", () => {
-        expect(keys({a: 1})).toEqual(["a"]);
+    test("values", () => {
+        expect(values({a: 1, b: 2})).toEqual([1, 2]);
+    });
+
+    test("object.isPlain", () => {
+        expect(object.isPlain({})).toBeTrue();
+        expect(object.isPlain(Object.create(null))).toBeTrue();
+        expect(object.isPlain([])).toBeFalse();
+        expect(object.isPlain(new (class Foo {})())).toBeFalse();
     });
 });

@@ -80,6 +80,12 @@ describe("fn utils", () => {
         );
     });
 
+    it("when(value, then, fallback) should accept plain values", () => {
+        expect(when("value", "then", "fallback")).toBe("then");
+        expect(when("", "then", "fallback")).toBe("fallback");
+        expect(when("", "then")).toBeUndefined();
+    });
+
     it("invoke(target, args)", () => {
         expect(invoke("hello")).toEqual("hello");
         expect(invoke((name: string) => `hello ${name}`, "world")).toEqual("hello world");
@@ -114,11 +120,43 @@ describe("fn utils", () => {
         const circular: any = {};
         circular.self = circular;
         const res = fn.toStringValue(circular);
-        expect(typeof res).toBe("string");
+        expect(res).toBe("[object Object]");
     });
 
-    it("isFunction (deprecated) still detects functions", () => {
+    it("is(unknown, function) still detects functions", () => {
         expect(is(() => 1, "function")).toBeTrue();
         expect(is(1, "function")).toBeFalse();
+    });
+
+    it("arrow(name, fn) should create a named forwarding function", () => {
+        const sum = fn.arrow("sum", (a: number, b: number) => a + b);
+
+        expect(sum.name).toBe("sum");
+        expect(sum(1, 2)).toBe(3);
+    });
+
+    it("named(name, target) should rename function and class targets", () => {
+        const namedFn = fn.named("timesTwo", (value: number) => value * 2);
+
+        class Base {}
+        const NamedClass = fn.named("NamedClass", Base);
+
+        expect(namedFn.name).toBe("timesTwo");
+        expect(namedFn(2)).toBe(4);
+        expect(NamedClass.name).toBe("NamedClass");
+        expect(new NamedClass()).toBeInstanceOf(Base);
+    });
+
+    it("construct(target, args) should instantiate constructors and object constructors", () => {
+        class Box {
+            constructor(readonly value: number) {}
+        }
+
+        const fromConstructor = fn.construct(Box as any, 42) as Box;
+        const fromObject = fn.construct(new Box(1), 2);
+
+        expect(fromConstructor).toBeInstanceOf(Box);
+        expect(fromConstructor.value).toBe(42);
+        expect(fromObject.value).toBe(2);
     });
 });

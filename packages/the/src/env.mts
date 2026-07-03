@@ -36,10 +36,10 @@ export function createStrict<T extends Dict<string>>(requires: EnvRuleList<T>, p
             if (is(defaultValue, "string")) {
                 env[required] = defaultValue;
             }
+        }
 
-            if (isBlank(env[required])) {
-                failed.push(required);
-            }
+        if (isBlank(env[required])) {
+            failed.push(required);
         }
     }
 

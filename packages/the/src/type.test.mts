@@ -2,11 +2,17 @@ import {describe, expect, test} from "bun:test";
 import {isXEqualToY, isXExtendsOfY} from "./test.mjs";
 import type {
     Arrayify,
+    Constructor,
+    ConstructorAbstract,
     DeArrayify,
     DeFnify,
     Drop,
     Entries,
+    Equal,
     Exact,
+    Expect,
+    Expand,
+    Extends,
     Fn,
     Fnify,
     FromEntries,
@@ -29,6 +35,7 @@ import type {
     LikeString,
     Nullable,
     Nullish,
+    Optional,
     Override,
     PairKeyOf,
     PartialKeys,
@@ -177,6 +184,12 @@ describe("Type", () => {
         expect(isXEqualToY<T1, number | null>(false)).toBeFalse();
     });
 
+    test("Optional<T>", () => {
+        type T1 = Optional<number>;
+        expect(isXEqualToY<T1, number | undefined>(true)).toBeTrue();
+        expect(isXEqualToY<T1, number | null>(false)).toBeFalse();
+    });
+
     test("ToAny<T>", () => {
         expect(isXEqualToY<ToAny<number, 1>, 1>(true)).toBeTrue();
         expect(isXEqualToY<ToAny<number | any, 1>, any>(true)).toBeTrue();
@@ -252,8 +265,10 @@ describe("Type", () => {
         type A = {a: number; b: string};
         type B = {b: boolean; c: Date};
         type R = Override<A, B>;
+        type E = Expand<{a: number} & {b: string}>;
         const value: R = {a: 1, b: true, c: new Date()};
         expect(!!value).toBeTrue();
+        expect(isXEqualToY<E, {a: number; b: string}>(true)).toBeTrue();
     });
 
     test("StrictRec<T> and Drop<T, V>", () => {
@@ -314,5 +329,33 @@ describe("Type", () => {
         expect(isXEqualToY<null, LikeString>(false)).toBeFalse();
         expect(isXEqualToY<undefined, LikeString>(false)).toBeFalse();
         expect(isXExtendsOfY<typeof likeNotString, LikeString>(false)).toBeFalse();
+    });
+
+    test("Constructor<T> and ConstructorAbstract<T>", () => {
+        class Box {
+            static label = "box";
+
+            constructor(readonly value: number) {}
+        }
+
+        abstract class AbstractBox {
+            constructor(readonly value: number) {}
+        }
+
+        type BoxConstructor = Constructor<Box, [number], {label: string}>;
+        type AbstractBoxConstructor = ConstructorAbstract<AbstractBox, [number]>;
+        expect(isXExtendsOfY<typeof Box, BoxConstructor>(true)).toBeTrue();
+        expect(isXExtendsOfY<typeof AbstractBox, AbstractBoxConstructor>(true)).toBeTrue();
+    });
+
+    test("Equal, Extends and Expect", () => {
+        type IsEqual = Equal<1, 1>;
+        type IsNotEqual = Equal<1, 2>;
+        type DoesExtend = Extends<1, number>;
+        type Expected = Expect<true>;
+        expect(isXEqualToY<IsEqual, true>(true)).toBeTrue();
+        expect(isXEqualToY<IsNotEqual, false>(true)).toBeTrue();
+        expect(isXEqualToY<DoesExtend, true>(true)).toBeTrue();
+        expect(isXEqualToY<Expected, true>(true)).toBeTrue();
     });
 });

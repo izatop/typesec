@@ -15,6 +15,11 @@ describe("async", () => {
         expect(async.isAsyncGenerator({})).toBeFalse();
     });
 
+    it("isAsyncFunction(value)", () => {
+        expect(async.isAsyncFunction(async () => 1)).toBeTrue();
+        expect(async.isAsyncFunction(() => Promise.resolve(1))).toBeFalse();
+    });
+
     it("isAsyncGeneratorFunction(value)", () => {
         expect(async.isAsyncGeneratorFunction(agf)).toBeTrue();
         expect(async.isAsyncGeneratorFunction(it)).toBeFalse();

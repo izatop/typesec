@@ -17,8 +17,8 @@ const MONTH = DAY * 30;
 const YEAR = MONTH * 12;
 
 function parseString(ttl: TTLString): number {
-    const value = parseInt(ttl.substring(0, ttl.length - 1), 10);
-    const unit = ttl.substring(ttl.length - 1, ttl.length) as TTLUnit;
+    const [, valueStr = "", unit = ""] = ttl.match(/^(-?\d+)(ms|[a-zA-Z]+)$/) ?? [];
+    const value = parseInt(valueStr, 10);
     assert(numbers.isInt(value) && value > 0, "Wrong TTL value");
 
     switch (unit) {
@@ -66,10 +66,10 @@ function toSeconds(ttl: TTLValue): number {
 
 function toMinutes(ttl: TTLValue): number {
     if (fn.is(ttl, "string")) {
-        return Math.floor(parseString(ttl) / SEC / MIN);
+        return Math.floor(parseString(ttl) / MIN);
     }
 
-    return Math.floor(ttl / SEC / MIN);
+    return Math.floor(ttl / MIN);
 }
 
 export const ttl = {parse, toSeconds, toMinutes, parseString};

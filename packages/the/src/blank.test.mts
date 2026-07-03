@@ -17,6 +17,12 @@ describe("isBlank", async () => {
         expect(isBlank(undefined)).toBeTrue();
     });
 
+    test("should reject non-blank primitive values", () => {
+        expect(isBlank(0)).toBeFalse();
+        expect(isBlank(false)).toBeFalse();
+        expect(isBlank(1n)).toBeFalse();
+    });
+
     test("should work with object", () => {
         expect(isBlank({})).toBeTrue();
         expect(isBlank(null)).toBeTrue();

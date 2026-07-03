@@ -14,6 +14,18 @@ describe("env", () => {
         expect(() => createStrict<StrictEnv>({required: true}, {})).toThrowError();
         const env2 = createStrict<StrictEnv>({required: true}, {required: "required"});
         expect(env2.required).toBe("required");
+        expect(env2.get("required")).toBe("required");
+        expect(env2.pick(["required"])).toEqual({required: "required"});
+    });
+
+    test("createStatic(requires, payload?) rejects blank required values", () => {
+        type StrictEnv = {
+            required: string;
+        };
+
+        expect(() => createStrict<StrictEnv>({required: true}, {required: ""})).toThrowError(
+            "Variables should be defined: required",
+        );
     });
 
     test("detectRuntime()", () => {

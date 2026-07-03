@@ -18,10 +18,6 @@ export function truify<T>(value: T): value is NonNullable<T> {
     return Boolean(value);
 }
 
-export function valueable<T>(value: T): value is NonNullable<T> {
-    return Boolean(value);
-}
-
 export function isInstance<T extends Rec>(value: unknown): value is T {
     return typeof value === "object" && value !== null;
 }
@@ -105,7 +101,11 @@ function arrow<F extends Fn<any[], any>>(name: string, fn: F): F {
 export type NamedObject = Fn<any[], any> | {new (): unknown};
 
 function named<T extends NamedObject>(name: string, target: T): T {
-    return is(target, "function") ? arrow(name, target) : ({[name]: class extends (target as any) {}}[name] as T);
+    const isClass = is(target, "function") && Function.prototype.toString.call(target).startsWith("class ");
+
+    return is(target, "function") && !isClass
+        ? arrow(name, target)
+        : ({[name]: class extends (target as any) {}}[name] as T);
 }
 
 function construct<T extends {constructor: Function} | Function, A extends any[]>(target: T, ...args: A): T {
