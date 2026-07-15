@@ -122,7 +122,7 @@ first-class constraint injection. It can be used locally (in-process) or seriali
 
 - Execution:
     - All: `bun test`
-    - Watch: `bun test --watch`
+    - Watch: `bun --watch test`
 - Scope and style:
     - Prefer fast, isolated unit tests without external I/O.
     - Keep files small and focused; one test file per module.
