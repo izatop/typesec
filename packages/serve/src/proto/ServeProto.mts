@@ -15,6 +15,7 @@ export type ServeProtoConfig = {
     lookup: string[];
     routes?: Serve.Routes<unknown, string>;
     cors?: "auto-allow-any";
+    port?: number;
 };
 
 export class ServeProto extends ProtoAbstract<ServeInput> {
@@ -110,7 +111,7 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
 
             const server = Bun.serve({
                 routes,
-                port: 3000,
+                port: this.config.port ?? 3000,
                 development: runtime.isDevelopment() ? {hmr: runtime.hmr} : false,
             });
 

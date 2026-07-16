@@ -3,7 +3,7 @@ import {ServeProto} from "../index.mjs";
 
 export const app = context({
     name: "Test",
-    proto: ServeProto,
+    proto: ServeProto.configure({port: 0}),
     context: {version: 1},
 });
 

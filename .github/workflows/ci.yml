@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Run typecheck
+        run: bun run check
+
+  tests:
+    name: Tests and coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Run tests with coverage
+        run: bun run test:coverage
+      - name: Add coverage summary
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          if [[ ! -f coverage/lcov.info ]]; then
+            {
+              echo "## Test coverage"
+              echo
+              echo "Coverage report was not generated."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          awk '
+            /^LF:/  { lines_found += substr($0, 4) }
+            /^LH:/  { lines_hit += substr($0, 4) }
+            /^FNF:/ { functions_found += substr($0, 5) }
+            /^FNH:/ { functions_hit += substr($0, 5) }
+            END {
+              lines = lines_found ? 100 * lines_hit / lines_found : 100
+              functions = functions_found ? 100 * functions_hit / functions_found : 100
+              print "## Test coverage"
+              print ""
+              print "| Metric | Covered | Total | Coverage |"
+              print "| --- | ---: | ---: | ---: |"
+              printf "| Lines | %d | %d | %.2f%% |\n", lines_hit, lines_found, lines
+              printf "| Functions | %d | %d | %.2f%% |\n", functions_hit, functions_found, functions
+            }
+          ' coverage/lcov.info >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload LCOV report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-lcov-${{ github.sha }}
+          path: coverage/lcov.info
+          if-no-files-found: warn
+          retention-days: 14
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Audit dependencies
+        run: bun run audit
