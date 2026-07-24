@@ -72,4 +72,12 @@ function toMinutes(ttl: TTLValue): number {
     return Math.floor(ttl / MIN);
 }
 
-export const ttl = {parse, toSeconds, toMinutes, parseString};
+function toDate(ttl: TTLValue) {
+    return new Date(Date.now() + parse(ttl));
+}
+
+function asSeconds(value: number): TTLValue {
+    return `${value}s`;
+}
+
+export const ttl = {parse, toSeconds, toMinutes, parseString, toDate, asSeconds};
