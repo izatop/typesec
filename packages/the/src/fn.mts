@@ -114,6 +114,10 @@ function construct<T extends {constructor: Function} | Function, A extends any[]
     return new ctor(...args);
 }
 
+function combine<V1, V2, R>(fn1: Fn<[V1], V2>, fn2: Fn<[V2], R>): Fn<[V1], R> {
+    return (v1: V1) => fn2(fn1(v1));
+}
+
 export const fn = {
     is,
     once,
@@ -129,4 +133,5 @@ export const fn = {
     toStringValue,
     construct,
     truify,
+    combine,
 };
