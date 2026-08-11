@@ -159,4 +159,16 @@ describe("fn utils", () => {
         expect(fromConstructor.value).toBe(42);
         expect(fromObject.value).toBe(2);
     });
+
+    it("isThrow and isNotThrow should distinguish throwing callbacks", () => {
+        const throws = () => {
+            throw new Error("expected");
+        };
+        const returns = () => "value";
+
+        expect(fn.isThrow(throws)).toBeTrue();
+        expect(fn.isThrow(returns)).toBeFalse();
+        expect(fn.isNotThrow(throws)).toBeFalse();
+        expect(fn.isNotThrow(returns)).toBeTrue();
+    });
 });

@@ -36,6 +36,23 @@ describe("array", () => {
         expect(groups.size).toBe(2);
     });
 
+    it("map(values, by) should retain the last value for duplicate keys", () => {
+        const values = [
+            {id: "first", group: "a"},
+            {id: "second", group: "a"},
+            {id: "third", group: "b"},
+        ];
+
+        const mapped = array.map(values, (value) => value.group);
+
+        expect(mapped).toEqual(
+            new Map([
+                ["a", values[1]],
+                ["b", values[2]],
+            ]),
+        );
+    });
+
     it("async.shift(input) should resolve first item from promises and thunks", async () => {
         expect(await array.async.shift(Promise.resolve([1, 2]))).toBe(1);
         expect(await array.async.shift(() => Promise.resolve(["a", "b"]))).toBe("a");

@@ -1,5 +1,4 @@
 import {fn, type Fn, type Promisify} from "@typesec/the";
-import "./type.d";
 
 function uniq<T>(values: T[]): T[];
 function uniq<T, R>(values: T[], map: (value: T) => R): R[];
@@ -32,11 +31,21 @@ function group<T, R>(values: T[], by: (value: T) => R): Map<R, T[]> {
     return groups;
 }
 
+function map<T, R>(values: T[], by: (value: T) => R): Map<R, T> {
+    const mapping = new Map<R, T>();
+    for (const value of values) {
+        mapping.set(by(value), value);
+    }
+
+    return mapping;
+}
+
 export const array = {
     uniq,
     arraify,
     dearraify,
     group,
+    map,
     async: {
         shift: asyncShift,
     },

@@ -118,6 +118,20 @@ function combine<V1, V2, R>(fn1: Fn<[V1], V2>, fn2: Fn<[V2], R>): Fn<[V1], R> {
     return (v1: V1) => fn2(fn1(v1));
 }
 
+function isThrow(fn: Fn<[], unknown>): boolean {
+    try {
+        fn();
+
+        return false;
+    } catch {
+        return true;
+    }
+}
+
+function isNotThrow(fn: Fn<[], unknown>): boolean {
+    return !isThrow(fn);
+}
+
 export const fn = {
     is,
     once,
@@ -130,6 +144,8 @@ export const fn = {
     isInstance,
     isNullable,
     isNullish,
+    isThrow,
+    isNotThrow,
     toStringValue,
     construct,
     truify,
