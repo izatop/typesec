@@ -49,7 +49,7 @@ describe("array", () => {
             new Map([
                 ["a", values[1]],
                 ["b", values[2]],
-            ]),
+            ]) as typeof mapped,
         );
     });
 
