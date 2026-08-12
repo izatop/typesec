@@ -15,6 +15,7 @@ import {
     object,
     omit,
     override,
+    pick,
     prop,
     reverseEntries,
     toEntries,
@@ -92,6 +93,10 @@ describe("Object", () => {
 
     test("omit", () => {
         expect(omit({a: 1, b: 2, c: 3}, "b", "c")).toEqual({a: 1});
+    });
+
+    test("pick", () => {
+        expect(pick({a: 1, b: 2, c: 3}, "b", "c")).toEqual({b: 2, c: 3});
     });
 
     test("isNull", () => {

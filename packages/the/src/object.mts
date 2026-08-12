@@ -46,6 +46,10 @@ export function omit<T extends Rec, K extends keyof T>(target: T, ...keys: K[]):
     return reverseEntries(toEntries(target).filter(([key]) => !keys.some((k) => k === key)));
 }
 
+export function pick<T extends Rec, K extends keyof T>(target: T, ...keys: K[]): Pick<T, K> {
+    return reverseEntries(toEntries(target).filter(([key]) => keys.some((k) => k === key)));
+}
+
 export function isNull(value: unknown): value is null {
     return value === null;
 }
@@ -126,6 +130,7 @@ export const object = {
     is: isObject,
     isPlain,
     omit,
+    pick,
 };
 
 export default object;
