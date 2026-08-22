@@ -1,0 +1,16 @@
+{
+  "name": "@typesec/sam",
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "module": "./src/index.mts",
+  "exports": {
+    ".": {
+      "import": "./src/index.mts"
+    }
+  },
+  "dependencies": {
+    "@typesec/the": "catalog:",
+    "zod": "catalog:"
+  }
+}

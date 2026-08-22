@@ -23,6 +23,7 @@ export type DeArrayify<T> = T extends Array<infer A> ? A : T;
 export type InferArray<T extends any[]> = T extends (infer A)[] ? A : never;
 
 export type Promisify<T> = T | Promise<T> | PromiseLike<T>;
+export type MaybeThenable<T> = Promisify<T> | {then: (resolve: (value: number) => void) => any};
 
 export type KeyOf<T extends Rec, I extends string | number | symbol = string | number | symbol> = Extract<keyof T, I>;
 export type KeyOfValue<T extends Rec, TExtends> = ValueOf<{

@@ -61,6 +61,14 @@
         "zod": "catalog:",
       },
     },
+    "packages/sam": {
+      "name": "@typesec/sam",
+      "version": "0.1.0",
+      "dependencies": {
+        "@typesec/the": "catalog:",
+        "zod": "catalog:",
+      },
+    },
     "packages/serve": {
       "name": "@typesec/serve",
       "version": "0.1.0",
@@ -223,6 +231,8 @@
     "@typesec/gup": ["@typesec/gup@workspace:packages/gup"],
 
     "@typesec/mrpc": ["@typesec/mrpc@workspace:packages/mrpc"],
+
+    "@typesec/sam": ["@typesec/sam@workspace:packages/sam"],
 
     "@typesec/serve": ["@typesec/serve@workspace:packages/serve"],
 
