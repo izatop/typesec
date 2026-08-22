@@ -81,11 +81,13 @@ describe("pipeline", () => {
 
         expect(isXEqualToY<ReturnType<typeof identity.run>, string>(true)).toBe(true);
         expect(identity.run("value")).toBe("value");
+    });
 
-        if (false) {
-            // @ts-expect-error parse is only available when a pipeline starts with schema(...)
-            identity.parse(1);
-        }
+    it.skip("rejects parse on identity pipelines at the type level", () => {
+        const identity = pipeline<string>();
+
+        // @ts-expect-error parse is only available when a pipeline starts with schema(...)
+        identity.parse(1);
     });
 
     it("exposes parse only on schema-rooted pipelines at runtime", () => {
@@ -549,54 +551,50 @@ describe("public API", () => {
 });
 
 describe("type constraints", () => {
-    it("rejects incompatible patterns and incomplete transition APIs", () => {
-        if (false) {
-            const operations = pipeline<{kind: "avg" | "min"}>();
+    it.skip("rejects incompatible patterns and incomplete transition APIs", () => {
+        const operations = pipeline<{kind: "avg" | "min"}>();
 
-            // @ts-expect-error refinement values must be compatible with the pipeline input
-            operations.pipe(refine({kind: "bogus"}));
+        // @ts-expect-error refinement values must be compatible with the pipeline input
+        operations.pipe(refine({kind: "bogus"}));
 
-            const onlyA = refine({kind: "a"});
-            // @ts-expect-error a direct pattern step call must validate the input value
-            onlyA({kind: "b"} as const);
+        const onlyA = refine({kind: "a"});
+        // @ts-expect-error a direct pattern step call must validate the input value
+        onlyA({kind: "b"} as const);
 
-            type Branch = {kind: "a"; a: number} | {kind: "b"; b: string};
-            const branches = pipeline<Branch>();
-            // @ts-expect-error a pattern cannot combine fields from different union branches
-            branches.pipe(refine({kind: "a", b: "cross-branch"}));
+        type Branch = {kind: "a"; a: number} | {kind: "b"; b: string};
+        const branches = pipeline<Branch>();
+        // @ts-expect-error a pattern cannot combine fields from different union branches
+        branches.pipe(refine({kind: "a", b: "cross-branch"}));
 
-            const BranchSchema = z.discriminatedUnion("kind", [
-                z.object({kind: z.literal("a"), a: z.number()}),
-                z.object({kind: z.literal("b"), b: z.string()}),
-            ]);
-            transitions(BranchSchema, {
-                // @ts-expect-error transition patterns cannot combine fields from different schema branches
-                broken: {name: "Broken", when: {kind: "a", b: "cross-branch"}, to: []},
-            });
+        const BranchSchema = z.discriminatedUnion("kind", [
+            z.object({kind: z.literal("a"), a: z.number()}),
+            z.object({kind: z.literal("b"), b: z.string()}),
+        ]);
+        transitions(BranchSchema, {
+            // @ts-expect-error transition patterns cannot combine fields from different schema branches
+            broken: {name: "Broken", when: {kind: "a", b: "cross-branch"}, to: []},
+        });
 
-            transitions(PaymentStateSchema, {
-                // @ts-expect-error transition patterns cannot contain fields outside the schema output
-                broken: {name: "Broken", when: {status: "created", bogus: true}, to: []},
-            });
+        transitions(PaymentStateSchema, {
+            // @ts-expect-error transition patterns cannot contain fields outside the schema output
+            broken: {name: "Broken", when: {status: "created", bogus: true}, to: []},
+        });
 
-            transitions(PaymentStateSchema, {
-                // @ts-expect-error correlated schema fields cannot form an impossible state pattern
-                broken: {name: "Broken", when: {status: "created", substatus: "manual_review"}, to: []},
-            });
+        transitions(PaymentStateSchema, {
+            // @ts-expect-error correlated schema fields cannot form an impossible state pattern
+            broken: {name: "Broken", when: {status: "created", substatus: "manual_review"}, to: []},
+        });
 
-            transitions(PaymentStateSchema, {
-                broken: {
-                    name: "Broken",
-                    when: {status: "created", substatus: null},
-                    // @ts-expect-error transition targets must reference a key from the same definition
-                    to: ["missing"],
-                },
-            });
+        transitions(PaymentStateSchema, {
+            broken: {
+                name: "Broken",
+                when: {status: "created", substatus: null},
+                // @ts-expect-error transition targets must reference a key from the same definition
+                to: ["missing"],
+            },
+        });
 
-            // @ts-expect-error match handlers must cover every transition key
-            match(paymentTransitions, {created: () => "created"});
-        }
-
-        expect(true).toBe(true);
+        // @ts-expect-error match handlers must cover every transition key
+        match(paymentTransitions, {created: () => "created"});
     });
 });
