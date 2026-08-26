@@ -1,4 +1,4 @@
 [install]
-linker = isolated
+linker = "isolated"
 
 minimumReleaseAge = 259200
