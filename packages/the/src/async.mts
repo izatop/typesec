@@ -1,5 +1,5 @@
-import {fn} from "./fn.mts";
-import object from "./object.mts";
+import {fn} from "./fn.mjs";
+import object from "./object.mjs";
 import type {Fn, MaybeThenable} from "./type.mjs";
 
 function isPromise<R = unknown>(value: Promise<R> | R): value is Promise<R> {

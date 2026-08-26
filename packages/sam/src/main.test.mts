@@ -1,10 +1,10 @@
 import {isXEqualToY, isXExtendsOfY} from "@typesec/the";
 import {describe, expect, it} from "bun:test";
 import z from "zod";
-import {RefinementError, TransitionError} from "./errors.mts";
-import * as sam from "./index.mts";
-import type {StateChange} from "./interfaces.mts";
-import {issue, match, pipeline, refine, schema, transitions} from "./main.mts";
+import {RefinementError, TransitionError} from "./errors.mjs";
+import * as sam from "./index.mjs";
+import type {StateChange} from "./interfaces.mjs";
+import {issue, match, pipeline, refine, schema, transitions} from "./main.mjs";
 
 const PaymentStateSchema = z.discriminatedUnion("status", [
     z.object({

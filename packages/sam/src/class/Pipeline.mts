@@ -2,13 +2,13 @@ import {async} from "@typesec/the/async";
 import type {
     CompatiblePattern,
     NarrowByPattern,
-    PatternStep,
     ParsedPipeline as ParsedPipelineContract,
+    PatternStep,
     Pipeline as PipelineContract,
     PipeResult,
     RegularStep,
     Step,
-} from "../interfaces.mts";
+} from "../interfaces.mjs";
 
 export class Pipeline<TInput, TOutput> implements PipelineContract<TInput, TOutput> {
     readonly #step: Step<TInput, TOutput>;
