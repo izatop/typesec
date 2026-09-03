@@ -1,6 +1,5 @@
-import {AssertionError} from "node:assert";
 import {describe, expect, test} from "bun:test";
-import {assert} from "./assert.mjs";
+import {assert, AssertionError} from "./assert.mjs";
 
 describe("assert", () => {
     test("passes through truthy values", () => {
@@ -11,6 +10,12 @@ describe("assert", () => {
     test("throws AssertionError with string message", () => {
         expect(() => assert(false, "failed")).toThrow(AssertionError);
         expect(() => assert(false, "failed")).toThrow("failed");
+
+        try {
+            assert(false, "failed");
+        } catch (error) {
+            expect(error).toMatchObject({name: "AssertionError", code: "ERR_ASSERTION"});
+        }
     });
 
     test("uses Error message when message is an Error", () => {

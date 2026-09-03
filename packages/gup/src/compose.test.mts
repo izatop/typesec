@@ -1,5 +1,5 @@
 import {describe, expect, it} from "bun:test";
-import {AssertionError} from "node:assert";
+import {AssertionError} from "@typesec/the/assert";
 import {compose, composer} from "./composer.mjs";
 import {proto} from "./proto.mjs";
 import {scalars} from "./scalars.mjs";
@@ -26,7 +26,7 @@ describe("Composer", async () => {
         expect(valid).toEqual({
             input,
             type: scalars.string,
-            reason: new AssertionError({message: "ASSERT_WRONG_VALUE_KIND"}),
+            reason: new AssertionError("ASSERT_WRONG_VALUE_KIND"),
             defect: true,
         });
     });
@@ -44,7 +44,7 @@ describe("Composer", async () => {
                     defect: true,
                     type: null,
                     input: false,
-                    reason: new AssertionError({message: "ASSERT_CANNOT_SELECT_SUBJECT"}),
+                    reason: new AssertionError("ASSERT_CANNOT_SELECT_SUBJECT"),
                 },
             ],
         });
@@ -57,7 +57,7 @@ describe("Composer", async () => {
             defect: true,
             input: 123,
             type: T,
-            reason: new AssertionError({message: "ASSERT_WRONG_VALUE"}),
+            reason: new AssertionError("ASSERT_WRONG_VALUE"),
         });
     });
 
@@ -79,13 +79,13 @@ describe("Composer", async () => {
                     defect: true,
                     type: scalars.string,
                     input: 1,
-                    reason: new AssertionError({message: "ASSERT_WRONG_VALUE_KIND"}),
+                    reason: new AssertionError("ASSERT_WRONG_VALUE_KIND"),
                 },
                 age: {
                     defect: true,
                     type: scalars.int,
                     input: undefined,
-                    reason: new AssertionError({message: "ASSERT_WRONG_VALUE_KIND"}),
+                    reason: new AssertionError("ASSERT_WRONG_VALUE_KIND"),
                 },
             },
         });
@@ -105,13 +105,13 @@ describe("Composer", async () => {
             defect: true,
             type: M,
             input: null,
-            reason: new AssertionError({message: "ASSERT_WRONG_VALUE"}),
+            reason: new AssertionError("ASSERT_WRONG_VALUE"),
         });
         expect(resUndef).toEqual({
             defect: true,
             type: M,
             input: undefined,
-            reason: new AssertionError({message: "ASSERT_WRONG_VALUE"}),
+            reason: new AssertionError("ASSERT_WRONG_VALUE"),
         });
     });
 
@@ -128,7 +128,7 @@ describe("Composer", async () => {
             defect: true,
             input: 123,
             type: M,
-            reason: new AssertionError({message: "ASSERT_WRONG_VALUE"}),
+            reason: new AssertionError("ASSERT_WRONG_VALUE"),
         });
     });
 
@@ -140,7 +140,7 @@ describe("Composer", async () => {
             defect: true,
             type: U,
             input: {},
-            reason: new AssertionError({message: "ASSERT_CANNOT_SELECT_SUBJECT"}),
+            reason: new AssertionError("ASSERT_CANNOT_SELECT_SUBJECT"),
         });
         expect(res2).toEqual({type: U, value: {type: scalars.int, value: 10}});
     });
@@ -160,7 +160,7 @@ describe("Composer", async () => {
             defect: true,
             type: T,
             input: ["x", 1, 2],
-            reason: new AssertionError({message: "ASSERT_WRONG_TUPLE_LENGHT"}),
+            reason: new AssertionError("ASSERT_WRONG_TUPLE_LENGHT"),
         });
     });
 
@@ -174,7 +174,7 @@ describe("Composer", async () => {
                     defect: true,
                     type: null,
                     input: {},
-                    reason: new AssertionError({message: "ASSERT_CANNOT_SELECT_SUBJECT"}),
+                    reason: new AssertionError("ASSERT_CANNOT_SELECT_SUBJECT"),
                 },
             ],
         });

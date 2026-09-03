@@ -1,16 +1,16 @@
-import {AssertionError} from "node:assert";
+export class AssertionError extends Error {
+    public readonly code = "ERR_ASSERTION";
+
+    public constructor(message: string) {
+        super(message);
+        this.name = "AssertionError";
+    }
+}
 
 export function assert(value: unknown, message: string | Error): asserts value {
     if (value) {
         return;
     }
 
-    const err = new AssertionError({
-        message: message instanceof Error ? message.message : message,
-        stackStartFn: assert,
-    });
-
-    Error.captureStackTrace(err);
-
-    throw err;
+    throw new AssertionError(message instanceof Error ? message.message : message);
 }
