@@ -1,4 +1,7 @@
-import {assert, fn, object, type Rec} from "@typesec/the";
+import {assert} from "@typesec/the/assert";
+import {fn} from "@typesec/the/fn";
+import {object} from "@typesec/the/object";
+import type {Rec} from "@typesec/the/type";
 import {Contract} from "./class/Contract.mjs";
 import type {Domain} from "./interfaces.mjs";
 

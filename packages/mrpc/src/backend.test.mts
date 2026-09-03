@@ -1,4 +1,4 @@
-import {isXEqualToY} from "@typesec/the";
+import {isXEqualToY} from "@typesec/the/test";
 import {describe, expect, test} from "bun:test";
 import {MyBackend} from "./test/backend.mjs";
 

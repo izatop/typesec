@@ -1,4 +1,6 @@
-import {assert, object, type Rec} from "@typesec/the";
+import {assert} from "@typesec/the/assert";
+import {object} from "@typesec/the/object";
+import type {Rec} from "@typesec/the/type";
 import z from "zod";
 import type {ClientQuery, ClientResult} from "../index.mjs";
 import type {Domain, IClientProtocol} from "../interfaces.mjs";

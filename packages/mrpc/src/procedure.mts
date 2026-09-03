@@ -1,4 +1,5 @@
-import {fn, type Promisify} from "@typesec/the";
+import {fn} from "@typesec/the/fn";
+import type {Promisify} from "@typesec/the/type";
 import type z from "zod";
 import type {Contract} from "./class/Contract.mjs";
 import type {ProcedureAbstract} from "./class/ProcedureAbstract.mjs";

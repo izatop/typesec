@@ -1,4 +1,4 @@
-import type {KeyOf, Rec} from "@typesec/the";
+import type {KeyOf, Rec} from "@typesec/the/type";
 import z from "zod";
 import type {Backend} from "./class/Backend.mjs";
 import type {Contract} from "./class/Contract.mjs";
