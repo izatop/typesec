@@ -1,6 +1,6 @@
-import {object, type Rec} from "@typesec/the";
+import type {Rec} from "@typesec/the";
 import {assert} from "@typesec/the/assert";
-import {is} from "@typesec/the/fn";
+import {is, isNullish} from "@typesec/the/fn";
 import {resolveSync} from "bun";
 import type Module from "node:module";
 import path from "node:path";
@@ -8,6 +8,10 @@ import type {Application, HandleEntry, Proto} from "./interfaces.mjs";
 import type {ProtoAbstract} from "./ProtoAbstract.mjs";
 import {tracer} from "./tracer.mjs";
 
+/**
+ * Imports an application entrypoint and runs its protocol against the `app` directory beside it.
+ * @category protocol
+ */
 export async function runApplication(location: string): Promise<void> {
     tracer.log("runApplication( <%s> )", location);
 
@@ -16,6 +20,10 @@ export async function runApplication(location: string): Promise<void> {
     await proto.run({path: path.resolve(path.dirname(realPath), "app")});
 }
 
+/**
+ * Reads the application from a module's default export, asserting it is one.
+ * @category protocol
+ */
 export function getApplication<TContext, TProto extends ProtoAbstract<TIn>, TIn, TRet>(
     module: Rec,
 ): Application<TContext, TProto, TIn, TRet> {
@@ -25,12 +33,20 @@ export function getApplication<TContext, TProto extends ProtoAbstract<TIn>, TIn,
     return module["default"];
 }
 
+/**
+ * Whether a value is an application factory.
+ * @category guard
+ */
 export function isApplication<TContext, TProto extends ProtoAbstract<TIn>, TIn, TRet>(
     value: unknown,
 ): value is Application<TContext, TProto, TIn, TRet> {
     return is(value, "function") && "proto" in value;
 }
 
+/**
+ * Reads an entrypoint handle from a routed module, asserting it belongs to the expected protocol.
+ * @category protocol
+ */
 export function getHandle<TProto extends ProtoAbstract<TIn>, TIn, TRet>(
     proto: Proto<TProto, TIn, TRet>,
     module: Module,
@@ -42,23 +58,35 @@ export function getHandle<TProto extends ProtoAbstract<TIn>, TIn, TRet>(
     return module.default;
 }
 
+/**
+ * Whether a value is an entrypoint handle.
+ * @category guard
+ */
 export function isHandleEntry<TProto extends ProtoAbstract<TIn>, TIn, TRet>(
     value: unknown,
 ): value is HandleEntry<TProto, TIn, TRet> {
     return is(value, "function") && "proto" in value && "meta" in value;
 }
 
-function isProtoOf<TProto extends ProtoAbstract<TIn>, TIn, TRet>(proto: Proto<TProto, TIn, TRet>, input: unknown) {
-    if (proto === proto) {
-        return true;
-    }
+/**
+ * Whether an entrypoint's proto is the one the running protocol expects, or derived from it.
+ *
+ * A protocol may subclass itself — `ServeProto.configure(...)` returns one — so the check walks the
+ * static prototype chain instead of comparing the two classes directly.
+ */
+function isProtoOf<TProto extends ProtoAbstract<TIn>, TIn, TRet>(
+    proto: Proto<TProto, TIn, TRet>,
+    input: unknown,
+): boolean {
+    let next = input;
 
-    let next = Object.getPrototypeOf(input);
-    do {
+    while (!isNullish(next)) {
         if (next === proto) {
             return true;
         }
-    } while (object.isNull(next));
+
+        next = Object.getPrototypeOf(next);
+    }
 
     return false;
 }
