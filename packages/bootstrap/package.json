@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "license": "MIT",
   "bin": {
+    "typesec-api": "bin/typesec-api",
     "typesec-sync": "bin/typesec-sync"
   },
   "type": "module",
@@ -10,6 +11,14 @@
   "exports": {
     ".": {
       "import": "./src/index.mts"
+    },
+    "./api": {
+      "import": "./src/api/index.mts"
     }
+  },
+  "dependencies": {
+    "@commander-js/extra-typings": "catalog:",
+    "commander": "catalog:",
+    "oxc-parser": "catalog:"
   }
 }
