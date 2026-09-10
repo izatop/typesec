@@ -309,12 +309,41 @@ SAM does not wrap errors from schemas, predicates, actions, transforms, or selec
 ```ts
 export {issue, match, pipeline, refine, schema, transitions};
 
-export type {Pipeline, StateChange, Step, Transitions};
-
 export {RefinementError, TransitionError};
+
+export type {
+    AllowedStateChange,
+    ParsedPipeline,
+    ParserStep,
+    PatternStep,
+    Pipeline,
+    StateChange,
+    Step,
+    TransitionDefinition,
+    TransitionErrorCode,
+    TransitionKey,
+    TransitionState,
+    TransitionStateDefinition,
+    Transitions,
+};
 ```
 
 `Transitions` names the runtime object because it owns the state graph. A transition is one edge in that graph; v1 does not need a public `Transition` class.
+
+Every type a public function returns or asks for is exported, so a caller can write it down instead of only obtaining it through inference:
+
+```ts
+const parser: ParserStep<string, string> = schema(z.string());
+
+const states = {
+    created: {name: "Created", when: {status: "created"}, to: ["paid"]},
+    paid: {name: "Paid", when: {status: "paid"}, to: []},
+} as const satisfies TransitionDefinition<Payment>;
+
+const key: TransitionKey<typeof states> = payments.resolve(payment);
+```
+
+The inference machinery stays internal. `CompatiblePattern`, `NarrowByPattern`, `PipeResult`, `RegularStep`, `StatePattern` and `ValidateTransitionDefinition` constrain parameters and never appear in code a caller writes. The `parserStep` and `patternStep` symbols stay internal for the same reason: a parser step comes from `schema(...)` and a pattern step from `refine(...)`, never from a literal.
 
 ## Non-goals
 

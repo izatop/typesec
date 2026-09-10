@@ -1,4 +1,14 @@
+import {isXEqualToY} from "@typesec/the/test";
 import {beforeEach, describe, expect, test} from "bun:test";
+import {
+    PendingError,
+    PendingService,
+    ServiceRef,
+    type ServiceState,
+    type ServiceStateKnonwn,
+    type ServiceStateKnown,
+    type ServiceStateResolved,
+} from "./index.mjs";
 import {define, locator, resolve, service, state, sync, syncArray, unload} from "./service/fn.mjs";
 import {TestService} from "./test/TestService.mjs";
 import {TestService2} from "./test/TestService2.mjs";
@@ -63,5 +73,26 @@ describe("Service", () => {
             expect(s1).toBeInstanceOf(TestService);
             expect(s2).toBeInstanceOf(TestService2);
         });
+    });
+});
+
+describe("Service exports", () => {
+    test("the package root exposes the types its public API refers to", () => {
+        // `service()` returns a ServiceRef and `locator` catches a PendingError, so a consumer has
+        // to be able to name both.
+        expect(ServiceRef.is(define("MyExportedDef", () => new TestService()))).toBeTrue();
+        expect(
+            new PendingService(
+                define("MyPendingDef", () => new TestService()),
+                new TestService(),
+            ),
+        ).toBeInstanceOf(PendingError);
+    });
+
+    test("the misspelled state alias still resolves to the same type", () => {
+        expect(isXEqualToY<ServiceStateKnonwn, ServiceStateKnown>(true)).toBeTrue();
+        expect(
+            isXEqualToY<ServiceState<TestService>, ServiceStateKnown | ServiceStateResolved<TestService>>(true),
+        ).toBeTrue();
     });
 });

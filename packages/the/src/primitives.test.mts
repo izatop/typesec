@@ -3,7 +3,7 @@ import {primitives} from "./primitives.mjs";
 
 describe("primitives", () => {
     test("exports representative primitive and callable values", () => {
-        expect(primitives.Objec).toEqual({});
+        expect(primitives.Object).toEqual({});
         expect(primitives.Array).toEqual([]);
         expect(primitives.Float).toBe(1.1);
         expect(primitives.Number).toBe(1);
@@ -14,5 +14,9 @@ describe("primitives", () => {
         expect(primitives.Closure()).toBeUndefined();
         expect(primitives.Function.name).toBe("named");
         expect(primitives.Function()).toBeUndefined();
+    });
+
+    test("keeps the misspelled key pointing at the same value", () => {
+        expect(primitives.Objec).toBe(primitives.Object);
     });
 });
