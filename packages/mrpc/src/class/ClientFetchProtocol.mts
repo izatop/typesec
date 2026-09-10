@@ -4,6 +4,11 @@ import {object} from "@typesec/the/object";
 import type {IClientProtocol, ProtocolRequest, ProtocolResponse} from "../interfaces.mjs";
 import {ClientURLStore} from "./ClientURLStore.mjs";
 
+/**
+ * A client transport over `fetch`, posting the query as JSON.
+ * @category rpc
+ * @example client(domain, new ClientFetchProtocol("/rpc"))
+ */
 export class ClientFetchProtocol implements IClientProtocol {
     readonly #url: ClientURLStore;
 
@@ -11,6 +16,7 @@ export class ClientFetchProtocol implements IClientProtocol {
         this.#url = is(url, "string") ? new ClientURLStore(url) : url;
     }
 
+    /** Posts the query and returns the response, turning a transport failure into a reason rather than a throw. */
     public async query(request: ProtocolRequest): Promise<ProtocolResponse> {
         const res = await fetch(this.#url.get(), {
             body: JSON.stringify(request.query),

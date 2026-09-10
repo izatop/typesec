@@ -1,6 +1,10 @@
 import {is} from "./fn.mjs";
 import {isNull} from "./object.mjs";
 
+/**
+ * The value kinds `isBlank` inspects.
+ * @category guard
+ */
 export type BankTypeList = "string" | "number" | "object";
 
 const validators = {
@@ -14,6 +18,12 @@ const validators = {
     },
 };
 
+/**
+ * Whether a value carries no content: `undefined`, an empty string, `null`, an empty object, or an array of holes.
+ *
+ * Zero and `false` are content, so they are not blank.
+ * @category guard
+ */
 export function isBlank(value: unknown) {
     const type = typeof value;
 

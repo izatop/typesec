@@ -3,12 +3,20 @@ import {log} from "@typesec/tracer";
 import {PendingError} from "./PendingError.mjs";
 import type {PendingService} from "./PendingService.mjs";
 
+/**
+ * Raised by `syncArray` when several services are still being built, so one retry covers them all.
+ * @category service
+ */
 export class PendingServiceList<T extends PendingService<any>> extends PendingError<T[]> {
-    constructor(readonly pendings: Promisify<T>[]) {
+    constructor(
+        /** Every service still being built when `syncArray` gave up. */
+        readonly pendings: Promisify<T>[],
+    ) {
         super();
     }
 
     /* oxlint-disable unicorn/no-thenable expected behavior */
+    /** Awaits every pending service in the list. */
     public then<TResult1 = T[], TResult2 = never>(
         onfulfilled?: ((value: T[]) => TResult1 | PromiseLike<TResult1>) | null | undefined,
         onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined,

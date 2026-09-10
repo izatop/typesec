@@ -1,11 +1,21 @@
 import {TransitionError} from "../errors.mjs";
 import type {TransitionDefinition, TransitionKey} from "../interfaces.mjs";
 
+/**
+ * A state graph: named states with the patterns that identify them and the moves they allow.
+ *
+ * It reads and validates state without changing it. Every state must match exactly one
+ * pattern, so patterns are expected not to overlap.
+ * @category state
+ */
 export class Transitions<
     TState extends object,
     TDefinition extends TransitionDefinition<TState, TransitionKey<TDefinition>>,
 > {
-    constructor(public readonly states: TDefinition) {
+    constructor(
+        /** The state definitions, keyed by identifier. */
+        public readonly states: TDefinition,
+    ) {
         if (typeof states !== "object" || states === null || Array.isArray(states)) {
             throw new TransitionError("INVALID_DEFINITION", "Transition definition must be an object");
         }
@@ -40,6 +50,7 @@ export class Transitions<
         }
     }
 
+    /** The identifier of the state a value is in, throwing when no pattern or more than one matches. */
     public resolve(state: TState): TransitionKey<TDefinition> {
         const matches = this.entries().filter(([, definition]) => this.matches(state, definition.when));
 
@@ -55,6 +66,7 @@ export class Transitions<
         return matches[0]![0];
     }
 
+    /** Whether the graph allows a move between two state values. */
     public can(from: TState, to: TState): boolean {
         const fromKey = this.resolve(from);
         const toKey = this.resolve(to);
@@ -62,6 +74,7 @@ export class Transitions<
         return this.states[fromKey].to.includes(toKey);
     }
 
+    /** Throws `TransitionError` unless the graph allows the move. */
     public assert(from: TState, to: TState): void {
         const fromKey = this.resolve(from);
         const toKey = this.resolve(to);

@@ -1,6 +1,14 @@
 import type {KeyOf, Rec} from "./type.mjs";
 
+/**
+ * A binary size unit, each step 1024 times the previous one.
+ * @category bytes
+ */
 export type ByteUnit = "b" | "Kb" | "Mb" | "Gb" | "Tb" | "Pb";
+/**
+ * The byte count of every unit.
+ * @category bytes
+ */
 export type ByteGrade = Rec<ByteUnit, number>;
 
 const byteGrade: ByteGrade = {
@@ -12,10 +20,19 @@ const byteGrade: ByteGrade = {
     Pb: Math.pow(2, 50),
 };
 
+/**
+ * The number of bytes in `amount` units.
+ * @category bytes
+ * @example bytes.size("Mb", 8) // 8388608
+ */
 function size<G extends KeyOf<ByteGrade, string>>(to: G, amount = 1) {
     return byteGrade[to] * amount;
 }
 
+/**
+ * Binary size arithmetic.
+ * @category bytes
+ */
 export const bytes = {
     size,
 };

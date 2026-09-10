@@ -4,6 +4,10 @@ import {type TracerStackLine} from "./interfaces.mjs";
 const lineMatch = /([^\s]+)\s\((.+):(\d+):(\d+)\)/;
 const {pathname} = new URL(import.meta.url);
 
+/**
+ * Parses one raw stack frame into its name, file, line and column.
+ * @category tracing
+ */
 export function parseLine(str: string): TracerStackLine {
     const [, name, file, line, position] = str.match(lineMatch) ?? [void 0, "unknown", "unknown", 0, 0];
 
@@ -16,6 +20,10 @@ export function parseLine(str: string): TracerStackLine {
     };
 }
 
+/**
+ * The current call stack, with the tracer's own frames removed.
+ * @category tracing
+ */
 export function getCallStack(): TracerStackLine[] {
     const err = new Error();
     Error.captureStackTrace(err, getCallStack);

@@ -8,6 +8,12 @@ import {ClientError} from "./ClientError.mjs";
 import {ClientLazyQuery} from "./ClientLazyQuery.mjs";
 import {Contract} from "./Contract.mjs";
 
+/**
+ * The caller side of a domain, typed by the same contracts the backend implements.
+ *
+ * Encodes a query with the domain's input schemas, sends it over the protocol, and decodes the response with the output schemas.
+ * @category rpc
+ */
 export class Client<TDomain extends Domain<string, Rec<string, unknown>>> {
     readonly #protocol: IClientProtocol;
     readonly #domain: TDomain;
@@ -17,6 +23,7 @@ export class Client<TDomain extends Domain<string, Rec<string, unknown>>> {
         this.#protocol = protocol;
     }
 
+    /** Sends a query and returns the decoded result, throwing `ClientError` when the server reports a failure. */
     public async query<Q extends ClientQuery<Domain.Infer<TDomain>>>(
         query: Q,
     ): Promise<ClientResult<Domain.Infer<TDomain>, Q>> {
@@ -31,6 +38,7 @@ export class Client<TDomain extends Domain<string, Rec<string, unknown>>> {
         return this.#decode(this.#domain.root, response.data) as ClientResult<Domain.Infer<TDomain>, Q>;
     }
 
+    /** Prepares a query without sending it. */
     public lazy<Q extends ClientQuery<Domain.Infer<TDomain>>>(query: Q): ClientLazyQuery<TDomain, Q> {
         return new ClientLazyQuery(this, query);
     }

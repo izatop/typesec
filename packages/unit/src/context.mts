@@ -4,6 +4,13 @@ import type {Application, Factory, SetupOptions} from "./interfaces.mjs";
 import type {ProtoAbstract} from "./ProtoAbstract.mjs";
 import {tracer} from "./tracer.mjs";
 
+/**
+ * Declares an application: a protocol, a context, and metadata.
+ *
+ * Returns the factory each entrypoint file calls to register its handler. The factory resolves the context once through the service container, builds a protocol instance per request, validates the response, and disposes both.
+ * @category protocol
+ * @example export const app = context({name: "Test", proto: ServeProto, context: {version: 1}})
+ */
 export function context<TProto extends ProtoAbstract<TIn>, TIn, TRet, TContext>(
     args: SetupOptions<TContext, TProto, TIn, TRet>,
 ): Application<TContext, TProto, TIn, TRet> {

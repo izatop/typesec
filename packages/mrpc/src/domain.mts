@@ -7,6 +7,13 @@ import type {Domain} from "./interfaces.mjs";
 
 const registry = new Map();
 
+/**
+ * Names a tree of contracts, checking that every leaf is one and that the name is not already taken.
+ *
+ * The same domain is given to `backend` on the server and to `client` on the caller, which is what keeps the two ends in step.
+ * @category rpc
+ * @example domain("TestDomain", {strings: {count: StringCountContract}})
+ */
 export function domain<N extends string, T extends Rec<string, unknown>>(name: N, schema: T): Domain<N, T> {
     assert(!registry.has(name), `Domain ${name} is already exists`);
     registry.set(name, true);

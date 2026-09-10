@@ -1,11 +1,22 @@
 import {async} from "@typesec/the/async";
 import z from "zod";
 
+/**
+ * A contract output that streams values instead of returning one.
+ * @category rpc
+ */
 export type ZodSubscription<S extends z.ZodType> = z.ZodType<
     AsyncIterableIterator<z.output<S>>,
     AsyncIteratorObject<z.input<S>>
 >;
 
+/**
+ * Makes a contract output a stream of values validated one at a time.
+ *
+ * The procedure returns an async generator, and every yielded value is parsed as it passes through.
+ * @category rpc
+ * @example contract({output: subscription(z.string())})
+ */
 export function subscription<S extends z.ZodType>(schema: S): ZodSubscription<S> {
     return z
         .custom<AsyncIteratorObject<z.input<S>>>((input) => {

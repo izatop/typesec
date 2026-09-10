@@ -8,22 +8,36 @@ import path from "node:path";
 import {crush} from "radash";
 import {ArgvParser, type ArgvOption, type OptionPattern} from "../index.mjs";
 
+/**
+ * What a CLI entrypoint receives: the raw argv and the route that matched.
+ * @category cli
+ */
 export type CLIInput = {
     request: string[];
     route: MatchedRoute;
 };
 
+/**
+ * The CLI protocol: file-system routing over argv, with option parsing and table output.
+ *
+ * Directories under the application's `app` folder become the command tree, and a command's default export is its handler.
+ * @category cli
+ * @category protocol
+ */
 export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
     readonly #argv = new ArgvParser({});
 
+    /** A CLI command returns nothing; anything else is a protocol error. */
     public static validate(value: unknown): value is void {
         return typeof value === "undefined";
     }
 
+    /** The process arguments, without the interpreter path. */
     public get argv(): string[] {
         return process.argv.slice(1);
     }
 
+    /** Starts an option parser for this command. */
     public option<T extends string>(pattern: OptionPattern<T>): ArgvParser<Rec<T, ArgvOption<T, false>>>;
     public option<T extends string>(
         pattern: OptionPattern<T>,
@@ -40,6 +54,7 @@ export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
         return this.#argv.option(pattern, required);
     }
 
+    /** Routes the given arguments to a command and runs it. */
     public static async runWith(args: MainArgs, argv: string[]): Promise<void> {
         const logger = wrap("cli");
         logger.log("run( <%s> )", args.path);
@@ -66,10 +81,15 @@ export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
         await dispose(res);
     }
 
+    /** Routes `process.argv` to a command and runs it. */
     public static async run(args: MainArgs): Promise<void> {
         return this.runWith(args, process.argv.slice(2));
     }
 
+    /**
+     * Prints rows as a table, one row per record.
+     * @example proto.table("Users", users, ["id", "email"])
+     */
     public table<T extends Rec>(name: string, table: T[], pick?: StringKeyOf<T>[]) {
         process.stdout.write(
             name +
@@ -83,6 +103,7 @@ export class CommandLineInterfaceProto extends ProtoAbstract<CLIInput> {
         );
     }
 
+    /** Prints rows as key-value blocks, for records too wide for columns. */
     public verticalTable<T extends Rec, K extends keyof T>(name: string, data: T[], id?: K) {
         const table = [];
         for (const row of data) {

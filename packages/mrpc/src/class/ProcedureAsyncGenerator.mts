@@ -2,6 +2,10 @@ import z from "zod";
 import type {ZodSubscription} from "../subscription.mjs";
 import {ProcedureAbstract} from "./ProcedureAbstract.mjs";
 
+/**
+ * A procedure whose handler returns an async generator, backing a subscription.
+ * @category rpc
+ */
 export class ProcedureAsyncGenerator<
     TContext,
     TIn extends z.ZodType,
@@ -14,6 +18,7 @@ export class ProcedureAsyncGenerator<
     AsyncIteratorObject<z.input<TOut>>,
     AsyncIterableIterator<z.output<TOut>>
 > {
+    /** Validates the input and returns a stream that validates every value it yields. */
     public encode(context: TContext, raw: unknown): AsyncIterableIterator<z.output<TOut>> {
         const {
             config: {input, output},
@@ -27,6 +32,7 @@ export class ProcedureAsyncGenerator<
         return output.encode(result as z.output<ZSub>) as AsyncIterableIterator<z.output<TOut>>;
     }
 
+    /** Returns the handler's generator over validated input. */
     public run(context: TContext, input: z.output<TIn>) {
         return this.handler({context, input});
     }

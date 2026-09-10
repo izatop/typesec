@@ -77,30 +77,61 @@ function getLogArgs(label: TracerLevel, ...args: TracerFunctionArgs): TracerFunc
     ];
 }
 
+/**
+ * Emits at the lowest severity; printed only at verbosity 3.
+ * @category tracing
+ */
 export function log(...args: TracerFunctionArgs): void {
     if (v(3)) instance.log(getLogArgs("log", ...args).join(""));
 }
 
+/**
+ * Emits an informational line; printed from verbosity 2.
+ * @category tracing
+ */
 export function info(...args: TracerFunctionArgs): void {
     if (v(2)) instance.info(getLogArgs("info", ...args).join(""));
 }
 
+/**
+ * Emits a warning; printed from verbosity 1.
+ * @category tracing
+ */
 export function warn(...args: TracerFunctionArgs): void {
     if (v(1)) instance.warn(getLogArgs("warn", ...args).join(""));
 }
 
+/**
+ * Emits an error; printed at every verbosity unless tracing is disabled.
+ * @category tracing
+ */
 export function error(...args: TracerFunctionArgs): void {
     if (v(0)) instance.error(getLogArgs("error", ...args).join(""));
 }
 
+/**
+ * Formats a message without colours and without printing it, for error text.
+ * @category tracing
+ */
 export function format(...args: TracerFunctionArgs): string {
     return formatWithOptions({colors: false, compact: true}, ...args);
 }
 
+/**
+ * Changes tracer options at runtime.
+ * @category tracing
+ */
 export function setTracerOptions(setters: Partial<TracerOptions>) {
     Object.assign(options, setters);
 }
 
+/**
+ * A tracer that prefixes every message with a label.
+ *
+ * The label comes from the string, the value's `name`, or its constructor name, so a class can trace as itself.
+ * @category tracing
+ * @example const trace = wrap("cli");
+ */
 export function wrap(target: TracerWrapTarget): Tracer {
     const name = is(target, "string") ? target : "name" in target ? target.name : target.constructor.name;
 
@@ -112,6 +143,10 @@ export function wrap(target: TracerWrapTarget): Tracer {
     ) as Tracer;
 }
 
+/**
+ * The unlabelled tracer.
+ * @category tracing
+ */
 export const tracer: Tracer = {
     log,
     info,

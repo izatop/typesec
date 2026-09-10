@@ -8,6 +8,12 @@ import type {Domain, Implementation, StaticResolvers} from "../interfaces.mjs";
 import {ProcedureAbstract} from "./ProcedureAbstract.mjs";
 import {ProcedureAsync} from "./ProcedureAsync.mjs";
 
+/**
+ * The server side of a domain: every contract paired with the procedure that answers it.
+ *
+ * `query` runs procedures in process and returns their values; `execute` also encodes the result for a transport.
+ * @category rpc
+ */
 export class Backend<
     TContext,
     TDomain extends Domain<any, any>,
@@ -23,18 +29,22 @@ export class Backend<
         this.#procedures = crush(this.#impl) as Rec<string, ProcedureAsync<TContext, any, any>>;
     }
 
+    /** The procedures backing this domain. */
     public get implementation(): TImpl {
         return this.#impl;
     }
 
+    /** The domain this backend implements. */
     public get domain(): TDomain {
         return this.#domain;
     }
 
+    /** Runs a wire query and encodes the result for transport. */
     public async execute(context: TContext, query: unknown): Promise<Rec<string, unknown>> {
         return construct(await this.#deepExecuteAndEncode(context, query)) as Rec<string, unknown>;
     }
 
+    /** Runs a typed query in process, returning decoded values. */
     public async query<Q extends ClientQuery<Domain.Infer<TDomain>>>(
         context: TContext,
         query: Q,
@@ -88,6 +98,10 @@ export class Backend<
         return res;
     }
 
+    /**
+     * Binds a context to every procedure, so they can be called as plain functions without a transport.
+     * @example const api = MyBackend.createStatic(Math); api.strings.count("hello")
+     */
     public createStatic(context: TContext): StaticResolvers<TImpl>;
     public createStatic(context: Fn<[], Promise<TContext>>): Promise<StaticResolvers<TImpl>>;
     public createStatic(context: TContext | Fn<[], Promise<TContext>>): Promisify<StaticResolvers<TImpl>> {

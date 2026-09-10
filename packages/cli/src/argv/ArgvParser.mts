@@ -2,6 +2,13 @@ import type {Expand, Rec} from "@typesec/the";
 import {ArgvOption} from "./ArgvOption.mjs";
 import type {OptionPattern, ParseOptions} from "./interfaces.mjs";
 
+/**
+ * A parser built one option at a time, where the result type grows with it.
+ *
+ * Each `option` or `require` call returns a new parser, so `parse` returns a record whose keys and optionality are known at compile time.
+ * @category cli
+ * @example new ArgvParser({}).option("-f, --foo <foo>").parse(["-f", "value"]) // {foo: "value"}
+ */
 export class ArgvParser<O extends Rec<string, ArgvOption<string, boolean>>> {
     readonly #options: O;
 
@@ -12,10 +19,12 @@ export class ArgvParser<O extends Rec<string, ArgvOption<string, boolean>>> {
         this.#defaultArgv = argv ?? process.argv;
     }
 
+    /** Adds a required option, typed as `string` in the result. */
     public require<T extends string>(pattern: OptionPattern<T>): ArgvParser<O & Rec<T, ArgvOption<T, true>>> {
         return this.option(pattern, true);
     }
 
+    /** Adds an option, typed as `string | undefined` unless marked required. */
     public option<T extends string>(pattern: OptionPattern<T>): ArgvParser<O & Rec<T, ArgvOption<T, false>>>;
     public option<T extends string>(
         pattern: OptionPattern<T>,
@@ -37,6 +46,7 @@ export class ArgvParser<O extends Rec<string, ArgvOption<string, boolean>>> {
         });
     }
 
+    /** Parses argv into the typed record, throwing when a required option is missing. */
     public parse(argv?: string[]): Expand<ParseOptions<O>> {
         argv = argv ?? this.#defaultArgv;
         const args = argv.slice();

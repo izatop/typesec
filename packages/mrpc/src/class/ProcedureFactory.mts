@@ -8,6 +8,10 @@ import {ProcedureAsync} from "./ProcedureAsync.mjs";
 import {ProcedureAsyncGenerator} from "./ProcedureAsyncGenerator.mjs";
 import {ProcedureSync} from "./ProcedureSync.mjs";
 
+/**
+ * A contract waiting for its handler, so context middleware can be attached first.
+ * @category rpc
+ */
 export class ProcedureFactory<TContext, TIn extends z.ZodType, TOut extends z.ZodType> {
     readonly #contract: Contract<TIn, TOut>;
 
@@ -18,10 +22,14 @@ export class ProcedureFactory<TContext, TIn extends z.ZodType, TOut extends z.Zo
         this.#use = use;
     }
 
+    /** Adds middleware that maps the incoming context before the handler sees it. */
     public use<TNextContext>(fn: UseContextFn<TContext, TNextContext>): ProcedureFactory<TNextContext, TIn, TOut> {
         return new ProcedureFactory(this.#contract, fn);
     }
 
+    /**
+     * Attaches the handler, picking the procedure kind from what it returns: a value, a promise, or an async generator.
+     */
     public create<TSubOut extends z.ZodType, TSub extends ZodSubscription<TSubOut>>(
         this: ProcedureFactory<TContext, TIn, TSub>,
         handler: ProcedureHandler<TContext, TIn, z.output<TSubOut>>,

@@ -29,6 +29,14 @@ type MapMatchHandlers<TMap, TOutput> = {
     >;
 };
 
+/**
+ * Starts a pipeline.
+ *
+ * Given `schema(...)` it also exposes `parse` for unknown input; given a step, or
+ * nothing at all, it starts from a known type.
+ * @category pipeline
+ * @example pipeline(schema(z.string())).pipe((value) => value.length)
+ */
 export function pipeline<TInput, TOutput>(step: ParserStep<TInput, TOutput>): ParsedPipelineContract<TInput, TOutput>;
 export function pipeline<TInput>(): PipelineContract<TInput, TInput>;
 export function pipeline<TInput, TOutput>(step: Step<TInput, TOutput>): PipelineContract<TInput, TOutput>;
@@ -36,10 +44,22 @@ export function pipeline(step: Step<any, any> = (value) => value): PipelineContr
     return parserStep in step ? new ParsedPipeline(step) : new Pipeline(step);
 }
 
+/**
+ * Turns a Zod schema into a validating first stage.
+ * @category pipeline
+ */
 export function schema<TOutput, TInput = unknown>(schema: z.ZodType<TOutput, TInput>): ParserStep<TInput, TOutput> {
     return Object.assign((value: TInput) => schema.parse(value), {[parserStep]: true as const});
 }
 
+/**
+ * Narrows a value without changing it, by object pattern, type predicate, or state graph.
+ *
+ * With a `Transitions` and no key it validates a `{from, to}` change; with a key it
+ * narrows one value to that named state. A failure throws `RefinementError`.
+ * @category pipeline
+ * @example pipeline<Operation>().pipe(refine({kind: "avg"}))
+ */
 export function refine<
     TState extends object,
     TDefinition extends TransitionDefinition<TState, TransitionKey<TDefinition>>,
@@ -100,6 +120,11 @@ export function refine(refinement: object | ((input: any) => boolean), key?: str
     ) as PatternStep<typeof refinement>;
 }
 
+/**
+ * Builds a state graph from a schema and its state definitions, inferring the state type from the schema.
+ * @category state
+ * @example transitions(PaymentSchema, {created: {name: "Created", when: {status: "created"}, to: ["paid"]}})
+ */
 export function transitions<
     TSchema extends z.ZodType<object, any>,
     const TDefinition extends TransitionDefinition<z.output<TSchema>, TransitionKey<TDefinition>>,
@@ -110,6 +135,14 @@ export function transitions<
     return new Transitions<z.output<TSchema>, TDefinition>(definition);
 }
 
+/**
+ * Resolves the current state and runs the one handler for it.
+ *
+ * Handlers cover every state in the graph and each receives its narrowed type.
+ * Only the selected handler runs.
+ * @category state
+ * @example match(payments, {created: start, paid: settle})
+ */
 export function match<const TMap extends Transitions<object, any>, const TOutput>(
     map: TMap,
     handlers: MapMatchHandlers<TMap, TOutput>,
@@ -130,6 +163,11 @@ export function match(map: Transitions<any, any>, handlers: Record<string, (stat
     return (state) => handlers[map.resolve(state)]!(state as never);
 }
 
+/**
+ * Replaces the error a step raises, keeping its input and output types.
+ * @category pipeline
+ * @example issue(schema(IdSchema), "Bad payment id")
+ */
 export function issue<TInput, TOutput>(
     step: ParserStep<TInput, TOutput>,
     error: string | ((reason: unknown, payload: unknown) => Error),
