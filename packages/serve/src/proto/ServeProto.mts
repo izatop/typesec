@@ -6,11 +6,19 @@ import {hostname} from "node:os";
 import path from "node:path";
 import {ServeError} from "./ServeError.mjs";
 
+/**
+ * What an HTTP entrypoint receives: the request and the route that matched.
+ * @category http
+ */
 export type ServeInput = {
     request: BunRequest;
     route: MatchedRoute;
 };
 
+/**
+ * Server configuration: which paths to route, extra Bun routes, CORS and the port.
+ * @category http
+ */
 export type ServeProtoConfig = {
     lookup: string[];
     routes?: Serve.Routes<unknown, string>;
@@ -18,15 +26,26 @@ export type ServeProtoConfig = {
     port?: number;
 };
 
+/**
+ * The HTTP protocol: a Bun server with file-system routing.
+ *
+ * Files under the application's `app` directory become routes in Next.js style, so `user/[id].mts` answers `/user/42`. A handler returns a `Response`; a thrown `ServeError` becomes its status, anything else a 500.
+ * @category http
+ * @category protocol
+ */
 export class ServeProto extends ProtoAbstract<ServeInput> {
+    /** Configuration this protocol class serves with. */
     public static config: ServeProtoConfig = {lookup: ["/*"]};
 
+    /** Servers currently running under this protocol, for tests and shutdown. */
     public static readonly instances: Server<undefined>[] = [];
 
+    /** An HTTP handler must return a `Response`. */
     public static validate(value: unknown): value is Response {
         return value instanceof Response;
     }
 
+    /** Builds the file-system router over the application's `app` directory. */
     public static createRouter(args: MainArgs): FileSystemRouter {
         return new FileSystemRouter({
             dir: path.resolve(args.path),
@@ -35,12 +54,17 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
         });
     }
 
+    /**
+     * A subclass carrying the given configuration, so one application can serve on its own port and paths.
+     * @example ServeProto.configure({port: 8080, cors: "auto-allow-any"})
+     */
     public static configure(config: Partial<ServeProtoConfig>): typeof ServeProto {
         return class ServeProtoConfigured extends this {
             public static override config = {...ServeProto.config, ...config};
         };
     }
 
+    /** Starts the server and keeps it up until the runtime aborts. */
     public static async run(args: MainArgs): Promise<void> {
         const trace = wrap(this);
 
@@ -131,7 +155,7 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
         });
     }
 
-    private static async preload(args: MainArgs) {
+    private static async preload(args: MainArgs): Promise<void> {
         const dir = path.resolve(args.path);
         const glob = new Bun.Glob("*.{mts,mjs}");
         const preloading = [];
@@ -139,6 +163,6 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
             preloading.push(import(path.resolve(dir, file)));
         }
 
-        Promise.all(preloading);
+        await Promise.all(preloading);
     }
 }
