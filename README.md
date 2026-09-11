@@ -26,6 +26,11 @@ git submodule add https://github.com/izatop/typesec.git typesec
 }
 ```
 
+TypeSec's packages reference their shared dependencies through `catalog:`, which resolves against
+the workspace root — your project, not the submodule. Your catalog therefore has to carry the
+entries the packages name; the `workspaces.catalog` of this repository is the reference list, and a
+missing one fails `bun install` with `<name>@catalog: is not in the catalog`.
+
 Paths below assume the submodule sits at `typesec/`. Scaffolding the shared lint, format and
 TypeScript configuration into an existing project:
 

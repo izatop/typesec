@@ -19,6 +19,6 @@
   "dependencies": {
     "@commander-js/extra-typings": "catalog:",
     "commander": "catalog:",
-    "oxc-parser": "catalog:"
+    "oxc-parser": "0.149.0"
   }
 }
