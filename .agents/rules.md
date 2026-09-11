@@ -17,6 +17,17 @@ bun <typesec>/packages/bootstrap/bin/typesec-api show <name>         # one symbo
 bun <typesec>/packages/bootstrap/bin/typesec-api packages            # what each package is for
 ```
 
+Without `--root` the command indexes the checkout the binary belongs to, which is what you want when
+looking up what TypeSec already provides. Point it elsewhere to index a different project of the
+same shape — the one you are working in, for instance:
+
+```sh
+bun <typesec>/packages/bootstrap/bin/typesec-api --root . search <keywords>
+```
+
+That shape is a `packages/tsconfig.json` listing the packages as project references, each with an
+`exports` map and `.mts` sources under `src/`. Nothing about the index is TypeSec-specific.
+
 TypeSec is not published to npm, so `bunx typesec-api` resolves only where `@typesec/bootstrap` is a
 dependency of the project — listing the submodule in `workspaces` is not enough. Anywhere else bunx
 looks the name up on the registry and fails. Running the binary by path always works. A project that
@@ -25,9 +36,6 @@ uses it often should give it a script:
 ```json
 {"scripts": {"api": "bun typesec/packages/bootstrap/bin/typesec-api"}}
 ```
-
-The command indexes the checkout it belongs to, so `--root <path>` is only needed to point it at a
-different one.
 
 Every keyword has to match. Narrow with `--package`, `--kind function|type|class|const`,
 `--category`, `--limit`; add `--json` or `--yaml` to parse the result.

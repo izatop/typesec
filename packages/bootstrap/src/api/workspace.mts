@@ -77,9 +77,25 @@ type Manifest = {
 };
 
 async function readReferences(file: string): Promise<string[]> {
-    const config = (await Bun.file(file).json()) as {references?: {path: string}[]};
+    const source = await Bun.file(file).text();
+
+    // A tsconfig may carry comments and trailing commas; JSON.parse may not.
+    const config = parseConfig(source, file) as {references?: {path: string}[]};
 
     return (config.references ?? []).map((reference) => reference.path.replace(/^\.\//, ""));
+}
+
+function parseConfig(source: string, file: string): unknown {
+    const stripped = source
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/(^|[^:"'\\])\/\/.*$/gm, "$1")
+        .replace(/,(\s*[}\]])/g, "$1");
+
+    try {
+        return JSON.parse(stripped);
+    } catch (reason) {
+        throw new Error(`Cannot read ${file}: ${reason instanceof Error ? reason.message : reason}`);
+    }
 }
 
 async function readManifest(file: string): Promise<Manifest | null> {

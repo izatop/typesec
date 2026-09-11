@@ -263,12 +263,22 @@ $ bun packages/bootstrap/bin/typesec-api search unique
                     Keeps the unique values, comparing the values themselves or the result of `map`.
 ```
 
-The command indexes the checkout it belongs to, whatever directory it runs from, so a consuming
-project calls the same binary through the submodule — `bun typesec/packages/bootstrap/bin/typesec-api
-search unique` — and needs `--root <path>` only to point it at a different checkout. The short
-`bunx typesec-api` works only where `@typesec/bootstrap` is a dependency of the project: listing the
-submodule in `workspaces` is not enough, because Bun links a binary only for a package something
-depends on. `typesec-sync` adds that dependency, which is what makes the short form work here.
+Without `--root` the command indexes the checkout the binary belongs to, whatever directory it runs
+from, so a consuming project calls the same binary through the submodule —
+`bun typesec/packages/bootstrap/bin/typesec-api search unique` — and gets TypeSec's own API.
+
+`--root <path>` indexes a different project instead. Nothing in the index is TypeSec-specific: it
+reads any repository shaped the same way, meaning a `packages/tsconfig.json` that lists the packages
+as project references, each with an `exports` map and `.mts` sources under `src/`.
+
+```sh
+bun typesec/packages/bootstrap/bin/typesec-api --root . packages   # your own project
+```
+
+The short `bunx typesec-api` works only where `@typesec/bootstrap` is a dependency of the project:
+listing the submodule in `workspaces` is not enough, because Bun links a binary only for a package
+something depends on. `typesec-sync` adds that dependency, which is what makes the short form work
+here.
 
 The examples below shorten the invocation to `typesec-api`. A project that reaches for it often
 should give it a script:

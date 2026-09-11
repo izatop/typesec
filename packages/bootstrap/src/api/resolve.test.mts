@@ -105,6 +105,35 @@ describe("indexProject over a fixture project", () => {
         expect(nested.symbols.map((symbol) => symbol.qualified)).toEqual(["value"]);
     });
 
+    test("reads a tsconfig written with comments and a trailing comma", async () => {
+        // tsconfig.json is JSONC by convention, and most real ones use it.
+        const root = await build({
+            "packages/tsconfig.json": [
+                "{",
+                "    // the packages that make up the build",
+                '    "references": [',
+                '        {"path": "./delta"}, /* only one for now */',
+                "    ],",
+                "}",
+            ].join("\n"),
+            "packages/delta/package.json": JSON.stringify({
+                name: "@fixture/delta",
+                exports: {".": {import: "./src/index.mts"}},
+            }),
+            "packages/delta/src/index.mts": "export const value = 1;",
+        });
+
+        const fixture = await indexProject(root);
+
+        expect(fixture.packages.map((entry) => entry.name)).toEqual(["@fixture/delta"]);
+    });
+
+    test("names the file it could not read", async () => {
+        const root = await build({"packages/tsconfig.json": "{ this is not a config }"});
+
+        await expect(indexProject(root)).rejects.toThrow("packages/tsconfig.json");
+    });
+
     test("names the missing file when there is no project to index", async () => {
         const root = await build({"package.json": JSON.stringify({name: "consumer"})});
 
