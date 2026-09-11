@@ -10,7 +10,10 @@ type Origin = {
     local: string;
 };
 
-const sourceGlob = new Glob("src/**/*.mts");
+/** Extensions a package's sources may use. */
+const sourceExtensions = [".mts", ".tsx"];
+
+const sourceGlob = new Glob("src/**/*.{mts,tsx}");
 
 /**
  * Builds the public API index of a TypeSec project.
@@ -58,7 +61,7 @@ async function sourcesOf(entry: WorkspacePackage): Promise<string[]> {
     const files: string[] = [];
 
     for await (const relative of sourceGlob.scan({cwd: entry.dir})) {
-        if (relative.endsWith(".test.mts")) continue;
+        if (/\.test\.(mts|tsx)$/.test(relative)) continue;
         if (relative.split("/").includes("test")) continue;
 
         files.push(path.resolve(entry.dir, relative));
@@ -137,12 +140,22 @@ function reachable(file: string, files: Map<string, FileSurface>, visiting: Set<
     return names;
 }
 
-/** Resolves a relative specifier, allowing for the `.mjs` extension the sources import by. */
+/**
+ * Resolves a relative specifier to the file it names.
+ *
+ * Sources import each other by the extension they compile to, or by none at all, so the compiled
+ * suffix is swapped for each source extension and a bare path is also tried as a directory.
+ */
 function resolveSpecifier(from: string, specifier: string, files: Map<string, FileSurface>): string | null {
     if (!specifier.startsWith(".")) return null;
 
     const base = path.resolve(path.dirname(from), specifier);
-    const candidates = [base.replace(/\.mjs$/, ".mts"), base, path.join(base, "index.mts")];
+    const stem = base.replace(/\.(mjs|js|jsx)$/, "");
+    const candidates = [
+        base,
+        ...sourceExtensions.map((extension) => `${stem}${extension}`),
+        ...sourceExtensions.map((extension) => path.join(base, `index${extension}`)),
+    ];
 
     return candidates.find((candidate) => files.has(candidate)) ?? null;
 }

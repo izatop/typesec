@@ -105,6 +105,40 @@ describe("indexProject over a fixture project", () => {
         expect(nested.symbols.map((symbol) => symbol.qualified)).toEqual(["value"]);
     });
 
+    test("indexes .tsx sources, JSX and all", async () => {
+        const root = await build({
+            "packages/tsconfig.json": JSON.stringify({references: [{path: "./view"}]}),
+            "packages/view/package.json": JSON.stringify({
+                name: "@fixture/view",
+                exports: {".": {import: "./src/index.mts"}},
+            }),
+            "packages/view/src/index.mts": 'export * from "./Button.js";',
+            "packages/view/src/Button.tsx": [
+                "/**",
+                " * A button.",
+                " * @category view",
+                " */",
+                "export function Button({label}: {label: string}) {",
+                '    return <button className="b">{label}</button>;',
+                "}",
+            ].join("\n"),
+            // Excluded like any other co-located test.
+            "packages/view/src/Button.test.tsx": "export const ignored = 1;",
+        });
+
+        const fixture = await indexProject(root);
+
+        expect(fixture.symbols.map((symbol) => symbol.qualified)).toEqual(["Button"]);
+        expect(fixture.symbols[0]).toMatchObject({
+            kind: "function",
+            import: "@fixture/view",
+            file: "packages/view/src/Button.tsx",
+            signature: "function Button({label}: {label: string})",
+            category: "view",
+            description: "A button.",
+        });
+    });
+
     test("reads a tsconfig written with comments and a trailing comma", async () => {
         // tsconfig.json is JSONC by convention, and most real ones use it.
         const root = await build({

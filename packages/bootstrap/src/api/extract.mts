@@ -66,7 +66,8 @@ type Context = {
  * as separate symbols, because that is the shape callers actually reach for.
  */
 export function extract(file: string, source: string): FileSurface {
-    const parsed = parseSync(file, source, {lang: "ts"});
+    // No explicit lang: oxc reads the dialect from the extension, so .tsx parses its JSX.
+    const parsed = parseSync(file, source);
     const offsets = lineOffsets(source);
     const context: Context = {
         source,

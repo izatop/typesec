@@ -269,7 +269,7 @@ from, so a consuming project calls the same binary through the submodule —
 
 `--root <path>` indexes a different project instead. Nothing in the index is TypeSec-specific: it
 reads any repository shaped the same way, meaning a `packages/tsconfig.json` that lists the packages
-as project references, each with an `exports` map and `.mts` sources under `src/`.
+as project references, each with an `exports` map and `.mts` or `.tsx` sources under `src/`.
 
 ```sh
 bun typesec/packages/bootstrap/bin/typesec-api --root . packages   # your own project

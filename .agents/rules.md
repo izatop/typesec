@@ -26,7 +26,8 @@ bun <typesec>/packages/bootstrap/bin/typesec-api --root . search <keywords>
 ```
 
 That shape is a `packages/tsconfig.json` listing the packages as project references, each with an
-`exports` map and `.mts` sources under `src/`. Nothing about the index is TypeSec-specific.
+`exports` map and `.mts` or `.tsx` sources under `src/`. Nothing about the index is
+TypeSec-specific.
 
 TypeSec is not published to npm, so `bunx typesec-api` resolves only where `@typesec/bootstrap` is a
 dependency of the project — listing the submodule in `workspaces` is not enough. Anywhere else bunx
