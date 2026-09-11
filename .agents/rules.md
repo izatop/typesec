@@ -17,9 +17,10 @@ bun <typesec>/packages/bootstrap/bin/typesec-api show <name>         # one symbo
 bun <typesec>/packages/bootstrap/bin/typesec-api packages            # what each package is for
 ```
 
-TypeSec is not published to npm, so `bunx typesec-api` resolves only where the submodule's packages
-are part of the workspace — otherwise it looks for the name on the registry and fails. Running the
-binary by path always works. A project that uses it often should give it a script:
+TypeSec is not published to npm, so `bunx typesec-api` resolves only where `@typesec/bootstrap` is a
+dependency of the project — listing the submodule in `workspaces` is not enough. Anywhere else bunx
+looks the name up on the registry and fails. Running the binary by path always works. A project that
+uses it often should give it a script:
 
 ```json
 {"scripts": {"api": "bun typesec/packages/bootstrap/bin/typesec-api"}}

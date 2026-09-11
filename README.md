@@ -265,9 +265,10 @@ $ bun packages/bootstrap/bin/typesec-api search unique
 
 The command indexes the checkout it belongs to, whatever directory it runs from, so a consuming
 project calls the same binary through the submodule — `bun typesec/packages/bootstrap/bin/typesec-api
-search unique` — and needs `--root <path>` only to point it at a different checkout. `bunx
-typesec-api` works wherever the packages are part of the workspace, here included, but not from a
-project that merely checks the submodule out.
+search unique` — and needs `--root <path>` only to point it at a different checkout. The short
+`bunx typesec-api` works only where `@typesec/bootstrap` is a dependency of the project: listing the
+submodule in `workspaces` is not enough, because Bun links a binary only for a package something
+depends on. `typesec-sync` adds that dependency, which is what makes the short form work here.
 
 The examples below shorten the invocation to `typesec-api`. A project that reaches for it often
 should give it a script:
