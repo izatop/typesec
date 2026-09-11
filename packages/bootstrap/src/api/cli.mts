@@ -3,15 +3,28 @@ import {renderPackages, renderSymbol, renderSymbols, type Format} from "./render
 import type {ProjectIndex} from "./interfaces.mjs";
 import {indexProject} from "./resolve.mjs";
 import {lookup, search} from "./search.mjs";
+import {findRoot} from "./workspace.mjs";
 
 type FormatOptions = {json?: boolean; yaml?: boolean};
 
 const write = (value: string): void => void process.stdout.write(`${value}\n`);
 
+/**
+ * The checkout to index: the one around the working directory, else the one this tool is part of.
+ *
+ * A project that consumes TypeSec as a git submodule runs the submodule's own bin from outside any
+ * checkout, so falling back to where the tool lives spares it from passing --root every time.
+ */
+function rootOf(explicit?: string): Promise<string> {
+    if (explicit) return findRoot(explicit);
+
+    return findRoot(process.cwd()).catch(() => findRoot(import.meta.dir));
+}
+
 /** Reports a missing or wrong project root as a message rather than a stack trace. */
-async function load(start: string): Promise<ProjectIndex> {
+async function load(start?: string): Promise<ProjectIndex> {
     try {
-        return await indexProject(start);
+        return await indexProject(await rootOf(start));
     } catch (reason) {
         process.exitCode = 1;
         write(reason instanceof Error ? reason.message : `${reason}`);
@@ -29,7 +42,7 @@ function formatOf(options: FormatOptions): Format {
 const cli = program
     .name("typesec-api")
     .description("Public API index of a TypeSec project: packages, functions, types, with keyword search")
-    .option("-r, --root <path>", "Project root", process.cwd());
+    .option("-r, --root <path>", "TypeSec checkout to index; found automatically when omitted");
 
 cli.command("packages")
     .description("List the packages, their entry points and documentation coverage")

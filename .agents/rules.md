@@ -4,7 +4,7 @@ Rules for writing code in a project built on TypeSec. They describe what this fr
 they do not replace the project's own conventions.
 
 Throughout, `<typesec>` is the path to the TypeSec checkout — the submodule directory in a
-consuming project. Inside the checkout itself, drop `--root <typesec>` from every command.
+consuming project, or `.` inside the checkout itself.
 
 ## Search the API before writing anything
 
@@ -12,10 +12,21 @@ TypeSec carries a large utility surface. Look for what exists before adding a he
 dependency:
 
 ```sh
-bunx typesec-api --root <typesec> search <keywords>       # names, descriptions, signatures
-bunx typesec-api --root <typesec> show <name>             # one symbol in full
-bunx typesec-api --root <typesec> packages                # what each package is for
+bun <typesec>/packages/bootstrap/bin/typesec-api search <keywords>   # names, descriptions, signatures
+bun <typesec>/packages/bootstrap/bin/typesec-api show <name>         # one symbol in full
+bun <typesec>/packages/bootstrap/bin/typesec-api packages            # what each package is for
 ```
+
+TypeSec is not published to npm, so `bunx typesec-api` resolves only where the submodule's packages
+are part of the workspace — otherwise it looks for the name on the registry and fails. Running the
+binary by path always works. A project that uses it often should give it a script:
+
+```json
+{"scripts": {"api": "bun typesec/packages/bootstrap/bin/typesec-api"}}
+```
+
+The command indexes the checkout it belongs to, so `--root <path>` is only needed to point it at a
+different one.
 
 Every keyword has to match. Narrow with `--package`, `--kind function|type|class|const`,
 `--category`, `--limit`; add `--json` or `--yaml` to parse the result.
@@ -104,7 +115,7 @@ describe("fn", () => {
   `@category <slug>`. Optionally `@example`, `@see`, `@deprecated <reason>`.
 - Never rename a published symbol in place. Add the corrected name and keep the old one as a
   deprecated alias.
-- `bunx typesec-api --root <typesec> search --undocumented` must stay empty.
+- `typesec-api search --undocumented` must stay empty.
 
 ## Verify before reporting done
 

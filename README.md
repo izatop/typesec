@@ -11,14 +11,26 @@ build step.
 
 ## Install
 
+TypeSec is not published to npm. A project consumes it as a git submodule and resolves the
+`@typesec/*` specifiers through its own workspaces:
+
 ```sh
-bun add @typesec/core @typesec/unit @typesec/serve
+git submodule add https://github.com/izatop/typesec.git typesec
 ```
 
-Scaffolding an existing project with the shared lint, format and TypeScript configuration:
+```json
+{
+    "workspaces": {
+        "packages": ["packages/*", "typesec/packages/*"]
+    }
+}
+```
+
+Paths below assume the submodule sits at `typesec/`. Scaffolding the shared lint, format and
+TypeScript configuration into an existing project:
 
 ```sh
-bunx typesec-sync
+bun typesec/packages/bootstrap/bin/typesec-sync
 ```
 
 ## The model
@@ -126,7 +138,7 @@ export default command({
 ```
 
 ```sh
-bunx typesec-cli ./src/index.mts daily -d 2026-01-01
+bun typesec/packages/cli/bin ./src/index.mts daily -d 2026-01-01
 ```
 
 `option` and `require` build the parser one flag at a time, and `parse` returns a record whose keys — and whose
@@ -235,23 +247,36 @@ specifier to import it from and the line that declares it. It is meant for agent
 rather ask than grep.
 
 ```sh
-bunx typesec-api packages              # the package map, entry points, documentation coverage
-bunx typesec-api search unique         # keyword search over names, descriptions and signatures
-bunx typesec-api show array.uniq       # one symbol in full
+bun packages/bootstrap/bin/typesec-api packages            # the package map and documentation coverage
+bun packages/bootstrap/bin/typesec-api search unique       # keyword search over names and descriptions
+bun packages/bootstrap/bin/typesec-api show array.uniq     # one symbol in full
 ```
 
 ```
-$ bunx typesec-api search unique
+$ bun packages/bootstrap/bin/typesec-api search unique
 @typesec/the/array  array.uniq<T>(values: T[]): T[] (+1 overloads)
                     Keeps the unique values, comparing the values themselves or the result of `map`.
+```
+
+The command indexes the checkout it belongs to, whatever directory it runs from, so a consuming
+project calls the same binary through the submodule — `bun typesec/packages/bootstrap/bin/typesec-api
+search unique` — and needs `--root <path>` only to point it at a different checkout. `bunx
+typesec-api` works wherever the packages are part of the workspace, here included, but not from a
+project that merely checks the submodule out.
+
+The examples below shorten the invocation to `typesec-api`. A project that reaches for it often
+should give it a script:
+
+```json
+{"scripts": {"api": "bun typesec/packages/bootstrap/bin/typesec-api"}}
 ```
 
 Every keyword has to match, and filters narrow further:
 
 ```sh
-bunx typesec-api search parse --package the --kind function
-bunx typesec-api search --category state
-bunx typesec-api search --undocumented
+typesec-api search parse --package the --kind function
+typesec-api search --category state
+typesec-api search --undocumented
 ```
 
 `--kind` groups the labels the way a caller thinks about them: `function` covers namespace members and class
@@ -264,7 +289,7 @@ The same index is available in process:
 ```ts
 import {indexProject, search} from "@typesec/bootstrap/api";
 
-const index = await indexProject(process.cwd());
+const index = await indexProject("./typesec");
 const found = search(index, {keywords: ["ttl"], kind: "function"});
 ```
 
@@ -318,15 +343,13 @@ Follow the TypeSec rules in [typesec/.agents/rules.md](typesec/.agents/rules.md)
 @typesec/.agents/rules.md
 ```
 
-The rules tell an agent to run `typesec-api` against the submodule:
+The rules tell an agent to run `typesec-api` through the submodule:
 
 ```sh
-bunx typesec-api --root ./typesec search <keywords>
+bun typesec/packages/bootstrap/bin/typesec-api search <keywords>
 ```
 
-`--root` is needed because the index is built from `packages/tsconfig.json`, which belongs to the
-TypeSec checkout rather than to your project. Inside the checkout the flag can be dropped: the root
-is found by walking up from the working directory.
+The command indexes the checkout it belongs to, so no `--root` is needed from a consuming project.
 
 ## Conventions
 
