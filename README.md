@@ -293,7 +293,7 @@ vocabulary is deliberately small:
 
 ## Agent rules
 
-[`agents/rules.md`](agents/rules.md) is the instruction file for coding agents: how to search the API
+[`.agents/rules.md`](.agents/rules.md) is the instruction file for coding agents: how to search the API
 before writing a helper, how entrypoints and imports work, what a package's public surface requires,
 and which commands verify a change. It is plain Markdown with no tool-specific syntax, so any agent
 can read it.
@@ -308,14 +308,14 @@ them, and `typesec/` is wherever the submodule sits:
 ```md
 <!-- AGENTS.md — read by most agents -->
 
-Follow the TypeSec rules in [typesec/agents/rules.md](typesec/agents/rules.md).
+Follow the TypeSec rules in [typesec/.agents/rules.md](typesec/.agents/rules.md).
 ```
 
 ```md
 <!-- CLAUDE.md — @ imports the file into every session -->
 
 @AGENTS.md
-@typesec/agents/rules.md
+@typesec/.agents/rules.md
 ```
 
 The rules tell an agent to run `typesec-api` against the submodule:
