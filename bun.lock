@@ -7,7 +7,7 @@
       "devDependencies": {
         "@types/bun": "catalog:",
         "@typescript/native-preview": "^7.0.0-dev.20260707.2",
-        "@typesec/bootstrap": "catalog:",
+        "@typesec/bootstrap": "workspace:*",
         "oxfmt": "catalog:build",
         "oxlint": "catalog:build",
       },
@@ -34,10 +34,10 @@
       "dependencies": {
         "@commander-js/extra-typings": "catalog:",
         "@types/bun": "catalog:",
-        "@typesec/core": "catalog:",
-        "@typesec/the": "catalog:",
-        "@typesec/tracer": "catalog:",
-        "@typesec/unit": "catalog:",
+        "@typesec/core": "workspace:*",
+        "@typesec/the": "workspace:*",
+        "@typesec/tracer": "workspace:*",
+        "@typesec/unit": "workspace:*",
         "commander": "catalog:",
         "radash": "catalog:",
       },
@@ -46,8 +46,8 @@
       "name": "@typesec/core",
       "version": "0.1.0",
       "dependencies": {
-        "@typesec/the": "catalog:",
-        "@typesec/tracer": "catalog:",
+        "@typesec/the": "workspace:*",
+        "@typesec/tracer": "workspace:*",
         "radash": "catalog:",
       },
     },
@@ -55,14 +55,14 @@
       "name": "@typesec/gup",
       "version": "0.1.0",
       "dependencies": {
-        "@typesec/the": "catalog:",
+        "@typesec/the": "workspace:*",
       },
     },
     "packages/mrpc": {
       "name": "@typesec/mrpc",
       "version": "0.1.0",
       "dependencies": {
-        "@typesec/the": "catalog:",
+        "@typesec/the": "workspace:*",
         "radash": "catalog:",
         "zod": "catalog:",
       },
@@ -71,7 +71,7 @@
       "name": "@typesec/sam",
       "version": "0.1.0",
       "dependencies": {
-        "@typesec/the": "catalog:",
+        "@typesec/the": "workspace:*",
         "zod": "catalog:",
       },
     },
@@ -80,10 +80,10 @@
       "version": "0.1.0",
       "dependencies": {
         "@types/bun": "catalog:",
-        "@typesec/core": "catalog:",
-        "@typesec/the": "catalog:",
-        "@typesec/tracer": "catalog:",
-        "@typesec/unit": "catalog:",
+        "@typesec/core": "workspace:*",
+        "@typesec/the": "workspace:*",
+        "@typesec/tracer": "workspace:*",
+        "@typesec/unit": "workspace:*",
         "zod": "catalog:",
       },
     },
@@ -95,7 +95,7 @@
       "name": "@typesec/tracer",
       "version": "0.1.0",
       "dependencies": {
-        "@typesec/the": "catalog:",
+        "@typesec/the": "workspace:*",
         "chalk": "catalog:",
       },
     },
@@ -103,9 +103,9 @@
       "name": "@typesec/unit",
       "version": "0.1.0",
       "dependencies": {
-        "@typesec/core": "catalog:",
-        "@typesec/the": "catalog:",
-        "@typesec/tracer": "catalog:",
+        "@typesec/core": "workspace:*",
+        "@typesec/the": "workspace:*",
+        "@typesec/tracer": "workspace:*",
         "radash": "catalog:",
       },
     },
@@ -113,11 +113,6 @@
   "catalog": {
     "@commander-js/extra-typings": "15.0.0",
     "@types/bun": "1.4.2",
-    "@typesec/bootstrap": "workspace:*",
-    "@typesec/core": "workspace:*",
-    "@typesec/the": "workspace:*",
-    "@typesec/tracer": "workspace:*",
-    "@typesec/unit": "workspace:*",
     "chalk": "6.0.0",
     "commander": "15.0.0",
     "radash": "12.1.1",
@@ -250,7 +245,7 @@
 
     "@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
 
-    "@types/node": ["@types/node@26.4.1", "", { "dependencies": { "undici-types": "~8.3.0" } }, "sha512-k97ENvZWtvA6yqz5/FS6a7duDgOPEeOQOc2iKS/nY6mX6qJUKtLnWzQS+Xj6tXweyj6ZcTAK2Qecetnvi9nCLA=="],
+    "@types/node": ["@types/node@26.5.1", "", { "dependencies": { "undici-types": "~8.9.0" } }, "sha512-CzNm2FezW4VR/LjG6yUdiEgLE/rAQ9Slj5gCu/C2VrdcW7I0ahNZ8DRbHT7zOZ6r3ONgd/bsQIeSaoDGrd1C6g=="],
 
     "@typescript/native-preview": ["@typescript/native-preview@7.0.0-dev.20260707.2", "", { "optionalDependencies": { "@typescript/native-preview-darwin-arm64": "7.0.0-dev.20260707.2", "@typescript/native-preview-darwin-x64": "7.0.0-dev.20260707.2", "@typescript/native-preview-linux-arm": "7.0.0-dev.20260707.2", "@typescript/native-preview-linux-arm64": "7.0.0-dev.20260707.2", "@typescript/native-preview-linux-x64": "7.0.0-dev.20260707.2", "@typescript/native-preview-win32-arm64": "7.0.0-dev.20260707.2", "@typescript/native-preview-win32-x64": "7.0.0-dev.20260707.2" }, "bin": { "tsgo": "bin/tsgo" } }, "sha512-oUGp+Rep/hqMhPunyinsALUwSlzHINSxitifPiSaeqoKOKD2OlR9NE3TaPqwsl4NlGslsOSUXI1JotWQzpYCPg=="],
 
@@ -304,7 +299,7 @@
 
     "tinypool": ["tinypool@2.1.2", "", {}, "sha512-9YodfrxS9g9IbFr/KOjE5bAeJ0p61n3bW6mqvy0jtoeKd1kTW1Cxm0oulm6KX2lyM9Gl6WIe8nEbY7LWv5ZJww=="],
 
-    "undici-types": ["undici-types@8.3.0", "", {}, "sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ=="],
+    "undici-types": ["undici-types@8.9.0", "", {}, "sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg=="],
 
     "zod": ["zod@4.6.2", "", {}, "sha512-lh5RCAGFa1Cm2hjtNwLQhSs/AsqdWnTQaBER9fEwN/88pSh7KOtJavtBx/0VlkN/uFd61SwYmljLMDAsHlvzBQ=="],
   }

@@ -10,9 +10,9 @@
     }
   },
   "dependencies": {
-    "@typesec/core": "catalog:",
-    "@typesec/the": "catalog:",
-    "@typesec/tracer": "catalog:",
+    "@typesec/core": "workspace:*",
+    "@typesec/the": "workspace:*",
+    "@typesec/tracer": "workspace:*",
     "radash": "catalog:"
   }
 }

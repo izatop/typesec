@@ -11,8 +11,8 @@
     }
   },
   "dependencies": {
-    "@typesec/the": "catalog:",
-    "@typesec/tracer": "catalog:",
+    "@typesec/the": "workspace:*",
+    "@typesec/tracer": "workspace:*",
     "radash": "catalog:"
   }
 }

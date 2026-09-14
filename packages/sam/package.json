@@ -10,7 +10,7 @@
     }
   },
   "dependencies": {
-    "@typesec/the": "catalog:",
+    "@typesec/the": "workspace:*",
     "zod": "catalog:"
   }
 }
