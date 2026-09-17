@@ -64,6 +64,14 @@ export function schema<TOutput, TInput = unknown>(schema: z.ZodType<TOutput, TIn
 }
 
 /**
+ * Trusted typed step
+ * @category pipeline
+ */
+export function trust<T>(): Step<T, T> {
+    return (value) => value;
+}
+
+/**
  * Narrows a value without changing it, by object pattern, type predicate, or state graph.
  *
  * With a `Transitions` and no key it validates a `{from, to}` change; with a key it

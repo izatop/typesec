@@ -1,5 +1,5 @@
 import {describe, expect, test} from "bun:test";
-import z from "zod";
+import z, {pipe} from "zod";
 import {
     issue,
     match,
@@ -21,7 +21,7 @@ import {
     type TransitionState,
     type TransitionStateDefinition,
 } from "./index.mjs";
-import {transform} from "./main.mts";
+import {transform, trust} from "./main.mts";
 
 const PaymentSchema = z.discriminatedUnion("status", [
     z.object({id: z.string(), status: z.literal("created")}),
@@ -61,8 +61,10 @@ describe("public surface", () => {
 
     test("Transformation of input into output via an intermediate validator", () => {
         const numToStr = pipeline(schema(z.number())).pipe(transform(schema(z.string()), (value) => value.toString()));
-
         expect(numToStr.parse(1)).toBe("1");
+
+        const trusted = pipeline(schema(z.number())).pipe(transform(trust<string>(), (v) => v.toString()));
+        expect(trusted.run(1)).toBe("1");
     });
 
     test("refinement types are nameable", () => {
