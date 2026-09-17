@@ -1,5 +1,5 @@
 import {describe, expect, test} from "bun:test";
-import z, {pipe} from "zod";
+import z from "zod";
 import {
     issue,
     match,
