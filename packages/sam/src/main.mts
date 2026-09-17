@@ -1,5 +1,5 @@
 import {async} from "@typesec/the/async";
-import type z from "zod";
+import z from "zod";
 import {ParsedPipeline, Pipeline} from "./class/Pipeline.mjs";
 import {Transitions} from "./class/Transitions.mjs";
 import {RefinementError} from "./errors.mjs";
@@ -42,6 +42,17 @@ export function pipeline<TInput>(): PipelineContract<TInput, TInput>;
 export function pipeline<TInput, TOutput>(step: Step<TInput, TOutput>): PipelineContract<TInput, TOutput>;
 export function pipeline(step: Step<any, any> = (value) => value): PipelineContract<any, any> {
     return parserStep in step ? new ParsedPipeline(step) : new Pipeline(step);
+}
+
+/**
+ * Transformation of TInput into TOut via an intermediate validator.
+ * @category pipeline
+ */
+export function transform<TInput, TNext, TOut>(
+    validator: Step<TNext, TOut>,
+    mutator: Step<TInput, TNext>,
+): Step<TInput, TOut> {
+    return Object.assign((input: TInput) => validator(mutator(input)), {[parserStep]: true as const});
 }
 
 /**

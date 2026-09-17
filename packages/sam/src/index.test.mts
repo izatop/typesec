@@ -21,6 +21,7 @@ import {
     type TransitionState,
     type TransitionStateDefinition,
 } from "./index.mjs";
+import {transform} from "./main.mts";
 
 const PaymentSchema = z.discriminatedUnion("status", [
     z.object({id: z.string(), status: z.literal("created")}),
@@ -56,6 +57,12 @@ describe("public surface", () => {
         expect(parsed.parse("hello")).toBe(5);
         expect(plain.run("hello")).toBe(5);
         expect(wrapped("hello")).toBe(5);
+    });
+
+    test("Transformation of input into output via an intermediate validator", () => {
+        const numToStr = pipeline(schema(z.number())).pipe(transform(schema(z.string()), (value) => value.toString()));
+
+        expect(numToStr.parse(1)).toBe("1");
     });
 
     test("refinement types are nameable", () => {
