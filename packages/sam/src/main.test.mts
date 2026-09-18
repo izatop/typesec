@@ -4,7 +4,7 @@ import z from "zod";
 import {RefinementError, TransitionError} from "./errors.mjs";
 import * as sam from "./index.mjs";
 import type {StateChange} from "./interfaces.mjs";
-import {issue, match, pipeline, refine, schema, transitions} from "./main.mjs";
+import {context, issue, match, pipeline, refine, schema, transitions, trust} from "./main.mjs";
 
 const PaymentStateSchema = z.discriminatedUnion("status", [
     z.object({
@@ -523,6 +523,131 @@ describe("match", () => {
     });
 });
 
+describe("context", () => {
+    type Store = {readonly prefix: string};
+
+    const store: Store = {prefix: "p-"};
+
+    it("hands the context to every step as a typed second argument", () => {
+        const withStore = context(store);
+        const label = withStore(schema(z.string())).pipe((value, ctx) => {
+            expect(isXEqualToY<typeof ctx, Store>(true)).toBe(true);
+
+            return ctx.prefix + value;
+        });
+
+        expect(label.run("1")).toBe("p-1");
+    });
+
+    it("builds the same pipeline whether it is called or piped", () => {
+        const withStore = context(store);
+        const called = withStore(schema(z.string())).pipe((value, ctx) => ctx.prefix + value);
+        const piped = withStore.pipe(schema(z.string())).pipe((value, ctx) => ctx.prefix + value);
+
+        expect("parse" in called).toBe(true);
+        expect("parse" in piped).toBe(true);
+        expect(called.parse("1")).toBe(piped.parse("1"));
+    });
+
+    it("fixes a value at declaration and calls a factory on every run and parse", () => {
+        let seed = 1;
+        const fixed = context(seed)().pipe((_value: unknown, ctx) => ctx);
+        const lazy = context(() => seed)().pipe((_value: unknown, ctx) => ctx);
+
+        seed = 2;
+
+        expect(fixed.run(undefined)).toBe(1);
+        expect(lazy.run(undefined)).toBe(2);
+
+        seed = 3;
+
+        expect(lazy.run(undefined)).toBe(3);
+    });
+
+    it("resolves the factory once per run, not once per stage", () => {
+        let calls = 0;
+        const flow = context(() => ++calls)(schema(z.string()))
+            .pipe((value, ctx) => [value, ctx])
+            .pipe((seen, ctx) => [...seen, ctx])
+            .pipe((seen, ctx) => [...seen, ctx]);
+
+        expect(flow.parse("v")).toEqual(["v", 1, 1, 1]);
+        expect(calls).toBe(1);
+
+        expect(flow.parse("v")).toEqual(["v", 2, 2, 2]);
+        expect(calls).toBe(2);
+    });
+
+    it("keeps a synchronous context synchronous", () => {
+        const flow = context({factor: 3})(schema(z.number())).pipe((value, ctx) => value * ctx.factor);
+
+        expect(isXEqualToY<ReturnType<typeof flow.run>, number>(true)).toBe(true);
+        expect(flow.parse(2)).toBe(6);
+    });
+
+    it("promises everything after an asynchronous context and still resolves it before the steps", async () => {
+        const flow = context(async () => ({factor: 3}))(schema(z.number())).pipe((value, ctx) => {
+            expect(isXEqualToY<typeof ctx, {factor: number}>(true)).toBe(true);
+
+            return value * ctx.factor;
+        });
+
+        expect(isXEqualToY<ReturnType<typeof flow.parse>, Promise<number>>(true)).toBe(true);
+        await expect(flow.parse(2)).resolves.toBe(6);
+    });
+
+    it("exposes parse only when a schema starts the pipeline", () => {
+        const withStore = context(store);
+
+        expect("parse" in withStore(schema(z.string()))).toBe(true);
+        expect("parse" in withStore()).toBe(false);
+        expect("parse" in withStore((value: string) => value.trim())).toBe(false);
+        expect(() => withStore(schema(z.string())).parse(1)).toThrow();
+    });
+
+    it("accepts the one-argument combinators unchanged", () => {
+        const flow = context(store)(schema(PaymentStateSchema))
+            .pipe(refine({status: "created"} as const))
+            .pipe(trust<CreatedState>())
+            .pipe(
+                match(paymentTransitions, {
+                    created: (payment) => payment.id,
+                    processing: (payment) => payment.id,
+                    manualReview: (payment) => payment.id,
+                    completed: (payment) => payment.id,
+                    cancelled: (payment) => payment.id,
+                }),
+            )
+            .pipe((id, ctx) => ctx.prefix + id);
+
+        expect(flow.parse({id: "payment-1", status: "created", substatus: null})).toBe("p-payment-1");
+    });
+
+    it("narrows a pattern step inside a context pipeline", () => {
+        const flow = context(store)<{kind: "a" | "b"}>().pipe(refine({kind: "a"} as const));
+
+        expect(isXEqualToY<ReturnType<typeof flow.run>, {kind: "a" | "b"} & {kind: "a"}>(true)).toBe(true);
+        expect(flow.run({kind: "a"})).toEqual({kind: "a"});
+        expect(() => flow.run({kind: "b"})).toThrow(RefinementError);
+    });
+
+    it("forwards the context through issue and maps the error", () => {
+        const failure = new Error("store offline");
+        const flow = context(store)(schema(z.string())).pipe(
+            issue(
+                (value: string, ctx: Store) => {
+                    expect(ctx).toBe(store);
+
+                    throw failure;
+                },
+                (reason, payload) => new Error(`Cannot label ${payload}`, {cause: reason}),
+            ),
+        );
+
+        expect(() => flow.parse("1")).toThrow(new Error("Cannot label 1", {cause: failure}));
+    });
+});
+
 describe("public API", () => {
     it("builds a schema-to-transition-to-match pipeline from the entrypoint", () => {
         const StateSchema = z.discriminatedUnion("status", [
@@ -546,7 +671,7 @@ describe("public API", () => {
         expect(sam.TransitionError).toBe(TransitionError);
         expect("Atom" in sam).toBe(false);
         expect("group" in sam).toBe(false);
-        expect("context" in sam).toBe(false);
+        expect("context" in sam).toBe(true);
     });
 });
 
@@ -596,5 +721,15 @@ describe("type constraints", () => {
 
         // @ts-expect-error match handlers must cover every transition key
         match(paymentTransitions, {created: () => "created"});
+
+        // @ts-expect-error a pipeline without a context has no second argument to give a step
+        pipeline<string>().pipe((value: string, ctx: {prefix: string}) => ctx.prefix + value);
+
+        const withStore = context({prefix: "p-"});
+        // @ts-expect-error the context type is fixed by the starter, not by the step
+        withStore(schema(z.string())).pipe((value: string, ctx: {missing: number}) => ctx.missing + value);
+
+        // @ts-expect-error issue is built before pipe can type it, so its step must annotate both parameters
+        withStore(schema(z.string())).pipe(issue((value, ctx) => ctx.prefix + value, "fail"));
     });
 });

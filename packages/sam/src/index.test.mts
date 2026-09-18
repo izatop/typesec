@@ -1,6 +1,7 @@
 import {describe, expect, test} from "bun:test";
 import z from "zod";
 import {
+    context,
     issue,
     match,
     pipeline,
@@ -8,6 +9,8 @@ import {
     schema,
     transitions,
     type AllowedStateChange,
+    type ContextSource,
+    type ContextualPipeline,
     type ParsedPipeline,
     type ParserStep,
     type PatternStep,
@@ -65,6 +68,24 @@ describe("public surface", () => {
 
         const trusted = pipeline(schema(z.number())).pipe(transform(trust<string>(), (v) => v.toString()));
         expect(trusted.run(1)).toBe("1");
+    });
+
+    test("context pipeline types are nameable", () => {
+        type Store = {readonly prefix: string};
+
+        const source: ContextSource<Store> = () => ({prefix: "p-"});
+        const withStore: ContextualPipeline<Store> = context(source);
+        const parsed: ParsedPipeline<string, string, Store> = withStore(schema(z.string()));
+        const plain: Pipeline<string, string, Store> = withStore<string>();
+        const labelled: Step<string, string, Store> = (value, store) => store.prefix + value;
+
+        expect(parsed.parse("1")).toBe("1");
+        expect(plain.run("1")).toBe("1");
+        expect(labelled("1", {prefix: "p-"})).toBe("p-1");
+
+        // a step written before contexts existed keeps its exact type and its call site
+        const legacy: Step<string, number> = (value) => value.length;
+        expect(legacy("hello")).toBe(5);
     });
 
     test("refinement types are nameable", () => {

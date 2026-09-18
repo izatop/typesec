@@ -1,10 +1,14 @@
 import {async} from "@typesec/the/async";
+import {fnify} from "@typesec/the/fn";
+import type {Fn} from "@typesec/the/type";
 import z from "zod";
 import {ParsedPipeline, Pipeline} from "./class/Pipeline.mjs";
 import {Transitions} from "./class/Transitions.mjs";
 import {RefinementError} from "./errors.mjs";
 import type {
     AllowedStateChange,
+    ContextSource,
+    ContextualPipeline,
     ParsedPipeline as ParsedPipelineContract,
     ParserStep,
     PatternStep,
@@ -42,6 +46,24 @@ export function pipeline<TInput>(): PipelineContract<TInput, TInput>;
 export function pipeline<TInput, TOutput>(step: Step<TInput, TOutput>): PipelineContract<TInput, TOutput>;
 export function pipeline(step: Step<any, any> = (value) => value): PipelineContract<any, any> {
     return parserStep in step ? new ParsedPipeline(step) : new Pipeline(step);
+}
+
+/**
+ * Starts pipelines that hand every step a context as its second argument.
+ *
+ * A plain value is fixed when the context is declared; a factory is called again on every `run` or
+ * `parse`, which is what a per-request snapshot needs. The result is used like `pipeline` itself,
+ * either by calling it or through `pipe`, and the same context serves the whole pipeline.
+ * @category pipeline
+ * @example const withStore = context(() => store.snapshot());
+ * @example withStore(schema(Command)).pipe((command, store) => store.load(command.id))
+ */
+export function context<TContext>(source: ContextSource<TContext>): ContextualPipeline<TContext> {
+    const factory = fnify(source) as Fn<[], unknown>;
+    const create = (step: Fn<[input: any, context: any], any> = (value) => value) =>
+        parserStep in step ? new ParsedPipeline(step, factory) : new Pipeline(step, factory);
+
+    return Object.assign(create, {pipe: create}) as unknown as ContextualPipeline<TContext>;
 }
 
 /**
@@ -199,16 +221,20 @@ export function issue<TInput, TOutput>(
     step: Step<TInput, TOutput>,
     error: string | ((reason: unknown, payload: TInput) => Error),
 ): Step<TInput, IssueResult<TOutput>>;
+export function issue<TInput, TOutput, TContext>(
+    step: Step<TInput, TOutput, TContext>,
+    error: string | ((reason: unknown, payload: TInput) => Error),
+): Step<TInput, IssueResult<TOutput>, TContext>;
 export function issue(
-    step: Step<any, any>,
+    step: Fn<[input: any, context: any], any>,
     error: string | ((reason: unknown, payload: any) => Error),
-): Step<any, any> {
+): Fn<[input: any, context: any], any> {
     const mapError = (reason: unknown, payload: any): Error =>
         typeof error === "string" ? new Error(error, {cause: reason}) : error(reason, payload);
 
-    const wrapped = (payload: any) => {
+    const wrapped = (payload: any, context: any) => {
         try {
-            const result = step(payload);
+            const result = step(payload, context);
 
             return async.isThenable(result)
                 ? Promise.resolve(result).catch((reason) => {

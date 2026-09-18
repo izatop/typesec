@@ -42,6 +42,69 @@ const loadUser = pipeline(schema(z.string()))
     .pipe((user) => ({...user, displayName: user.name.trim()}));
 ```
 
+## Context
+
+`context(...)` starts pipelines whose steps take a second argument. The first argument is still the value
+from the previous step; the second is the context, resolved once per run.
+
+```ts
+const withStore = context(() => snapshot());
+
+const loadPayment = withStore(schema(PaymentIdSchema)).pipe((id, store) => store.payments.get(id));
+```
+
+The starter is used exactly like `pipeline`, and `pipe` is the same function under a name that reads as a
+chain, so these two build the same pipeline:
+
+```ts
+withStore(schema(PaymentIdSchema));
+withStore.pipe(schema(PaymentIdSchema));
+```
+
+Because the schema still starts the pipeline, a context pipeline gets `parse(unknown)` on the same terms as
+any other schema-rooted pipeline. One starter serves as many pipelines as needed:
+
+```ts
+const loadPayment = withStore(schema(PaymentIdSchema)).pipe((id, store) => store.payments.get(id));
+const savePayment = withStore(schema(PaymentSchema)).pipe((payment, store) => store.payments.save(payment));
+```
+
+`context(value)` fixes the value when the context is declared. `context(() => value)` calls the factory again
+on every `run` and `parse`, which is what a per-request or per-transaction context needs. The factory runs
+once per execution, not once per stage, so every step in one run sees the same value. A function argument is
+always a factory, so a context that is itself a function is written `context(() => fn)`.
+
+The context is fixed for the whole pipeline. It cannot be replaced at the call site, rebound afterwards, or
+changed midway; a value derived from earlier steps belongs in the value flow, which is what the pipeline is.
+
+An asynchronous context promises everything the pipeline produces, by the same rule a thenable stage follows.
+Steps always receive the resolved context, never a promise:
+
+```ts
+const sync = context({factor: 2})(schema(z.number())).pipe((value, ctx) => value * ctx.factor);
+// ParsedPipeline<number, number, {factor: number}>
+
+const loaded = context(async () => snapshot())(schema(z.number()));
+// ParsedPipeline<number, Promise<number>, Snapshot>
+```
+
+A step that ignores the context is written with one parameter, so `schema`, `refine`, `match`, `transform`
+and `trust` compose unchanged. `issue` passes the context through to the step it wraps, but it is built
+before `pipe` can type it, so that step has to annotate both parameters:
+
+```ts
+.pipe(issue((id: string, store: Store) => store.payments.get(id), "cannot load the payment"));
+```
+
+`match` handlers do not receive the context, so a handler that needs it closes over it:
+
+```ts
+.pipe((state, ctx) => match(paymentTransitions, {created: (payment) => ctx.provider.start(payment)})(state));
+```
+
+Do not annotate the context parameter. It is already typed by the starter, and an annotation that does not
+match produces an overload error whose last line names `never`.
+
 ## Refinement
 
 `refine` asserts a narrower type without changing the value. It accepts a shallow object pattern, a type predicate, or `Transitions`.
@@ -307,12 +370,14 @@ SAM does not wrap errors from schemas, predicates, actions, transforms, or selec
 ## Public v1 surface
 
 ```ts
-export {issue, match, pipeline, refine, schema, transitions};
+export {context, issue, match, pipeline, refine, schema, transitions};
 
 export {RefinementError, TransitionError};
 
 export type {
     AllowedStateChange,
+    ContextSource,
+    ContextualPipeline,
     ParsedPipeline,
     ParserStep,
     PatternStep,

@@ -1,8 +1,15 @@
+import type {Fnify} from "@typesec/the/type";
+
 /**
- * One pipeline stage: a plain function from input to output.
+ * One pipeline stage: a plain function from input to output, plus the pipeline context when there is one.
+ *
+ * Without a context `Step<TInput, TOutput>` stays exactly a one-argument function, so every step
+ * written before contexts existed keeps its type and its call sites.
  * @category pipeline
  */
-export type Step<TInput, TOutput> = (input: TInput) => TOutput;
+export type Step<TInput, TOutput, TContext = void> = [TContext] extends [void]
+    ? (input: TInput) => TOutput
+    : (input: TInput, context: TContext) => TOutput;
 
 /**
  * Keeps a pipeline synchronous until a stage returns a thenable, then promises everything after it.
@@ -62,7 +69,7 @@ export type PatternStep<TPattern extends object> = {
  * A step that is not a pattern refinement.
  * @category pipeline
  */
-export type RegularStep<TInput, TOutput> = Step<TInput, TOutput> & {
+export type RegularStep<TInput, TOutput, TContext = void> = Step<TInput, TOutput, TContext> & {
     readonly [patternStep]?: never;
 };
 
@@ -70,11 +77,13 @@ export type RegularStep<TInput, TOutput> = Step<TInput, TOutput> & {
  * A chain of steps, extended by `pipe` and executed by `run`.
  * @category pipeline
  */
-export interface Pipeline<TInput, TOutput> {
-    pipe<TNext>(step: RegularStep<Awaited<TOutput>, TNext>): Pipeline<TInput, PipeResult<TOutput, TNext>>;
+export interface Pipeline<TInput, TOutput, TContext = void> {
+    pipe<TNext>(
+        step: RegularStep<Awaited<TOutput>, TNext, TContext>,
+    ): Pipeline<TInput, PipeResult<TOutput, TNext>, TContext>;
     pipe<const TPattern extends object>(
         step: PatternStep<TPattern> & CompatiblePattern<Awaited<TOutput>, TPattern>,
-    ): Pipeline<TInput, PipeResult<TOutput, NarrowByPattern<Awaited<TOutput>, TPattern>>>;
+    ): Pipeline<TInput, PipeResult<TOutput, NarrowByPattern<Awaited<TOutput>, TPattern>>, TContext>;
     run(value: TInput): TOutput;
 }
 
@@ -82,13 +91,42 @@ export interface Pipeline<TInput, TOutput> {
  * A pipeline rooted in a schema, so it also accepts unknown input through `parse`.
  * @category pipeline
  */
-export interface ParsedPipeline<TInput, TOutput> extends Pipeline<TInput, TOutput> {
-    pipe<TNext>(step: RegularStep<Awaited<TOutput>, TNext>): ParsedPipeline<TInput, PipeResult<TOutput, TNext>>;
+export interface ParsedPipeline<TInput, TOutput, TContext = void> extends Pipeline<TInput, TOutput, TContext> {
+    pipe<TNext>(
+        step: RegularStep<Awaited<TOutput>, TNext, TContext>,
+    ): ParsedPipeline<TInput, PipeResult<TOutput, TNext>, TContext>;
     pipe<const TPattern extends object>(
         step: PatternStep<TPattern> & CompatiblePattern<Awaited<TOutput>, TPattern>,
-    ): ParsedPipeline<TInput, PipeResult<TOutput, NarrowByPattern<Awaited<TOutput>, TPattern>>>;
+    ): ParsedPipeline<TInput, PipeResult<TOutput, NarrowByPattern<Awaited<TOutput>, TPattern>>, TContext>;
     parse(value: unknown): TOutput;
 }
+
+/**
+ * How a pipeline context is produced: a ready value, or a factory called again on every run.
+ * @category pipeline
+ */
+export type ContextSource<TContext> = Fnify<TContext>;
+
+/**
+ * A pipeline starter bound to one context type, mirroring `pipeline` and also usable through `pipe`.
+ *
+ * Both forms are the same function, so `withContext(step)` and `withContext.pipe(step)` build the
+ * same pipeline. An asynchronous context promises everything the pipeline produces, while the steps
+ * themselves always receive the resolved value.
+ * @category pipeline
+ */
+export type ContextualPipeline<TContext> = {
+    <TInput, TOutput>(
+        step: ParserStep<TInput, TOutput>,
+    ): ParsedPipeline<TInput, PipeResult<TContext, TOutput>, Awaited<TContext>>;
+    <TInput>(): Pipeline<TInput, PipeResult<TContext, TInput>, Awaited<TContext>>;
+    <TInput, TOutput>(
+        step: Step<TInput, TOutput, Awaited<TContext>>,
+    ): Pipeline<TInput, PipeResult<TContext, TOutput>, Awaited<TContext>>;
+
+    /** The same starter under a name that reads as a chain; `pipe(step)` is `withContext(step)`. */
+    readonly pipe: ContextualPipeline<TContext>;
+};
 
 /**
  * A proposed move from one state value to another.
