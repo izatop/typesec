@@ -102,6 +102,17 @@ export interface ParsedPipeline<TInput, TOutput, TContext = void> extends Pipeli
 }
 
 /**
+ * A step that takes whatever the pipeline hands it, on the author's word that the value holds.
+ *
+ * Nothing is checked, so the trusted type lives only in the annotation that produced this step. That
+ * is what lets it stand where the pipeline's own type is wider, or unknown.
+ * @category pipeline
+ */
+export type TrustedStep<TOutput, TContext = void> = [TContext] extends [void]
+    ? {<TInput>(input: TInput): TOutput}
+    : {<TInput>(input: TInput, context: TContext): TOutput};
+
+/**
  * How a pipeline context is produced: a ready value, or a factory called again on every run.
  * @category pipeline
  */

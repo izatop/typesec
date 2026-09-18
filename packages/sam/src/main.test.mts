@@ -523,6 +523,59 @@ describe("match", () => {
     });
 });
 
+describe("trust", () => {
+    type Command = {id: string; amount: number};
+    type Trusted = Command & {checked: true};
+
+    it("passes the value through as the asserted type", () => {
+        const flow = pipeline<Trusted>().pipe(trust<Command>());
+
+        expect(isXEqualToY<ReturnType<typeof flow.run>, Command>(true)).toBe(true);
+
+        const command: Trusted = {id: "1", amount: 2, checked: true};
+        expect(flow.run(command)).toBe(command);
+    });
+
+    it("only the step form may stand where the pipeline's own type is wider", () => {
+        // `trust<T>()` is an ordinary step, so its input is checked against what flows in and it
+        // cannot narrow; the step form takes whatever arrives, which is the point of trusting it.
+        const narrowed = pipeline<Command>().pipe(trust((command: Trusted) => command.checked));
+        const fromUnknown = pipeline<unknown>().pipe(trust((command: Trusted) => command.id));
+
+        expect(narrowed.run({id: "1", amount: 2})).toBeUndefined();
+        expect(fromUnknown.run({id: "1", amount: 2, checked: true})).toBe("1");
+    });
+
+    it("hands the trusted value to a step and returns what that step returns", () => {
+        const flow = pipeline<Command>().pipe(trust((command: Trusted) => command.amount * 2));
+
+        expect(isXEqualToY<ReturnType<typeof flow.run>, number>(true)).toBe(true);
+        expect(flow.run({id: "1", amount: 2})).toBe(4);
+    });
+
+    it("gives that step the pipeline context", () => {
+        const flow = context({rate: 3})<Command>().pipe(
+            trust((command: Trusted, ctx: {rate: number}) => command.amount * ctx.rate),
+        );
+
+        expect(flow.run({id: "1", amount: 2})).toBe(6);
+    });
+
+    it("keeps working as a transform validator", () => {
+        const flow = pipeline(schema(z.number())).pipe(transform(trust<string>(), (value) => value.toString()));
+
+        expect(isXEqualToY<ReturnType<typeof flow.parse>, string>(true)).toBe(true);
+        expect(flow.parse(1)).toBe("1");
+    });
+
+    it("lets a trusted step stay asynchronous like any other", async () => {
+        const flow = pipeline<Command>().pipe(trust(async (command: Trusted) => command.amount));
+
+        expect(isXEqualToY<ReturnType<typeof flow.run>, Promise<number>>(true)).toBe(true);
+        await expect(flow.run({id: "1", amount: 2})).resolves.toBe(2);
+    });
+});
+
 describe("context", () => {
     type Store = {readonly prefix: string};
 
@@ -962,5 +1015,9 @@ describe("type constraints", () => {
 
         // @ts-expect-error issue is built before pipe can type it, so its step must annotate both parameters
         withStore(schema(z.string())).pipe(issue((value, ctx) => ctx.prefix + value, "fail"));
+
+        // @ts-expect-error trust takes the trusted type as its argument's annotation or as every type
+        // argument, never as the first of two: TypeScript stops inferring once one is supplied
+        pipeline<{id: string}>().pipe(trust<{id: string}>((value) => value.id));
     });
 });
