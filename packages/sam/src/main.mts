@@ -26,11 +26,16 @@ type IssueResult<TOutput> = TOutput extends PromiseLike<infer TValue> ? Promise<
 
 type MapState<TMap> = TMap extends Transitions<infer TState, any> ? TState : never;
 type MapDefinition<TMap> = TMap extends Transitions<any, infer TDefinition> ? TDefinition : never;
-type MapMatchHandlers<TMap, TOutput> = {
-    [TKey in Extract<keyof MapDefinition<TMap>, string>]: Step<
-        TransitionState<MapState<TMap>, MapDefinition<TMap>, TKey>,
-        TOutput
-    >;
+/**
+ * Written as a plain two-parameter signature rather than `Step<..., TContext>`: a conditional type
+ * stays deferred while `TContext` is still being inferred, which would cost `TOutput` its literal
+ * types. A handler that ignores the context simply declares one parameter.
+ */
+type MapMatchHandlers<TMap, TOutput, TContext = void> = {
+    [TKey in Extract<keyof MapDefinition<TMap>, string>]: (
+        state: TransitionState<MapState<TMap>, MapDefinition<TMap>, TKey>,
+        context: TContext,
+    ) => TOutput;
 };
 
 /**
@@ -70,11 +75,13 @@ export function context<TContext>(source: ContextSource<TContext>): ContextualPi
  * Transformation of TInput into TOut via an intermediate validator.
  * @category pipeline
  */
-export function transform<TInput, TNext, TOut>(
+export function transform<TInput, TNext, TOut, TContext = void>(
     validator: Step<TNext, TOut>,
-    mutator: Step<TInput, TNext>,
-): Step<TInput, TOut> {
-    return Object.assign((input: TInput) => validator(mutator(input)), {[parserStep]: true as const});
+    mutator: (input: TInput, context: TContext) => TNext,
+): Step<TInput, TOut, TContext> {
+    return Object.assign((input: TInput, context: TContext) => validator(mutator(input, context)), {
+        [parserStep]: true as const,
+    }) as unknown as Step<TInput, TOut, TContext>;
 }
 
 /**
@@ -184,24 +191,27 @@ export function transitions<
  * @category state
  * @example match(payments, {created: start, paid: settle})
  */
-export function match<const TMap extends Transitions<object, any>, const TOutput>(
+export function match<const TMap extends Transitions<object, any>, const TOutput, TContext = void>(
     map: TMap,
-    handlers: MapMatchHandlers<TMap, TOutput>,
-): Step<MapState<TMap>, TOutput>;
-export function match<const TMap extends Transitions<object, any>, const TOutput>(
+    handlers: MapMatchHandlers<TMap, TOutput, TContext>,
+): Step<MapState<TMap>, TOutput, TContext>;
+export function match<const TMap extends Transitions<object, any>, const TOutput, TContext = void>(
     map: TMap,
-    handlers: MapMatchHandlers<TMap, Promise<TOutput>>,
-): Step<MapState<TMap>, Promise<TOutput>>;
-export function match<const TMap extends Transitions<object, any>, const TSync, const TAsync>(
+    handlers: MapMatchHandlers<TMap, Promise<TOutput>, TContext>,
+): Step<MapState<TMap>, Promise<TOutput>, TContext>;
+export function match<const TMap extends Transitions<object, any>, const TSync, const TAsync, TContext = void>(
     map: TMap,
-    handlers: MapMatchHandlers<TMap, TSync | Promise<TAsync>>,
-): Step<MapState<TMap>, TSync | Promise<TAsync>>;
-export function match<const TMap extends Transitions<object, any>, const TSync, const TAsync>(
+    handlers: MapMatchHandlers<TMap, TSync | Promise<TAsync>, TContext>,
+): Step<MapState<TMap>, TSync | Promise<TAsync>, TContext>;
+export function match<const TMap extends Transitions<object, any>, const TSync, const TAsync, TContext = void>(
     map: TMap,
-    handlers: MapMatchHandlers<TMap, TSync | PromiseLike<TAsync>>,
-): Step<MapState<TMap>, TSync | PromiseLike<TAsync>>;
-export function match(map: Transitions<any, any>, handlers: Record<string, (state: any) => any>): Step<any, any> {
-    return (state) => handlers[map.resolve(state)]!(state as never);
+    handlers: MapMatchHandlers<TMap, TSync | PromiseLike<TAsync>, TContext>,
+): Step<MapState<TMap>, TSync | PromiseLike<TAsync>, TContext>;
+export function match(
+    map: Transitions<any, any>,
+    handlers: Record<string, Fn<[state: any, context: any], any>>,
+): Fn<[state: any, context: any], any> {
+    return (state, context) => handlers[map.resolve(state)]!(state as never, context);
 }
 
 /**
@@ -222,7 +232,7 @@ export function issue<TInput, TOutput>(
     error: string | ((reason: unknown, payload: TInput) => Error),
 ): Step<TInput, IssueResult<TOutput>>;
 export function issue<TInput, TOutput, TContext>(
-    step: Step<TInput, TOutput, TContext>,
+    step: (input: TInput, context: TContext) => TOutput,
     error: string | ((reason: unknown, payload: TInput) => Error),
 ): Step<TInput, IssueResult<TOutput>, TContext>;
 export function issue(

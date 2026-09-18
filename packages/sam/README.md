@@ -88,18 +88,29 @@ const loaded = context(async () => snapshot())(schema(z.number()));
 // ParsedPipeline<number, Promise<number>, Snapshot>
 ```
 
-A step that ignores the context is written with one parameter, so `schema`, `refine`, `match`, `transform`
-and `trust` compose unchanged. `issue` passes the context through to the step it wraps, but it is built
-before `pipe` can type it, so that step has to annotate both parameters:
+A step that ignores the context is written with one parameter, so `schema`, `refine` and `trust` compose
+unchanged.
+
+`match` handlers and a `transform` mutator receive the context as their own second argument, inferred from
+the pipeline without an annotation:
+
+```ts
+.pipe(match(paymentTransitions, {
+    created: (payment, ctx) => ctx.provider.start(payment),
+    processing: (payment, ctx) => ctx.provider.poll(payment),
+    manualReview: (payment, ctx) => ctx.reviewers.assign(payment),
+    completed: (payment) => payment,
+    cancelled: (payment) => payment,
+}));
+
+.pipe(transform(trust<Label>(), (payment, ctx) => ctx.prefix + payment.id));
+```
+
+`issue` also passes the context to the step it wraps, but it is built before `pipe` can type it, so that
+step has to annotate both parameters:
 
 ```ts
 .pipe(issue((id: string, store: Store) => store.payments.get(id), "cannot load the payment"));
-```
-
-`match` handlers do not receive the context, so a handler that needs it closes over it:
-
-```ts
-.pipe((state, ctx) => match(paymentTransitions, {created: (payment) => ctx.provider.start(payment)})(state));
 ```
 
 Do not annotate the context parameter. It is already typed by the starter, and an annotation that does not

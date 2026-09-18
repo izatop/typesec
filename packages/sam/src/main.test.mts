@@ -4,7 +4,7 @@ import z from "zod";
 import {RefinementError, TransitionError} from "./errors.mjs";
 import * as sam from "./index.mjs";
 import type {StateChange} from "./interfaces.mjs";
-import {context, issue, match, pipeline, refine, schema, transitions, trust} from "./main.mjs";
+import {context, issue, match, pipeline, refine, schema, transform, transitions, trust} from "./main.mjs";
 
 const PaymentStateSchema = z.discriminatedUnion("status", [
     z.object({
@@ -629,6 +629,49 @@ describe("context", () => {
         expect(isXEqualToY<ReturnType<typeof flow.run>, {kind: "a" | "b"} & {kind: "a"}>(true)).toBe(true);
         expect(flow.run({kind: "a"})).toEqual({kind: "a"});
         expect(() => flow.run({kind: "b"})).toThrow(RefinementError);
+    });
+
+    it("gives the context to every match handler, inferred without an annotation", () => {
+        const flow = context(store)(schema(PaymentStateSchema)).pipe(
+            match(paymentTransitions, {
+                created: (payment, ctx) => {
+                    expect(isXEqualToY<typeof ctx, Store>(true)).toBe(true);
+
+                    return ctx.prefix + payment.status;
+                },
+                processing: (payment, ctx) => ctx.prefix + payment.status,
+                manualReview: (payment, ctx) => ctx.prefix + payment.substatus,
+                completed: (payment, ctx) => ctx.prefix + payment.status,
+                cancelled: (payment, ctx) => ctx.prefix + payment.status,
+            }),
+        );
+
+        expect(flow.parse({id: "payment-1", status: "created", substatus: null})).toBe("p-created");
+        expect(flow.parse({id: "payment-1", status: "processing", substatus: "manual_review"})).toBe("p-manual_review");
+    });
+
+    it("keeps the literal output union of match while carrying a context", () => {
+        const select = match(paymentTransitions, {
+            created: () => 1,
+            processing: () => 2,
+            manualReview: () => 3,
+            completed: () => 4,
+            cancelled: () => 5,
+        });
+
+        expect(isXEqualToY<ReturnType<typeof select>, 1 | 2 | 3 | 4 | 5>(true)).toBe(true);
+    });
+
+    it("gives the context to a transform mutator, inferred without an annotation", () => {
+        const flow = context(store)(schema(z.number())).pipe(
+            transform(trust<string>(), (value, ctx) => {
+                expect(isXEqualToY<typeof ctx, Store>(true)).toBe(true);
+
+                return ctx.prefix + value.toString();
+            }),
+        );
+
+        expect(flow.parse(1)).toBe("p-1");
     });
 
     it("forwards the context through issue and maps the error", () => {
