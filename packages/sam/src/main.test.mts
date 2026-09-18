@@ -697,6 +697,175 @@ describe("context", () => {
         expect(() => flow.parse(3)).toThrow("request-7: cannot handle 3");
     });
 
+    it("gives a transform mutator the context but never its validator", () => {
+        const seen: unknown[] = [];
+        let validatorArguments = -1;
+        const validator = ((...args: unknown[]) => {
+            validatorArguments = args.length;
+
+            return args[0] as string;
+        }) as sam.Step<string, string>;
+
+        const flow = context(store)(schema(z.number())).pipe(
+            transform(validator, (value, ctx) => {
+                seen.push(ctx);
+
+                return ctx.prefix + value.toString();
+            }),
+        );
+
+        expect(flow.parse(1)).toBe("p-1");
+        expect(seen).toEqual([store]);
+        // the validator is handed the value alone, so the context never reaches it
+        expect(validatorArguments).toBe(1);
+    });
+
+    it("carries the context through a transform whose result a schema validates", () => {
+        const flow = context(store)(schema(z.number())).pipe(
+            transform(schema(z.string()), (value, ctx) => ctx.prefix + value.toString()),
+        );
+
+        expect(isXEqualToY<ReturnType<typeof flow.parse>, string>(true)).toBe(true);
+        expect(flow.parse(1)).toBe("p-1");
+    });
+
+    it("narrows a union with a context-aware refine predicate", () => {
+        type Operation = {kind: "avg"; values: number[]} | {kind: "min"; values: number[]};
+        type Wanted = {want: "avg"};
+
+        const flow = context<Wanted>({want: "avg"})<Operation>().pipe(
+            refine(
+                (operation: Operation, ctx: Wanted): operation is Extract<Operation, {kind: "avg"}> =>
+                    operation.kind === ctx.want,
+            ),
+        );
+
+        expect(isXEqualToY<ReturnType<typeof flow.run>, Extract<Operation, {kind: "avg"}>>(true)).toBe(true);
+        expect(flow.run({kind: "avg", values: [1]})).toEqual({kind: "avg", values: [1]});
+        expect(() => flow.run({kind: "min", values: [1]})).toThrow(RefinementError);
+    });
+
+    it("validates a transition and narrows one state inside a context pipeline", () => {
+        const change = context(store)<StateChange<PaymentState>>().pipe(refine(paymentTransitions));
+        const created: CreatedState = {id: "payment-1", status: "created", substatus: null};
+        const processing: ProcessingState = {id: "payment-1", status: "processing", substatus: null};
+        const completed: CompletedState = {id: "payment-1", status: "completed", substatus: null};
+
+        expect(change.run({from: created, to: processing})).toEqual({from: created, to: processing});
+        expect(() => change.run({from: created, to: completed})).toThrow(TransitionError);
+
+        const selected = context(store)<PaymentState>().pipe(refine(paymentTransitions, "manualReview"));
+        const manualReview: ManualReviewState = {id: "payment-1", status: "processing", substatus: "manual_review"};
+
+        expect(isXExtendsOfY<ReturnType<typeof selected.run>, ManualReviewState>(true)).toBe(true);
+        expect(selected.run(manualReview)).toBe(manualReview);
+        expect(() => selected.run(processing)).toThrow(RefinementError);
+    });
+
+    it("runs only the selected match handler and mixes one- and two-argument handlers", () => {
+        const ran: string[] = [];
+        const flow = context(store)(schema(PaymentStateSchema)).pipe(
+            match(paymentTransitions, {
+                created: (payment, ctx) => {
+                    ran.push("created");
+
+                    return ctx.prefix + payment.status;
+                },
+                processing: (payment) => {
+                    ran.push("processing");
+
+                    return payment.status;
+                },
+                manualReview: (payment, ctx) => {
+                    ran.push("manualReview");
+
+                    return ctx.prefix + payment.substatus;
+                },
+                completed: (payment) => payment.status,
+                cancelled: (payment) => payment.status,
+            }),
+        );
+
+        expect(flow.parse({id: "payment-1", status: "processing", substatus: "manual_review"})).toBe("p-manual_review");
+        expect(ran).toEqual(["manualReview"]);
+    });
+
+    it("awaits an asynchronous match handler that reads the context", async () => {
+        const flow = context(store)(schema(PaymentStateSchema)).pipe(
+            match(paymentTransitions, {
+                created: async (payment, ctx) => ctx.prefix + payment.status,
+                processing: async (payment, ctx) => ctx.prefix + payment.status,
+                manualReview: async (payment, ctx) => ctx.prefix + payment.status,
+                completed: async (payment, ctx) => ctx.prefix + payment.status,
+                cancelled: async (payment, ctx) => ctx.prefix + payment.status,
+            }),
+        );
+
+        await expect(flow.parse({id: "payment-1", status: "created", substatus: null})).resolves.toBe("p-created");
+    });
+
+    it("hands every kind of callback the very same context object within one run", () => {
+        let built = 0;
+        const seen: unknown[] = [];
+        const withRun = context(() => ({prefix: `p${++built}-`}));
+        type RunContext = {prefix: string};
+
+        const flow = withRun(schema(PaymentStateSchema))
+            .pipe((payment, ctx) => {
+                seen.push(ctx);
+
+                return payment;
+            })
+            .pipe(
+                refine((payment: PaymentState, ctx: RunContext): payment is CreatedState => {
+                    seen.push(ctx);
+
+                    return payment.status === "created";
+                }),
+            )
+            .pipe(
+                match(paymentTransitions, {
+                    created: (payment, ctx) => {
+                        seen.push(ctx);
+
+                        return payment.id;
+                    },
+                    processing: (payment) => payment.id,
+                    manualReview: (payment) => payment.id,
+                    completed: (payment) => payment.id,
+                    cancelled: (payment) => payment.id,
+                }),
+            )
+            .pipe(
+                transform(trust<string>(), (id, ctx) => {
+                    seen.push(ctx);
+
+                    return id;
+                }),
+            )
+            .pipe(
+                issue((id: string, ctx: RunContext) => {
+                    seen.push(ctx);
+
+                    return id;
+                }, "unused"),
+            );
+
+        expect(flow.parse({id: "payment-1", status: "created", substatus: null})).toBe("payment-1");
+        expect(built).toBe(1);
+        expect(seen).toHaveLength(5);
+        expect(new Set(seen).size).toBe(1);
+        expect(seen[0]).toEqual({prefix: "p1-"});
+
+        // a second run gets its own object, and again only one of it
+        seen.length = 0;
+        flow.parse({id: "payment-2", status: "created", substatus: null});
+
+        expect(built).toBe(2);
+        expect(new Set(seen).size).toBe(1);
+        expect(seen[0]).toEqual({prefix: "p2-"});
+    });
+
     it("forwards the context through issue and maps the error", () => {
         const failure = new Error("store offline");
         const flow = context(store)(schema(z.string())).pipe(
