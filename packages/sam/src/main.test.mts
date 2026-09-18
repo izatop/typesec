@@ -539,6 +539,16 @@ describe("context", () => {
         expect(label.run("1")).toBe("p-1");
     });
 
+    it("takes a typed input with no step in front of it, the way pipeline<T>() does", () => {
+        type Command = {id: string; amount: number};
+        const flow = context({rate: 2})<Command>().pipe((command, ctx) => command.amount * ctx.rate);
+
+        expect(isXEqualToY<Parameters<typeof flow.run>[0], Command>(true)).toBe(true);
+        expect(isXEqualToY<ReturnType<typeof flow.run>, number>(true)).toBe(true);
+        expect(flow.run({id: "1", amount: 3})).toBe(6);
+        expect("parse" in flow).toBe(false);
+    });
+
     it("builds the same pipeline whether it is called or piped", () => {
         const withStore = context(store);
         const called = withStore(schema(z.string())).pipe((value, ctx) => ctx.prefix + value);

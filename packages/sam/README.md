@@ -69,6 +69,15 @@ const loadPayment = withStore(schema(PaymentIdSchema)).pipe((id, store) => store
 const savePayment = withStore(schema(PaymentSchema)).pipe((payment, store) => store.payments.save(payment));
 ```
 
+The starter mirrors `pipeline` in full, so a pipeline over a type that is already validated starts the same
+way `pipeline<T>()` does — with the type argument, and no step in front of it:
+
+```ts
+const settle = withStore<Payment>().pipe((payment, store) => store.payments.save(payment));
+
+settle.run(payment);
+```
+
 `context(value)` fixes the value when the context is declared. `context(() => value)` calls the factory again
 on every `run` and `parse`, which is what a per-request or per-transaction context needs. The factory runs
 once per execution, not once per stage, so every step in one run sees the same value. A function argument is
