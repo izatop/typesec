@@ -198,22 +198,6 @@ only fits where the value is already known to hold:
 const label = pipeline(schema(PaymentSchema)).pipe(transform(trust<Label>(), (payment) => `#${payment.id}`));
 ```
 
-`trust` also takes a step, which then receives the trusted value and returns whatever it returns. Written
-this way the trusted type is the annotation on the step's input, and the step takes whatever the pipeline
-hands it — which is what lets it stand where the pipeline's own type is wider, or `unknown`:
-
-```ts
-const paymentId = pipeline<unknown>().pipe(trust((payment: Payment) => payment.id));
-```
-
-That is the difference between the two forms. `trust<T>()` is an ordinary step, so its input is checked
-against what flows in and it cannot narrow. The step form is unchecked on the way in, on the author's word.
-It may take the context as a second argument.
-
-Write the trusted type one way or the other: as the type argument of `trust<T>()`, or as the annotation on
-the step's input. `trust<T>(step)` — the first of two type arguments — does not work, because TypeScript
-stops inferring the rest as soon as one is supplied.
-
 The mutator takes the context as a second argument, inferred from the pipeline with no annotation. The
 validator never receives it: it is a `schema` or a `trust`, and checking a value needs nothing but the value.
 
@@ -509,7 +493,6 @@ export type {
     TransitionState,
     TransitionStateDefinition,
     Transitions,
-    TrustedStep,
 };
 ```
 

@@ -11,7 +11,6 @@ import type {
     ContextualPipeline,
     ParsedPipeline as ParsedPipelineContract,
     ParserStep,
-    TrustedStep,
     PatternStep,
     Pipeline as PipelineContract,
     StateChange,
@@ -105,27 +104,15 @@ export function schema<TOutput, TInput = unknown>(schema: z.ZodType<TOutput, TIn
 }
 
 /**
- * Asserts an input type without checking it, on its own or in front of a step that consumes it.
+ * Asserts a type without checking it, for a `transform` whose result needs no validation.
  *
- * `trust<T>()` passes the value through as `T`; `trust(step)` hands the trusted value to `step` and
- * returns what it returns. Either way the type is written down, never verified, so use it only where
- * the value is already known to hold. The step may take the pipeline context as a second argument.
- *
- * Write the trusted type one way or the other: as the type argument of `trust<T>()`, or as the
- * annotation on the step's input. Supplying only the first of two type arguments — `trust<T>(step)` —
- * does not work, because TypeScript stops inferring the rest as soon as one is given.
+ * Nothing is verified at runtime, so use it only where the value is already known to hold.
  * @category pipeline
  * @example transform(trust<Label>(), (payment) => `#${payment.id}`)
- * @example pipeline<Command>().pipe(trust((command: TrustedCommand) => command.id))
  * @see transform
  */
-export function trust<T>(): Step<T, T>;
-export function trust<T, TNext>(step: (input: T) => TNext): TrustedStep<TNext>;
-export function trust<T, TNext, TContext>(step: (input: T, context: TContext) => TNext): TrustedStep<TNext, TContext>;
-export function trust(
-    step: Fn<[input: any, context: any], any> = (value) => value,
-): Fn<[input: any, context: any], any> {
-    return step;
+export function trust<T>(): Step<T, T> {
+    return (value) => value;
 }
 
 /**

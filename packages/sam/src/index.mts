@@ -16,5 +16,4 @@ export type {
     TransitionKey,
     TransitionState,
     TransitionStateDefinition,
-    TrustedStep,
 } from "./interfaces.mjs";
