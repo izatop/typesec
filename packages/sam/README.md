@@ -13,6 +13,8 @@ unknown input
 
 Each stage is a plain function. A pipeline stays synchronous until a stage returns a thenable. Every later stage receives the awaited value.
 
+A pipeline may also carry a context, which every stage receives as a second argument. That is for what a stage needs but the value flow should not carry: a repository, a clock, a snapshot taken when the run started.
+
 ## Pipeline
 
 Use `pipeline(step)` when the first stage accepts typed input. Use `pipeline<T>()` to start with an identity pipeline for an existing type. A pipeline started with `schema(...)` also exposes `parse(unknown)`.
@@ -415,6 +417,13 @@ After an async stage, `.pipe` passes `Awaited<TResult>` to the next step. Promis
 
 `match` starts one handler. Unselected async handlers do not run. A mix of sync and async handlers produces a union such as `T | Promise<T>`.
 
+An asynchronous context follows the same rule from the start: it is resolved before the first stage, so everything the pipeline produces is promised, including `run` and `parse`. The stages themselves are unaffected and receive the resolved context, never a promise.
+
+```ts
+const loaded = context(async () => store.snapshot())(schema(z.number()));
+// ParsedPipeline<number, Promise<number>, Snapshot>
+```
+
 ## Custom error handling
 
 `issue` replaces an error from one step without changing its input or output type:
@@ -479,6 +488,8 @@ State matches multiple transitions: "Processing", "Manual review"
 
 SAM does not wrap errors from schemas, predicates, actions, transforms, or selected handlers unless the caller wraps that step with `issue`. A failed `refine` creates `RefinementError`; state resolution and transition validation create `TransitionError`.
 
+A context factory is resolved before the first stage, so an error it raises leaves `run` or `parse` unchanged and unwrapped: a synchronous factory throws, an asynchronous one rejects. No stage has run at that point, and `issue` cannot reach it, because `issue` wraps a stage.
+
 ## Public v1 surface
 
 ```ts
@@ -511,6 +522,9 @@ Every type a public function returns or asks for is exported, so a caller can wr
 
 ```ts
 const parser: ParserStep<string, string> = schema(z.string());
+
+const source: ContextSource<Store> = () => ({payments, clock});
+const withStore: ContextualPipeline<Store> = context(source);
 
 const states = {
     created: {name: "Created", when: {status: "created"}, to: ["paid"]},

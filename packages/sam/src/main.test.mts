@@ -549,6 +549,28 @@ describe("context", () => {
         expect("parse" in flow).toBe(false);
     });
 
+    it("lets a failing context factory out unchanged, before any stage runs", async () => {
+        const boom = new Error("no snapshot");
+        const ran: string[] = [];
+        const failing = context(() => {
+            throw boom;
+        });
+        const flow = failing(schema(z.number())).pipe((value) => {
+            ran.push("stage");
+
+            return value;
+        });
+
+        expect(() => flow.parse(1)).toThrow(boom);
+        expect(ran).toEqual([]);
+
+        const failingAsync = context(async () => {
+            throw boom;
+        })(schema(z.number())).pipe((value) => value);
+
+        await expect(failingAsync.parse(1)).rejects.toThrow(boom);
+    });
+
     it("builds the same pipeline whether it is called or piped", () => {
         const withStore = context(store);
         const called = withStore(schema(z.string())).pipe((value, ctx) => ctx.prefix + value);
