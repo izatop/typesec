@@ -729,15 +729,11 @@ describe("context", () => {
         expect(flow.parse(1)).toBe("p-1");
     });
 
-    it("narrows a union with a context-aware refine predicate", () => {
+    it("narrows a union inside a context pipeline, which needs no context to do it", () => {
         type Operation = {kind: "avg"; values: number[]} | {kind: "min"; values: number[]};
-        type Wanted = {want: "avg"};
 
-        const flow = context<Wanted>({want: "avg"})<Operation>().pipe(
-            refine(
-                (operation: Operation, ctx: Wanted): operation is Extract<Operation, {kind: "avg"}> =>
-                    operation.kind === ctx.want,
-            ),
+        const flow = context(store)<Operation>().pipe(
+            refine((operation): operation is Extract<Operation, {kind: "avg"}> => operation.kind === "avg"),
         );
 
         expect(isXEqualToY<ReturnType<typeof flow.run>, Extract<Operation, {kind: "avg"}>>(true)).toBe(true);

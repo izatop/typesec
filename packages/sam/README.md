@@ -169,6 +169,47 @@ const nonEmpty = pipeline<Operation>().pipe(
 
 A failed pattern or predicate throws `RefinementError`.
 
+Narrowing itself never needs the context, and a pattern cannot read one. A predicate may take the context
+as a second argument when the decision depends on something the run carries, such as a tenant or a limit.
+`refine` is built before `pipe` can type it, so such a predicate annotates both parameters:
+
+```ts
+const withinLimit = context(() => ({limit: currentLimit()}))<Operation>().pipe(
+    refine(
+        (operation: Operation, ctx: {limit: number}): operation is NonEmptyOperation =>
+            operation.values.length > 0 && operation.values.length <= ctx.limit,
+    ),
+);
+```
+
+## Transform
+
+`transform` changes a value and validates the result in one step, so the new shape is checked where it is
+made. The mutator produces the new value; the validator checks it.
+
+```ts
+const displayName = pipeline(schema(UserSchema)).pipe(transform(schema(NameSchema), (user) => user.name.trim()));
+```
+
+Use `trust<T>()` as the validator when the result needs no checking. Nothing is verified at runtime, so it
+only fits where the value is already known to hold:
+
+```ts
+const label = pipeline(schema(PaymentSchema)).pipe(transform(trust<Label>(), (payment) => `#${payment.id}`));
+```
+
+The mutator takes the context as a second argument, inferred from the pipeline with no annotation. The
+validator never receives it: it is a `schema` or a `trust`, and checking a value needs nothing but the value.
+
+```ts
+const prefixed = context(() => ({prefix: tenantPrefix()}))(schema(PaymentSchema)).pipe(
+    transform(trust<Label>(), (payment, ctx) => `${ctx.prefix}${payment.id}`),
+);
+```
+
+A mutator is synchronous. It turns one value into another and nothing else; work that has to await belongs
+in its own step, where the pipeline's usual rule promises everything after it.
+
 ## Transitions
 
 `Transitions` describes named states and the allowed edges between them. It reads state and validates transitions. It does not mutate state or run an action.
@@ -334,6 +375,21 @@ const handlePayment = pipeline(schema(PaymentStateSchema)).pipe(
 
 Literal return values are inferred as-is; handler functions do not need `as const`.
 
+A handler takes the context as a second argument, inferred from the pipeline with no annotation. Handlers
+that ignore it keep their single parameter, so the two mix freely in one map:
+
+```ts
+const handlePayment = context(() => ({provider, reviewers}))(schema(PaymentStateSchema)).pipe(
+    match(paymentTransitions, {
+        created: (payment, ctx) => ctx.provider.start(payment),
+        processing: (payment, ctx) => ctx.provider.poll(payment),
+        manualReview: (payment, ctx) => ctx.reviewers.assign(payment),
+        completed: (payment) => payment,
+        cancelled: (payment) => payment,
+    }),
+);
+```
+
 ## Async behavior
 
 The pipeline preserves synchronous results until the first thenable:
@@ -376,6 +432,20 @@ const loadPayment = pipeline(schema(PaymentIdSchema)).pipe(
 ```
 
 `issue` catches a synchronous throw or rejected thenable from the wrapped step. The factory receives the original reason and the value passed to that step. When `issue` wraps `schema(...)`, the payload type is `unknown` because `parse` may receive any value before validation. The string form throws `new Error(message, {cause: reason})`. Async results keep their resolved value type; custom thenables are normalized to a native `Promise`. Errors from later pipeline steps remain unchanged.
+
+Both the wrapped step and the factory receive the context, the factory as a third argument. That is the
+only way a message can name something only the run knows, such as a request id, because the context does
+not exist until the run starts and no closure can reach it. `issue` is built before `pipe` can type it, so
+the wrapped step annotates both of its parameters; the factory does not:
+
+```ts
+const loadPayment = context(() => ({payments, requestId: nextRequestId()}))(schema(PaymentIdSchema)).pipe(
+    issue(
+        (id: string, ctx: RequestContext) => ctx.payments.get(id),
+        (reason, id, ctx) => new PaymentLoadError(`${ctx.requestId}: cannot load payment ${id}`, {cause: reason}),
+    ),
+);
+```
 
 ## Errors
 

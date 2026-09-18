@@ -80,7 +80,8 @@ export function context<TContext>(source: ContextSource<TContext>): ContextualPi
  * Changes a value and validates the result in one step, so the new shape is checked where it is made.
  *
  * The mutator receives the pipeline context as its second argument; the validator is a `schema` or a
- * `trust`, so it takes the value alone.
+ * `trust`, so it takes the value alone. A mutator is synchronous: it turns one value into another and
+ * nothing else, and work that has to await belongs in its own step.
  * @category pipeline
  * @example transform(schema(NameSchema), (user) => user.name.trim())
  * @see trust
