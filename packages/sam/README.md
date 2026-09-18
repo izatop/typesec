@@ -88,11 +88,20 @@ const loaded = context(async () => snapshot())(schema(z.number()));
 // ParsedPipeline<number, Promise<number>, Snapshot>
 ```
 
-A step that ignores the context is written with one parameter, so `schema`, `refine` and `trust` compose
-unchanged.
+A step that ignores the context is written with one parameter, so every combinator composes unchanged.
+Where a callback does want the context, it takes it as its own second argument:
 
-`match` handlers and a `transform` mutator receive the context as their own second argument, inferred from
-the pipeline without an annotation:
+| callback                     | gets the context | inferred from the pipeline      |
+| ---------------------------- | ---------------- | ------------------------------- |
+| a step given to `pipe`       | yes              | yes                             |
+| a `match` handler            | yes              | yes                             |
+| a `transform` mutator        | yes              | yes                             |
+| a `refine` predicate         | yes              | no, annotate both parameters    |
+| the step `issue` wraps       | yes              | no, annotate both parameters    |
+| the error factory of `issue` | yes              | yes                             |
+| a `transform` validator      | no               | — it is a `schema` or a `trust` |
+
+`match` handlers and a `transform` mutator need no annotation:
 
 ```ts
 .pipe(match(paymentTransitions, {
@@ -106,11 +115,24 @@ the pipeline without an annotation:
 .pipe(transform(trust<Label>(), (payment, ctx) => ctx.prefix + payment.id));
 ```
 
-`issue` also passes the context to the step it wraps, but it is built before `pipe` can type it, so that
-step has to annotate both parameters:
+`issue` also passes the context to the step it wraps and to its error factory. `issue` is built before
+`pipe` can type it, so the wrapped step has to annotate both parameters; the error factory does not.
+Reaching the context from an error factory is the only way a message can name something only the run
+knows, such as a request id:
 
 ```ts
-.pipe(issue((id: string, store: Store) => store.payments.get(id), "cannot load the payment"));
+.pipe(
+    issue(
+        (id: string, store: Store) => store.payments.get(id),
+        (reason, id, store) => new PaymentLoadError(`${store.requestId}: cannot load ${id}`, {cause: reason}),
+    ),
+);
+```
+
+A `refine` predicate takes the context the same way, and annotates for the same reason:
+
+```ts
+.pipe(refine((payment: Payment, store: Store): payment is LargePayment => payment.amount > store.limit));
 ```
 
 Do not annotate the context parameter. It is already typed by the starter, and an annotation that does not
@@ -381,7 +403,7 @@ SAM does not wrap errors from schemas, predicates, actions, transforms, or selec
 ## Public v1 surface
 
 ```ts
-export {context, issue, match, pipeline, refine, schema, transitions};
+export {context, issue, match, pipeline, refine, schema, transform, transitions, trust};
 
 export {RefinementError, TransitionError};
 
@@ -426,3 +448,5 @@ The inference machinery stays internal. `CompatiblePattern`, `NarrowByPattern`, 
 SAM does not provide persistence, retries, transactions, compensation, or an event store. Application actions own those concerns. `Transitions` validates state and routes values without changing them.
 
 Dedicated wrappers for actions and transforms would add names without behavior. Plain pipeline steps cover the v1 semantics. Metadata, tracing, or retry policies may justify wrappers later.
+
+A context is fixed for the whole pipeline. SAM does not replace it at the call site, rebind it on a built pipeline, or derive a new one midway: a value computed from earlier steps belongs in the value flow, which is what a pipeline already is.

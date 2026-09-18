@@ -42,9 +42,11 @@ type MapMatchHandlers<TMap, TOutput, TContext = void> = {
  * Starts a pipeline.
  *
  * Given `schema(...)` it also exposes `parse` for unknown input; given a step, or
- * nothing at all, it starts from a known type.
+ * nothing at all, it starts from a known type. Use `context` instead when the steps need
+ * dependencies the value flow should not carry.
  * @category pipeline
  * @example pipeline(schema(z.string())).pipe((value) => value.length)
+ * @see context
  */
 export function pipeline<TInput, TOutput>(step: ParserStep<TInput, TOutput>): ParsedPipelineContract<TInput, TOutput>;
 export function pipeline<TInput>(): PipelineContract<TInput, TInput>;
@@ -56,9 +58,12 @@ export function pipeline(step: Step<any, any> = (value) => value): PipelineContr
 /**
  * Starts pipelines that hand every step a context as its second argument.
  *
- * A plain value is fixed when the context is declared; a factory is called again on every `run` or
- * `parse`, which is what a per-request snapshot needs. The result is used like `pipeline` itself,
- * either by calling it or through `pipe`, and the same context serves the whole pipeline.
+ * The context carries what a step needs but the value flow should not: a repository, a service, a
+ * clock, a tenant, a snapshot taken when the run started. A plain value is fixed when the
+ * context is declared; a factory is called again on every `run` or `parse`, which is what a
+ * per-request context needs. The result is used like `pipeline` itself, either by calling it or
+ * through `pipe`, and one context serves the whole pipeline, including the callbacks given to
+ * `match`, `transform`, `refine` and `issue`.
  * @category pipeline
  * @example const withStore = context(() => store.snapshot());
  * @example withStore(schema(Command)).pipe((command, store) => store.load(command.id))
@@ -72,8 +77,13 @@ export function context<TContext>(source: ContextSource<TContext>): ContextualPi
 }
 
 /**
- * Transformation of TInput into TOut via an intermediate validator.
+ * Changes a value and validates the result in one step, so the new shape is checked where it is made.
+ *
+ * The mutator receives the pipeline context as its second argument; the validator is a `schema` or a
+ * `trust`, so it takes the value alone.
  * @category pipeline
+ * @example transform(schema(NameSchema), (user) => user.name.trim())
+ * @see trust
  */
 export function transform<TInput, TNext, TOut, TContext = void>(
     validator: Step<TNext, TOut>,
@@ -93,8 +103,12 @@ export function schema<TOutput, TInput = unknown>(schema: z.ZodType<TOutput, TIn
 }
 
 /**
- * Trusted typed step
+ * Asserts a type without checking it, for a `transform` whose result needs no validation.
+ *
+ * Nothing is verified at runtime, so use it only where the value is already known to hold.
  * @category pipeline
+ * @example transform(trust<Label>(), (payment) => `#${payment.id}`)
+ * @see transform
  */
 export function trust<T>(): Step<T, T> {
     return (value) => value;
@@ -104,9 +118,11 @@ export function trust<T>(): Step<T, T> {
  * Narrows a value without changing it, by object pattern, type predicate, or state graph.
  *
  * With a `Transitions` and no key it validates a `{from, to}` change; with a key it
- * narrows one value to that named state. A failure throws `RefinementError`.
+ * narrows one value to that named state. A predicate may take the pipeline context as a second
+ * argument, which lets a check depend on a tenant or a limit. A failure throws `RefinementError`.
  * @category pipeline
  * @example pipeline<Operation>().pipe(refine({kind: "avg"}))
+ * @see RefinementError
  */
 export function refine<
     TState extends object,
@@ -120,8 +136,14 @@ export function refine<
 export function refine<TInput, TOutput extends TInput>(
     predicate: (input: TInput) => input is TOutput,
 ): Step<TInput, TOutput>;
+export function refine<TInput, TOutput extends TInput, TContext>(
+    predicate: (input: TInput, context: TContext) => input is TOutput,
+): Step<TInput, TOutput, TContext>;
 export function refine<const TPattern extends object>(pattern: TPattern): PatternStep<TPattern>;
-export function refine(refinement: object | ((input: any) => boolean), key?: string): Step<any, any> {
+export function refine(
+    refinement: object | Fn<[input: any, context: any], boolean>,
+    key?: string,
+): Fn<[input: any, context: any], any> {
     if (refinement instanceof Transitions) {
         return key === undefined
             ? (change: StateChange<object>) => {
@@ -139,8 +161,8 @@ export function refine(refinement: object | ((input: any) => boolean), key?: str
     }
 
     if (typeof refinement === "function") {
-        return (input) => {
-            if (!refinement(input)) {
+        return (input, context) => {
+            if (!refinement(input, context)) {
                 throw new RefinementError("Value does not satisfy refinement");
             }
 
@@ -169,9 +191,12 @@ export function refine(refinement: object | ((input: any) => boolean), key?: str
 }
 
 /**
- * Builds a state graph from a schema and its state definitions, inferring the state type from the schema.
+ * Builds a state machine from a schema and its state definitions, inferring the state type from the schema.
+ *
+ * The result validates transitions and resolves which state a value is in; it never changes the value.
  * @category state
  * @example transitions(PaymentSchema, {created: {name: "Created", when: {status: "created"}, to: ["paid"]}})
+ * @see match
  */
 export function transitions<
     TSchema extends z.ZodType<object, any>,
@@ -186,10 +211,11 @@ export function transitions<
 /**
  * Resolves the current state and runs the one handler for it.
  *
- * Handlers cover every state in the graph and each receives its narrowed type.
- * Only the selected handler runs.
+ * Handlers cover every state in the state machine and each receives its narrowed type, plus the
+ * pipeline context as a second argument. Only the selected handler runs.
  * @category state
- * @example match(payments, {created: start, paid: settle})
+ * @example match(payments, {created: (payment, ctx) => ctx.provider.start(payment), paid: settle})
+ * @see transitions
  */
 export function match<const TMap extends Transitions<object, any>, const TOutput, TContext = void>(
     map: TMap,
@@ -216,8 +242,13 @@ export function match(
 
 /**
  * Replaces the error a step raises, keeping its input and output types.
+ *
+ * Both the wrapped step and the error factory receive the pipeline context, which is the only way an
+ * error message can name something the context knows, such as a request id. A step that reads the
+ * context has to annotate both of its parameters, because `issue` is built before `pipe` types it.
  * @category pipeline
  * @example issue(schema(IdSchema), "Bad payment id")
+ * @see context
  */
 export function issue<TInput, TOutput>(
     step: ParserStep<TInput, TOutput>,
@@ -233,14 +264,14 @@ export function issue<TInput, TOutput>(
 ): Step<TInput, IssueResult<TOutput>>;
 export function issue<TInput, TOutput, TContext>(
     step: (input: TInput, context: TContext) => TOutput,
-    error: string | ((reason: unknown, payload: TInput) => Error),
+    error: string | ((reason: unknown, payload: TInput, context: TContext) => Error),
 ): Step<TInput, IssueResult<TOutput>, TContext>;
 export function issue(
     step: Fn<[input: any, context: any], any>,
-    error: string | ((reason: unknown, payload: any) => Error),
+    error: string | ((reason: unknown, payload: any, context: any) => Error),
 ): Fn<[input: any, context: any], any> {
-    const mapError = (reason: unknown, payload: any): Error =>
-        typeof error === "string" ? new Error(error, {cause: reason}) : error(reason, payload);
+    const mapError = (reason: unknown, payload: any, context: any): Error =>
+        typeof error === "string" ? new Error(error, {cause: reason}) : error(reason, payload, context);
 
     const wrapped = (payload: any, context: any) => {
         try {
@@ -248,11 +279,11 @@ export function issue(
 
             return async.isThenable(result)
                 ? Promise.resolve(result).catch((reason) => {
-                      throw mapError(reason, payload);
+                      throw mapError(reason, payload, context);
                   })
                 : result;
         } catch (reason) {
-            throw mapError(reason, payload);
+            throw mapError(reason, payload, context);
         }
     };
 

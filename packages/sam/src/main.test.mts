@@ -674,6 +674,29 @@ describe("context", () => {
         expect(flow.parse(1)).toBe("p-1");
     });
 
+    it("gives the context to a refine predicate", () => {
+        const flow = context({limit: 10})(schema(z.number())).pipe(
+            refine((value: number, ctx: {limit: number}): value is number => value <= ctx.limit),
+        );
+
+        expect(flow.parse(5)).toBe(5);
+        expect(() => flow.parse(50)).toThrow(RefinementError);
+    });
+
+    it("gives the context to the error factory, which no closure could reach", () => {
+        const withRequest = context(() => ({id: "request-7"}));
+        const flow = withRequest(schema(z.number())).pipe(
+            issue(
+                (value: number, _ctx: {id: string}) => {
+                    throw new Error("boom");
+                },
+                (reason, payload, ctx) => new Error(`${ctx.id}: cannot handle ${payload}`, {cause: reason}),
+            ),
+        );
+
+        expect(() => flow.parse(3)).toThrow("request-7: cannot handle 3");
+    });
+
     it("forwards the context through issue and maps the error", () => {
         const failure = new Error("store offline");
         const flow = context(store)(schema(z.string())).pipe(

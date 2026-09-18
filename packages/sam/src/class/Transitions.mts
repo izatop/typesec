@@ -2,11 +2,12 @@ import {TransitionError} from "../errors.mjs";
 import type {TransitionDefinition, TransitionKey} from "../interfaces.mjs";
 
 /**
- * A state graph: named states with the patterns that identify them and the moves they allow.
+ * A state machine: named states with the patterns that identify them and the transitions they allow.
  *
  * It reads and validates state without changing it. Every state must match exactly one
  * pattern, so patterns are expected not to overlap.
  * @category state
+ * @see transitions
  */
 export class Transitions<
     TState extends object,
