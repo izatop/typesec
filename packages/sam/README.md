@@ -526,12 +526,16 @@ const parser: ParserStep<string, string> = schema(z.string());
 const source: ContextSource<Store> = () => ({payments, clock});
 const withStore: ContextualPipeline<Store> = context(source);
 
+const pattern: PatternStep<{readonly status: "paid"}> = refine({status: "paid"} as const);
+
 const states = {
     created: {name: "Created", when: {status: "created"}, to: ["paid"]},
     paid: {name: "Paid", when: {status: "paid"}, to: []},
 } as const satisfies TransitionDefinition<Payment>;
 
 const key: TransitionKey<typeof states> = payments.resolve(payment);
+const created: TransitionStateDefinition<Payment, TransitionKey<typeof states>> = states.created;
+const change: Step<StateChange<Payment>, AllowedStateChange<Payment, typeof states>> = refine(payments);
 ```
 
 The inference machinery stays internal. `CompatiblePattern`, `NarrowByPattern`, `PipeResult`, `RegularStep`, `StatePattern` and `ValidateTransitionDefinition` constrain parameters and never appear in code a caller writes. The `parserStep` and `patternStep` symbols stay internal for the same reason: a parser step comes from `schema(...)` and a pattern step from `refine(...)`, never from a literal.
