@@ -15,7 +15,7 @@
       "path": "./mrpc"
     },
     {
-      "path": "./sam"
+      "path": "./pipe"
     },
     {
       "path": "./serve"
