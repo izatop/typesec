@@ -1,32 +1,33 @@
-import {describe, expect, mock, test} from "bun:test";
+import {afterEach, beforeEach, describe, expect, spyOn, test} from "bun:test";
 import {scheduler} from "timers/promises";
-import {exit, setShutdownFunction} from "./exit.mjs";
+import {exit} from "./exit.mjs";
 
 describe("exit(code, reason)", () => {
-    test("should exit", async () => {
-        const pe = mock((_code, _reason) => void 0);
-        setShutdownFunction(pe);
-        exit(0);
+    beforeEach(() => spyOn(process, "exit"));
+    afterEach(() => spyOn(process, "exit").mockRestore());
 
+    test("should exit", async () => {
+        const exitSpy = spyOn(process, "exit").mockImplementation(() => undefined as never);
+
+        exit(0);
         await scheduler.wait(0);
-        expect(pe.mock.calls).toEqual([[0, null]]);
+
+        expect(exitSpy).toHaveBeenCalledWith(0);
     });
 
     test("should exit code > 0", async () => {
-        const pe = mock((_code, _reason) => void 0);
-        setShutdownFunction(pe);
+        const exitSpy = spyOn(process, "exit").mockImplementation(() => undefined as never);
         exit(1, "Test reason");
-
         await scheduler.wait(0);
-        expect(pe.mock.calls).toEqual([[1, "Test reason"]]);
+        expect(exitSpy).toHaveBeenCalledWith(1);
     });
 
     test("should cancel exit", async () => {
-        const pe = mock((_code, _reason) => void 0);
-        setShutdownFunction(pe);
+        const spy2 = spyOn(process, "exit");
         clearImmediate(exit(2)); // test exit cancelled
 
         await scheduler.wait(0);
-        expect(pe.mock.calls).toEqual([]);
+        expect(spy2).toBeCalledTimes(0);
+        spy2.mockRestore();
     });
 });

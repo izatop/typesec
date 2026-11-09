@@ -1,5 +1,5 @@
-import {log} from "@typesec/tracer";
 import {AsyncLock} from "../lib/index.mjs";
+import {tracer} from "../tracer.mts";
 import {runtime} from "./runtime.mjs";
 
 /**
@@ -9,13 +9,13 @@ import {runtime} from "./runtime.mjs";
  * @category runtime
  */
 export function heartbeat(ctrl: AbortController = runtime.controller): Promise<void> {
-    log("heartbeat(%s)", ctrl.constructor.name);
+    tracer.log("heartbeat(%s)", ctrl.constructor.name);
 
     return AsyncLock.acquire(
         ctrl.signal,
         (release) =>
             new Promise(function beat(resolve) {
-                log("beat(): %s", ctrl.signal.aborted ? "break" : "start");
+                tracer.log("beat(): %s", ctrl.signal.aborted ? "break" : "start");
                 if (ctrl.signal.aborted) {
                     return resolve();
                 }
@@ -27,7 +27,7 @@ export function heartbeat(ctrl: AbortController = runtime.controller): Promise<v
                 ctrl.signal.addEventListener(
                     "abort",
                     () => {
-                        log("beat(): stop");
+                        tracer.log("beat(): stop");
                         resolve();
                         release();
                     },

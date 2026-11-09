@@ -1,5 +1,6 @@
 /**
  * Collects async disposables and releases them together.
+ *
  * @category lib
  */
 export class AsyncDisposableList {

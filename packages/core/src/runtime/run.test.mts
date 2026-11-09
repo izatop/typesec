@@ -1,6 +1,7 @@
 import {describe, expect, mock, test} from "bun:test";
-import {run} from "../index.mjs";
-import {lifecycle, runtime} from "./runtime.mjs";
+import {lifecycle} from "./controller/index.mjs";
+import {run} from "./run.mts";
+import {runtime} from "./runtime.mjs";
 
 describe("run()", () => {
     test("should run a task", async () => {

@@ -1,8 +1,9 @@
 import type {Fn, Prop} from "@typesec/the/type";
 import {AsyncLocalStorage} from "node:async_hooks";
 import {withDisposablePending, type WithDisposablePending} from "../lib/dispostable.mjs";
-import lifecycle, {RuntimeController} from "./controller/RuntimeController.mjs";
-import {RuntimeSequence} from "./controller/RuntimeSequence.mjs";
+import {WeakSequence} from "../lib/WeakSequence.mts";
+import {RuntimeController} from "./controller/index.mjs";
+import {lifecycle} from "./controller/index.mts";
 import {dispose} from "./dispose.mjs";
 
 /**
@@ -120,7 +121,7 @@ export const runtime: Runtime = {
     },
     /** Next value of the runtime-wide sequence. */
     increment() {
-        return RuntimeSequence.increment(RuntimeController);
+        return WeakSequence.increment(RuntimeController);
     },
     /** Waits, returning early when the controller aborts. */
     wait(ms) {
@@ -128,14 +129,8 @@ export const runtime: Runtime = {
     },
     /** Runs a task in its own async context, so nested code sees that controller. */
     run(task, withContext) {
-        const controller = withContext ?? this.controller;
+        const controller = withContext ?? this.use();
 
-        return withDisposablePending(store.run(controller, task), () => dispose(this.controller));
+        return withDisposablePending(store.run(controller, task), () => dispose(withContext));
     },
 };
-
-/**
- * The process-wide root controller.
- * @category runtime
- */
-export {lifecycle};

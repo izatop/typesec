@@ -1,11 +1,11 @@
 import {identify} from "@typesec/the/object";
 import {get} from "radash";
 import {tracer} from "../tracer.mjs";
+import {lifecycle} from "./controller/index.mjs";
 import {dispose} from "./dispose.mjs";
 import {exit} from "./exit.mjs";
 import type {MainTask} from "./interfaces.mjs";
 import {run} from "./run.mjs";
-import {lifecycle} from "./runtime.mjs";
 
 /**
  * Runs an entrypoint under the lifecycle controller and shuts the process down after it.

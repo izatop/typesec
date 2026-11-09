@@ -2,12 +2,12 @@
  * Per-key counter, used to give runtime controllers distinct identifiers.
  * @category runtime
  */
-export class RuntimeSequence {
-    static #map = new WeakMap<WeakKey, RuntimeSequence>();
-
+export class WeakSequence {
     #sequence: number = 0;
 
-    static #factory = () => new RuntimeSequence();
+    static readonly #map = new WeakMap<WeakKey, WeakSequence>();
+
+    static readonly #factory = () => new WeakSequence();
 
     private constructor() {}
 
