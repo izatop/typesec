@@ -148,6 +148,8 @@ export class RuntimeController extends AbortController implements Disposable {
 
     /** Registers the exit-signal handlers, once per controller. */
     public trap = (): this => {
+        assert(!this.#disposer.disposed, "trap(): controller already disposed");
+        this.signal.throwIfAborted();
         assert(!ExitSignals.some((signal) => process.listeners(signal).includes(this.abort)), "trap(): already called");
 
         this.#trace.log("trap(%o)", ExitSignals);
@@ -156,18 +158,8 @@ export class RuntimeController extends AbortController implements Disposable {
             this.#disposer.defer(() => process.removeListener(signal, this.abort));
         }
 
-        this.#disposer.createDisposableListener(
-            () => dispose(this),
-            (fn) => this.signal.addEventListener("abort", fn, {once: true}),
-            (fn) => this.signal.removeEventListener("abort", fn),
-        );
-
         const locker = setInterval(() => void 0, 1_000_000_000);
-        this.#disposer.createDisposableListener(
-            () => clearInterval(locker),
-            (fn) => this.signal.addEventListener("abort", fn, {once: true}),
-            (fn) => this.signal.removeEventListener("abort", fn),
-        );
+        this.#disposer.defer(() => clearInterval(locker));
 
         return this;
     };
@@ -183,8 +175,7 @@ export class RuntimeController extends AbortController implements Disposable {
         this.#trace.log("abort(%s)", reason);
 
         super.abort(reason);
-        this.#parent?.detach(this);
-        ExitSignals.forEach((signal) => process.off(signal, this.abort));
+        this[Symbol.dispose]();
 
         return this;
     };
@@ -211,12 +202,14 @@ export class RuntimeController extends AbortController implements Disposable {
             return this;
         }
 
-        const onAbort = this.#disposer.createDisposableListener(
-            () => child.abort(),
-            (fn) => this.signal.addEventListener("abort", fn, {once: true}),
-            (fn) => this.signal.removeEventListener("abort", fn),
-        );
+        assert(!this.#disposer.disposed, this.#trace.format("enqueue(%s): parent already disposed", identify(child)));
 
+        if (this.#children.has(child)) {
+            return this;
+        }
+
+        const onAbort = () => child.abort();
+        this.signal.addEventListener("abort", onAbort, {once: true});
         this.#children.set(child, onAbort);
 
         return this;
@@ -238,6 +231,8 @@ export class RuntimeController extends AbortController implements Disposable {
     };
 
     public [Symbol.dispose](): void {
+        this.#parent?.detach(this);
+
         for (const child of this.#children.keys()) {
             this.detach(child);
         }
