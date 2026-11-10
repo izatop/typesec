@@ -1,0 +1,45 @@
+import {dispose} from "./dispose.mjs";
+
+/**
+ * Progress of a cleanup attempt; `settled` includes success and failure.
+ * @internal
+ */
+export type DisposalEntryState = "idle" | "disposing" | "settled";
+
+/**
+ * An internal resource entry that memoizes one cleanup attempt.
+ * @internal
+ */
+export class DisposalEntry {
+    /** The resource held until its owner releases this entry. */
+    public readonly resource: Disposable | AsyncDisposable;
+
+    #state: DisposalEntryState = "idle";
+    #pending: Promise<void> | undefined;
+
+    /** Holds the resource without starting cleanup. */
+    constructor(resource: Disposable | AsyncDisposable) {
+        this.resource = resource;
+    }
+
+    /** Current progress of the single cleanup attempt. */
+    public get state(): DisposalEntryState {
+        return this.#state;
+    }
+
+    /** Starts cleanup in a microtask and always returns the same promise, including after rejection. */
+    public dispose(): Promise<void> {
+        if (this.#pending) {
+            return this.#pending;
+        }
+
+        this.#state = "disposing";
+        this.#pending = Promise.resolve()
+            .then(() => dispose(this.resource))
+            .finally(() => {
+                this.#state = "settled";
+            });
+
+        return this.#pending;
+    }
+}
