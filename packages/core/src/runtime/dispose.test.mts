@@ -1,22 +1,23 @@
 import {describe, expect, mock, test} from "bun:test";
 import {dispose} from "../index.mjs";
+import {toAsyncDisposable, toDisposable} from "../lib/dispostable.mjs";
 
 describe("dispose", () => {
     test("should async dispose", async () => {
-        const disposable = {
-            [Symbol.asyncDispose]: mock(async () => void 0),
-        };
+        const cleanup = mock(async () => void 0);
+        const disposable = toAsyncDisposable(cleanup);
 
         await dispose(disposable);
-        expect(disposable[Symbol.asyncDispose].mock.calls.length).toBe(1);
+
+        expect(cleanup.mock.calls.length).toBe(1);
     });
 
     test("should dispose", async () => {
-        const disposable = {
-            [Symbol.dispose]: mock(() => void 0),
-        };
+        const cleanup = mock(() => void 0);
+        const disposable = toDisposable(cleanup);
 
         await dispose(disposable);
-        expect(disposable[Symbol.dispose].mock.calls.length).toBe(1);
+
+        expect(cleanup.mock.calls.length).toBe(1);
     });
 });

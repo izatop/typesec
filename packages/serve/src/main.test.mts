@@ -1,4 +1,4 @@
-import {runtime} from "@typesec/core";
+import {runtime, toAsyncDisposable} from "@typesec/core";
 import {getApplication} from "@typesec/unit";
 import type {Server} from "bun";
 import {describe, expect, test} from "bun:test";
@@ -7,21 +7,46 @@ import {response, ServeProto} from "./index.mjs";
 
 describe("Main", () => {
     test("Server", async () => {
-        using _ = runtime.use();
+        using controller = runtime.use().clone();
 
         const path = resolve(import.meta.dirname, "test/app");
         const app = getApplication(await import("./test/index.mjs"));
         const ready = Promise.withResolvers<Server<undefined>>();
-        const running = app.proto.run({
-            path,
-            ready: () => {
-                const server = ServeProto.instances.at(-1);
-                if (!server) {
-                    throw new Error("Server instance was not registered");
+        let startedServer: Server<undefined> | undefined;
+
+        const running = runtime.run(
+            () =>
+                app.proto.run({
+                    path,
+                    ready: () => {
+                        const server = ServeProto.instances.at(-1);
+                        if (!server) {
+                            throw new Error("Server instance was not registered");
+                        }
+
+                        startedServer = server;
+                        ready.resolve(server);
+                    },
+                }),
+            controller,
+        );
+
+        await using cleanup = toAsyncDisposable(async () => {
+            controller.abort();
+
+            try {
+                await running;
+            } finally {
+                await startedServer?.stop();
+
+                if (startedServer) {
+                    const index = ServeProto.instances.indexOf(startedServer);
+
+                    if (index !== -1) ServeProto.instances.splice(index, 1);
                 }
 
-                ready.resolve(server);
-            },
+                await controller.close();
+            }
         });
 
         const server = await Promise.race([

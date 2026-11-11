@@ -1,4 +1,4 @@
-import {dispose, runtime} from "@typesec/core";
+import {dispose, runtime, toAsyncDisposable} from "@typesec/core";
 import {wrap} from "@typesec/tracer";
 import {getHandle, ProtoAbstract, type MainArgs} from "@typesec/unit";
 import {FileSystemRouter, type BunRequest, type MatchedRoute, type Serve, type Server} from "bun";
@@ -146,12 +146,10 @@ export class ServeProto extends ProtoAbstract<ServeInput> {
             await preload;
             await runtime.heartbeat(() => dispose(res));
 
-            return {
-                [Symbol.asyncDispose]: async () => {
-                    this.instances.splice(this.instances.indexOf(server), 1);
-                    await server.stop();
-                },
-            };
+            return toAsyncDisposable(async () => {
+                this.instances.splice(this.instances.indexOf(server), 1);
+                await server.stop();
+            });
         });
     }
 

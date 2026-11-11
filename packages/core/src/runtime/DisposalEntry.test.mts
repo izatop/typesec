@@ -1,15 +1,17 @@
 import {describe, expect, mock, test} from "bun:test";
+import {toAsyncDisposable, toDisposable} from "../lib/dispostable.mjs";
 import {DisposalEntry} from "./DisposalEntry.mjs";
 
 describe("DisposalEntry", () => {
     test("should lazily share one cleanup promise during and after disposal", async () => {
         const {promise: gate, resolve: release} = Promise.withResolvers<void>();
-        const resource = {[Symbol.asyncDispose]: mock(() => gate)};
+        const cleanup = mock(() => gate);
+        const resource = toAsyncDisposable(cleanup);
         const entry = new DisposalEntry(resource);
 
         expect(entry.resource).toBe(resource);
         expect(entry.state).toBe("idle");
-        expect(resource[Symbol.asyncDispose]).not.toHaveBeenCalled();
+        expect(cleanup).not.toHaveBeenCalled();
 
         let settled = false;
 
@@ -23,13 +25,13 @@ describe("DisposalEntry", () => {
 
             expect(concurrent).toBe(pending);
             expect(entry.state).toBe("disposing");
-            expect(resource[Symbol.asyncDispose]).not.toHaveBeenCalled();
+            expect(cleanup).not.toHaveBeenCalled();
 
             await Promise.resolve();
 
             expect(settled).toBeFalse();
             expect(entry.state).toBe("disposing");
-            expect(resource[Symbol.asyncDispose]).toHaveBeenCalledTimes(1);
+            expect(cleanup).toHaveBeenCalledTimes(1);
         } finally {
             release();
             await observed;
@@ -40,16 +42,15 @@ describe("DisposalEntry", () => {
         expect(settled).toBeTrue();
         expect(entry.state).toBe("settled");
         expect(repeated).toBe(pending);
-        expect(resource[Symbol.asyncDispose]).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(1);
     });
 
     test("a reentrant sync hook should receive the cached cleanup promise", async () => {
         let reentrant: Promise<void> | undefined;
-        const resource = {
-            [Symbol.dispose]: mock(() => {
-                reentrant = entry.dispose();
-            }),
-        };
+        const cleanup = mock(() => {
+            reentrant = entry.dispose();
+        });
+        const resource = toDisposable(cleanup);
         const entry = new DisposalEntry(resource);
 
         const pending = entry.dispose();
@@ -59,16 +60,15 @@ describe("DisposalEntry", () => {
         expect(reentrant).toBe(pending);
         expect(repeated).toBe(pending);
         expect(entry.state).toBe("settled");
-        expect(resource[Symbol.dispose]).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(1);
     });
 
     test("should retain the rejected promise and original async disposal error", async () => {
         const reason = new Error("Async cleanup failed");
-        const resource = {
-            [Symbol.asyncDispose]: mock(async () => {
-                throw reason;
-            }),
-        };
+        const cleanup = mock(async () => {
+            throw reason;
+        });
+        const resource = toAsyncDisposable(cleanup);
         const entry = new DisposalEntry(resource);
 
         const pending = entry.dispose();
@@ -80,16 +80,15 @@ describe("DisposalEntry", () => {
 
         expect(repeated).toBe(pending);
         await expect(repeated).rejects.toBe(reason);
-        expect(resource[Symbol.asyncDispose]).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(1);
     });
 
     test("should retain the rejected promise after a sync disposal throw without retrying", async () => {
         const reason = new Error("Sync cleanup failed");
-        const resource = {
-            [Symbol.dispose]: mock(() => {
-                throw reason;
-            }),
-        };
+        const cleanup = mock(() => {
+            throw reason;
+        });
+        const resource = toDisposable(cleanup);
         const entry = new DisposalEntry(resource);
 
         const pending = entry.dispose();
@@ -101,6 +100,6 @@ describe("DisposalEntry", () => {
 
         expect(repeated).toBe(pending);
         await expect(repeated).rejects.toBe(reason);
-        expect(resource[Symbol.dispose]).toHaveBeenCalledTimes(1);
+        expect(cleanup).toHaveBeenCalledTimes(1);
     });
 });

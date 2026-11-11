@@ -76,7 +76,7 @@ describe("RuntimeController regressions", () => {
             const result = parent[Symbol.dispose]();
 
             expect(result).toBeUndefined();
-            expect(parent.signal.aborted).toBeFalse();
+            expect(parent.signal.aborted).toBeTrue();
             expect(clearedIntervals).toHaveBeenCalledTimes(1);
             expect(clearedIntervals).toHaveBeenCalledWith(locker);
             expect(ExitSignals.map((signal) => process.listenerCount(signal))).toEqual(initialListeners);
@@ -97,7 +97,7 @@ describe("RuntimeController regressions", () => {
         }
     });
 
-    test("disposing a child should detach it and its children without aborting them", () => {
+    test("disposing a child should abort it and its children before detaching them", () => {
         using parent = RuntimeController.clone();
         using child = parent.clone();
         using grandchild = child.clone();
@@ -106,8 +106,8 @@ describe("RuntimeController regressions", () => {
 
         expect(parent.has(child)).toBeFalse();
         expect(child.has(grandchild)).toBeFalse();
-        expect(child.signal.aborted).toBeFalse();
-        expect(grandchild.signal.aborted).toBeFalse();
+        expect(child.signal.aborted).toBeTrue();
+        expect(grandchild.signal.aborted).toBeTrue();
     });
 
     test("enqueue() should not retain a duplicate listener after detach", () => {
@@ -189,7 +189,7 @@ describe("RuntimeController regressions", () => {
         }
     });
 
-    test("enqueue() should reject a disposed controller before registering a listener", () => {
+    test("enqueue() should immediately abort a child after disposing its parent", () => {
         const parent = RuntimeController.clone();
         const child = new AbortController();
         parent[Symbol.dispose]();
@@ -197,11 +197,12 @@ describe("RuntimeController regressions", () => {
         const listeners = spyOn(parent.signal, "addEventListener");
 
         try {
-            expect(() => parent.enqueue(child)).toThrow();
+            const result = parent.enqueue(child);
 
+            expect(result).toBe(parent);
             expect(listeners).not.toHaveBeenCalled();
             expect(parent.has(child)).toBeFalse();
-            expect(child.signal.aborted).toBeFalse();
+            expect(child.signal.aborted).toBeTrue();
         } finally {
             for (const [type, listener] of listeners.mock.calls) {
                 parent.signal.removeEventListener(type, listener);

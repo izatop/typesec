@@ -1,15 +1,16 @@
 import {assert} from "@typesec/the/assert";
 import {identify} from "@typesec/the/object";
 import {task} from "@typesec/the/task";
-import type {Fn} from "@typesec/the/type";
+import type {Fn, Promisify} from "@typesec/the/type";
 import {type Tracer, wrap} from "@typesec/tracer";
 import {scheduler} from "node:timers/promises";
 import {ExitSignals} from "../../const.mjs";
 import type {EnvModeType} from "../../env.mjs";
 import {DisposableListener} from "../../lib/DisposableListener.mts";
-import {withDisposablePending, type WithDisposablePending} from "../../lib/dispostable.mjs";
+import {toAsyncDisposable, withDisposablePending, type WithDisposablePending} from "../../lib/dispostable.mjs";
 import {Ref} from "../../lib/Ref.mjs";
 import {WeakSequence} from "../../lib/WeakSequence.mts";
+import {DisposalEntry} from "../DisposalEntry.mjs";
 import {dispose} from "../dispose.mjs";
 import {heartbeat} from "../heartbeat.mjs";
 import {ReloadController} from "./ReloadController.mjs";
@@ -28,6 +29,10 @@ export class RuntimeController extends AbortController implements Disposable {
     readonly #parent: RuntimeController | null;
     readonly #children = new Map<AbortController, EventListener>();
     readonly #disposer = new DisposableListener();
+    readonly #resources = new Map<Disposable | AsyncDisposable, DisposalEntry>();
+
+    #state: "open" | "closing" | "closed" = "open";
+    #closing: Promise<void> | undefined;
 
     static readonly #ref = new Ref(() => new this(null, "lifecycle"));
 
@@ -164,20 +169,87 @@ export class RuntimeController extends AbortController implements Disposable {
         return this;
     };
 
-    /** Aborts the controller once, detaches it from its parent and releases the signal traps. */
+    /** Starts closure, synchronously aborting the controller and releasing its signal traps. */
     public override abort = (reason?: unknown): this => {
-        if (this.signal.aborted) {
-            this.#trace.warn("abort(%s): already aborted");
-
-            return this;
-        }
-
         this.#trace.log("abort(%s)", reason);
-
-        super.abort(reason);
-        this[Symbol.dispose]();
+        this.close(reason);
 
         return this;
+    };
+
+    /**
+     * Registers a resource once by identity and returns it unchanged.
+     * @category runtime
+     */
+    public own = <T extends Disposable | AsyncDisposable>(resource: T): T => {
+        assert(this.#state === "open", "own(): controller is closing or closed");
+
+        if (!this.#resources.has(resource)) {
+            this.#resources.set(resource, new DisposalEntry(resource));
+        }
+
+        return resource;
+    };
+
+    /**
+     * Registers a cleanup callback in the resource disposal order.
+     * @category runtime
+     */
+    public defer = (cleanup: Fn<[], Promisify<void>>): void => {
+        this.own(toAsyncDisposable(cleanup));
+    };
+
+    /**
+     * Aborts synchronously, then disposes owned resources sequentially in reverse registration order.
+     * Always returns the same promise; await it to observe completion and cleanup errors.
+     * @category runtime
+     */
+    public close = (reason?: unknown): Promise<void> => {
+        if (this.#closing) {
+            return this.#closing;
+        }
+
+        this.#state = "closing";
+
+        const resources = [...this.#resources.values()];
+        const errors: unknown[] = [];
+
+        this.#resources.clear();
+        this.#closing = Promise.resolve()
+            .then(async () => {
+                while (resources.length) {
+                    const entry = resources.pop()!;
+
+                    try {
+                        await entry.dispose();
+                    } catch (error) {
+                        errors.push(error);
+                    }
+                }
+
+                if (errors.length === 1) throw errors[0];
+                if (errors.length > 1) throw new AggregateError(errors, "Runtime cleanup failed");
+            })
+            .finally(() => {
+                this.#state = "closed";
+            });
+
+        // Synchronous disposal starts cleanup without awaiting it; retain the original rejection for close().
+        void this.#closing.catch(() => undefined);
+
+        try {
+            super.abort(reason);
+        } catch (error) {
+            errors.push(error);
+        } finally {
+            try {
+                this.#release();
+            } catch (error) {
+                errors.push(error);
+            }
+        }
+
+        return this.#closing;
     };
 
     /** Whether the controller holds this child. */
@@ -230,7 +302,12 @@ export class RuntimeController extends AbortController implements Disposable {
         return task.tolerant(scheduler.wait(ms, {signal: this.signal}));
     };
 
+    /** Starts closure synchronously; await close() to observe completion and errors. */
     public [Symbol.dispose](): void {
+        this.close();
+    }
+
+    #release(): void {
         this.#parent?.detach(this);
 
         for (const child of this.#children.keys()) {
