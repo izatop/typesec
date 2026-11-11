@@ -47,7 +47,7 @@ export type EnvRuleList<T extends Dict<string>> = {
 /**
  * Validates the environment up front and returns a typed registry.
  *
- * Applies defaults, then throws `AssertionError` naming every variable still missing or blank, so a misconfigured process fails at startup rather than at first use.
+ * Applies defaults, then throws `AssertionException` naming every variable still missing or blank, so a misconfigured process fails at startup rather than at first use.
  * @category env
  * @example createStrict<{PORT: string}>({PORT: "3000"})
  */

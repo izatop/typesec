@@ -1,7 +1,7 @@
 import {describe, expect, spyOn, test} from "bun:test";
-import {ExitSignals} from "../../const.mjs";
-import {lifecycle} from "../controller/index.mjs";
-import {RuntimeController} from "./RuntimeController.mjs";
+import {ExitSignals} from "../../../../const.mjs";
+import {lifecycle} from "../../index.mjs";
+import {RuntimeController} from "../../RuntimeController.mjs";
 
 describe("RuntimeController regressions", () => {
     test("a trapped controller should finish abort dispatch before releasing its children", () => {

@@ -1,28 +1,57 @@
-/**
- * Thrown by `assert` when a condition does not hold. Carries the code `ERR_ASSERTION`.
- * @category assert
- */
-export class AssertionError extends Error {
-    /** Stable error code, so a handler can recognise an assertion failure without matching on the message. */
-    public readonly code = "ERR_ASSERTION";
+import {AssertionException, ValidationException} from "./errors.mjs";
+import {defnify} from "./fn.mjs";
 
-    public constructor(message: string) {
-        super(message);
-        this.name = "AssertionError";
-    }
-}
+export {AssertionException};
 
 /**
- * Throws `AssertionError` unless the value is truthy, and narrows it for the code that follows.
- *
- * Runtime-neutral: it does not reach for `node:assert`, so it works in a browser too.
+ * Compatibility alias for `AssertionException`.
+ * @deprecated Use `AssertionException`; its name is `AssertionException`.
  * @category assert
- * @example assert(route, `Route "${path}" not found`);
  */
-export function assert(value: unknown, message: string | Error): asserts value {
-    if (value) {
-        return;
-    }
+export {AssertionException as AssertionError};
 
-    throw new AssertionError(message instanceof Error ? message.message : message);
-}
+/**
+ * A failure message, a concrete exception, or a factory evaluated only when an assertion fails.
+ * @category assert
+ */
+export type AssertionReason = string | Error | (() => Error);
+
+/**
+ * A truthiness assertion with a validation variant; both narrow the checked value.
+ * @category assert
+ */
+export type Assert = {
+    (value: unknown, reason: AssertionReason): asserts value;
+    /** Throws ValidationException for a string reason, preserving explicit exceptions and factories. */
+    validate(value: unknown, reason: AssertionReason): asserts value;
+};
+
+/**
+ * Narrows a truthy value or throws AssertionException for a message, preserving explicit exceptions.
+ * Factories run once on failure; assert.validate uses ValidationException for string reasons.
+ * @category assert
+ * @example assert(connection, "Connection must be initialized");
+ */
+export const assert: Assert = Object.assign(
+    function assert(value: unknown, reason: AssertionReason): asserts value {
+        if (value) {
+            return;
+        }
+
+        const failure = defnify(reason);
+
+        throw typeof failure === "string" ? new AssertionException(failure) : failure;
+    },
+    {
+        /** Narrows valid input, preserving explicit exceptions and evaluating factories only on failure. */
+        validate(value: unknown, reason: AssertionReason): asserts value {
+            if (value) {
+                return;
+            }
+
+            const failure = defnify(reason);
+
+            throw typeof failure === "string" ? new ValidationException(failure) : failure;
+        },
+    },
+);

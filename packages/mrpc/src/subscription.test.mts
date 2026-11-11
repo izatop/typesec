@@ -1,7 +1,6 @@
 import {describe, expect, test} from "bun:test";
 import z from "zod";
 import {subscription} from "./subscription.mjs";
-import {MyBackend} from "./test/backend.mjs";
 
 describe("iterator", () => {
     test("test", async () => {
@@ -24,21 +23,5 @@ describe("iterator", () => {
         }
 
         expect(values).toMatchSnapshot();
-    });
-
-    test.skip("Contract", async () => {
-        const backend = MyBackend.createStatic(Math);
-        const res = [];
-        const max = 127 - 32;
-        const chars = Array.from<number>({length: max})
-            .fill(32)
-            .map((c, i) => String.fromCharCode(c + i));
-
-        // for await (const char of backend.strings.generator({max: 10, chars})) {
-        //     res.push(char);
-        // }
-
-        // expect(res.length).toEqual(10);
-        // expect(chars).toContainValues(res);
     });
 });

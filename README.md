@@ -372,8 +372,10 @@ The command indexes the checkout it belongs to, so no `--root` is needed from a 
 - Sources are `.mts` and import each other through `.mjs` specifiers.
 - Packages are named `@typesec/<name>`; helpers are imported through their subpath — `@typesec/the/fn`, not the
   package root.
-- Tests sit beside the code as `<module>.test.mts` and run on Bun's test runner. Type-level assertions use the
-  helpers in `@typesec/the/test`:
+- Primary tests sit beside the code as `<module>.test.mts`. Additional suites go in
+  `test/<module>/<TestName>.test.mts`, relative to the source directory, with the module's extension omitted.
+  Additional test names use PascalCase, for example `test/RuntimeController/LateRegistration.test.mts`.
+  Tests run on Bun's test runner. Type-level assertions use the helpers in `@typesec/the/test`:
 
     ```ts
     import {isXEqualToY} from "@typesec/the/test";

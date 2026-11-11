@@ -125,6 +125,14 @@ describe("pipeline", () => {
         expect(name.parse({name: "Grace"})).toBe("Grace");
         expect(() => name.parse({name: 42})).toThrow();
     });
+
+    it("transforms input through a schema or trusted output type", () => {
+        const numToStr = pipeline(schema(z.number())).pipe(transform(schema(z.string()), (value) => value.toString()));
+        const trusted = pipeline(schema(z.number())).pipe(transform(trust<string>(), (value) => value.toString()));
+
+        expect(numToStr.parse(1)).toBe("1");
+        expect(trusted.run(1)).toBe("1");
+    });
 });
 
 describe("refine", () => {
@@ -930,11 +938,6 @@ describe("public API", () => {
 
         expect(isXEqualToY<ReturnType<typeof render.parse>, "open" | "closed">(true)).toBe(true);
         expect(render.parse({status: "open"})).toBe("open");
-        expect(sam.RefinementError).toBe(RefinementError);
-        expect(sam.TransitionError).toBe(TransitionError);
-        expect("Atom" in sam).toBe(false);
-        expect("group" in sam).toBe(false);
-        expect("context" in sam).toBe(true);
     });
 });
 

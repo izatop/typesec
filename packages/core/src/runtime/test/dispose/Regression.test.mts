@@ -1,6 +1,6 @@
 import {describe, expect, mock, test} from "bun:test";
-import {toAsyncDisposable, toDisposable} from "../lib/dispostable.mjs";
-import {dispose} from "./dispose.mjs";
+import {toAsyncDisposable, toDisposable} from "../../../lib/dispostable.mjs";
+import {dispose} from "../../dispose.mjs";
 
 describe("dispose regressions", () => {
     test("should prefer and await async disposal when both hooks exist", async () => {

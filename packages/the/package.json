@@ -29,6 +29,9 @@
     "./env": {
       "import": "./src/env.mts"
     },
+    "./errors": {
+      "import": "./src/errors.mts"
+    },
     "./fn": {
       "import": "./src/fn.mts"
     },

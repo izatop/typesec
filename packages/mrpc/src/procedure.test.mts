@@ -10,6 +10,4 @@ describe("Procedure", () => {
         const count = charsCount.encode(undefined, input);
         expect(count).toBe(input.length);
     });
-
-    test("factory", async () => {});
 });

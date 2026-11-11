@@ -51,13 +51,6 @@
         "radash": "catalog:",
       },
     },
-    "packages/gup": {
-      "name": "@typesec/gup",
-      "version": "0.1.0",
-      "dependencies": {
-        "@typesec/the": "workspace:*",
-      },
-    },
     "packages/mrpc": {
       "name": "@typesec/mrpc",
       "version": "0.1.0",
@@ -277,8 +270,6 @@
     "@typesec/cli": ["@typesec/cli@workspace:packages/cli"],
 
     "@typesec/core": ["@typesec/core@workspace:packages/core"],
-
-    "@typesec/gup": ["@typesec/gup@workspace:packages/gup"],
 
     "@typesec/mrpc": ["@typesec/mrpc@workspace:packages/mrpc"],
 

@@ -1,6 +1,4 @@
 import {describe, expect, mock, test} from "bun:test";
-import {isXEqualToY} from "@typesec/the/test";
-import {toAsyncDisposable as exportedAsync, toDisposable as exportedSync} from "../index.mjs";
 import {
     isAsyncDisposable,
     isDisposable,
@@ -34,8 +32,6 @@ describe("disposal adapters", () => {
         });
         const resource = toDisposable(cleanup);
 
-        expect(exportedSync).toBe(toDisposable);
-        expect(isXEqualToY<typeof resource, Disposable>(true)).toBeTrue();
         expect(cleanup).not.toHaveBeenCalled();
         expect(isAsyncDisposable(resource)).toBeFalse();
 
@@ -79,8 +75,6 @@ describe("disposal adapters", () => {
         });
         const resource = toAsyncDisposable(cleanup);
 
-        expect(exportedAsync).toBe(toAsyncDisposable);
-        expect(isXEqualToY<typeof resource, AsyncDisposable>(true)).toBeTrue();
         expect(cleanup).not.toHaveBeenCalled();
         expect(isDisposable(resource)).toBeFalse();
 

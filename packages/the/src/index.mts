@@ -1,6 +1,7 @@
 export * from "./array.mjs";
 export * from "./assert.mjs";
 export * from "./env.mjs";
+export * from "./errors.mjs";
 export * from "./fn.mjs";
 export * from "./numbers.mjs";
 export * from "./object.mjs";

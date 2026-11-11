@@ -6,6 +6,22 @@ they do not replace the project's own conventions.
 Throughout, `<typesec>` is the path to the TypeSec checkout — the submodule directory in a
 consuming project, or `.` inside the checkout itself.
 
+## Local AI working documentation
+
+- Use `.agents/doc/` for local AI plans, task status, decisions, implementation reports, reviews and fixes.
+  This directory is ignored by Git; do not force-add it to commits.
+- Start with `.agents/doc/README.md` and the relevant task's status before continuing existing work.
+  Verify these notes against the current code and working tree, including concurrent user changes.
+- Keep each task in its own subdirectory. Maintain one current status; preserve dated reports as historical evidence.
+  Distinguish proposed, agreed, implemented, verified, user-accepted and committed work.
+- Update the local record after meaningful implementation, review or user corrections. Record open issues,
+  fixes, verification commands and results, commit references and the next action without inventing missing history.
+- Keep material for the final project documentation: accepted API contracts, examples, migration notes,
+  limitations and links to supporting code and tests. After the planned work is complete, use these records
+  to update the maintained project documentation; do not publish unfinished proposals as implemented behavior.
+- Verification results apply to the recorded revision and dependencies. Recheck affected results after changes;
+  passing checks do not replace user acceptance or authorize a commit by themselves.
+
 ## Search the API before writing anything
 
 TypeSec carries a large utility surface. Look for what exists before adding a helper, a type, or a
@@ -91,6 +107,9 @@ Rules that follow from this:
   Inside a handler, `sync()` plus `locator()` avoids awaiting.
 - Anything that must be released implements `Symbol.dispose` or `Symbol.asyncDispose`; the runtime
   disposes what a handler returns.
+- `using` and `await using` bindings may exist only to trigger disposal at scope exit. Keep descriptive
+  names; no `_` prefix is required just because the binding is not read. Configure `no-unused-vars`
+  with `ignoreUsingDeclarations: true`, retaining unused-variable checks for ordinary declarations.
 - Validate at the boundary with Zod. For a multi-step flow use `@typesec/sam`: `pipeline`, `schema`,
   `refine`, `match`, `transitions`.
 - Typed RPC goes through `@typesec/mrpc`: one `contract` per procedure, a `domain` of contracts, a
@@ -98,10 +117,24 @@ Rules that follow from this:
 
 ## Tests
 
-- Co-locate as `<module>.test.mts` beside the source, one file per module.
+- Keep the primary test as `<module>.test.mts` beside the source.
+- Put additional suites in `test/<module>/<TestName>.test.mts`, relative to the source directory.
+  `<module>` is the source filename without its extension; preserve its casing.
+  Additional test names use PascalCase, for example `Ownership.test.mts` or `LateRegistration.test.mts`.
+  Example: `controller/test/RuntimeController/Ownership.test.mts` tests `controller/RuntimeController.mts`.
+  Do not add sibling `<module>.<TestName>.test.mts` files or use kebab-case names for additional tests.
 - Use `bun:test`; import the module under test through its `.mjs` specifier.
 - Assert types with `isXEqualToY` and `isXExtendsOfY` from `@typesec/the/test`.
 - Cover both the passing and the failing path of a guard.
+- Do not add tests that only enumerate exports or re-exports, check that imported symbols exist,
+  compare a re-export with its source, or restate a direct type alias or explicitly declared field
+  or return type. Use normal typed imports and `bun run check` for those checks.
+- Keep type tests for generic inference, narrowing, overload selection and negative constraints.
+  Runtime tests must check observable behavior; checking the shape of a dynamically constructed
+  value is valid when the typechecker cannot guarantee it.
+- Check compatibility aliases through actual operations, not standalone alias identity assertions.
+  Identity checks for returned resources, errors or memoized results remain useful behavior tests.
+- Do not add empty placeholders or smoke tests without an observable assertion.
 
 ```ts
 import {describe, expect, test} from "bun:test";

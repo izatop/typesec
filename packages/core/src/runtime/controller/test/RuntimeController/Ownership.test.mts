@@ -1,7 +1,7 @@
 import {describe, expect, mock, spyOn, test} from "bun:test";
-import {ExitSignals} from "../../const.mjs";
-import {toAsyncDisposable, toDisposable} from "../../lib/dispostable.mjs";
-import {RuntimeController} from "./index.mjs";
+import {ExitSignals} from "../../../../const.mjs";
+import {toAsyncDisposable, toDisposable} from "../../../../lib/dispostable.mjs";
+import {RuntimeController} from "../../index.mjs";
 
 describe("RuntimeController resource ownership", () => {
     test("should own resources by identity and dispose mixed registrations once in LIFO order", async () => {
@@ -98,6 +98,8 @@ describe("RuntimeController resource ownership", () => {
         expect(olderCleanup).toHaveBeenCalledTimes(1);
         expect(() => controller.own(rejectedResource)).toThrow();
         expect(() => controller.defer(rejectedCleanup)).toThrow();
+
+        await controller.close();
     });
 
     test("should retain a single cleanup error and finish older registrations", async () => {

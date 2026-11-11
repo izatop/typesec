@@ -1,3 +1,4 @@
+export * from "@typesec/the/errors";
 export * from "./cache.mjs";
 export * from "./const.mjs";
 export * from "./env.mjs";

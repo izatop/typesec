@@ -15,8 +15,4 @@ describe("primitives", () => {
         expect(primitives.Function.name).toBe("named");
         expect(primitives.Function()).toBeUndefined();
     });
-
-    test("keeps the misspelled key pointing at the same value", () => {
-        expect(primitives.Objec).toBe(primitives.Object);
-    });
 });

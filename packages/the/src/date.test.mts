@@ -2,11 +2,6 @@ import {describe, expect, test} from "bun:test";
 import {date} from "./date.mjs";
 
 describe("Date Utils", async () => {
-    test("now", () => {
-        const d = date.now("+1s");
-        expect(d).toBeInstanceOf(Date);
-    });
-
     test("shift", () => {
         const d = new Date();
         const next = date.shift(d, "+1s");

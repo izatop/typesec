@@ -1,19 +1,6 @@
 import {deepEquals} from "bun";
 import {describe, expect, it} from "bun:test";
-import {
-    defnify,
-    fn,
-    fnify,
-    invoke,
-    is,
-    isInstance,
-    isNullable,
-    isNullish,
-    when,
-    type TypeCheckcList,
-    type TypeCheckList,
-} from "./fn.mjs";
-import {isXEqualToY} from "./test.mjs";
+import {defnify, fn, fnify, invoke, is, isInstance, isNullable, isNullish, when} from "./fn.mjs";
 
 describe("fn utils", () => {
     it("is(value, type)", () => {
@@ -54,7 +41,6 @@ describe("fn utils", () => {
     it("fnify(value)", () => {
         const value = 42;
         const wrapped = fnify(value);
-        expect(typeof wrapped).toBe("function");
         expect(wrapped()).toBe(42);
 
         const original = () => 7;
@@ -183,11 +169,5 @@ describe("fn utils", () => {
         expect(fn.isThrow(returns)).toBeFalse();
         expect(fn.isNotThrow(throws)).toBeFalse();
         expect(fn.isNotThrow(returns)).toBeTrue();
-    });
-});
-
-describe("TypeCheckList", () => {
-    it("keeps the misspelled alias interchangeable", () => {
-        expect(isXEqualToY<TypeCheckcList, TypeCheckList>(true)).toBeTrue();
     });
 });

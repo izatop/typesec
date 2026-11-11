@@ -14,6 +14,7 @@ import {DisposalEntry} from "../DisposalEntry.mjs";
 import {dispose} from "../dispose.mjs";
 import {heartbeat} from "../heartbeat.mjs";
 import {ReloadController} from "./ReloadController.mjs";
+import {RuntimeClosedException} from "./RuntimeClosedException.mjs";
 
 /**
  * An `AbortController` arranged in a tree, so shutdown cascades.
@@ -29,9 +30,11 @@ export class RuntimeController extends AbortController implements Disposable {
     readonly #parent: RuntimeController | null;
     readonly #children = new Map<AbortController, EventListener>();
     readonly #disposer = new DisposableListener();
-    readonly #resources = new Map<Disposable | AsyncDisposable, DisposalEntry>();
+    readonly #resources: DisposalEntry[] = [];
+    readonly #seen = new WeakSet<Disposable | AsyncDisposable>();
 
     #state: "open" | "closing" | "closed" = "open";
+    #active = false;
     #closing: Promise<void> | undefined;
 
     static readonly #ref = new Ref(() => new this(null, "lifecycle"));
@@ -179,13 +182,19 @@ export class RuntimeController extends AbortController implements Disposable {
 
     /**
      * Registers a resource once by identity and returns it unchanged.
+     * After closure begins, queues new resources for cleanup and throws RuntimeClosedException instead.
      * @category runtime
      */
     public own = <T extends Disposable | AsyncDisposable>(resource: T): T => {
-        assert(this.#state === "open", "own(): controller is closing or closed");
+        if (!this.#seen.has(resource)) {
+            this.#seen.add(resource);
+            this.#resources.push(new DisposalEntry(resource));
+        }
 
-        if (!this.#resources.has(resource)) {
-            this.#resources.set(resource, new DisposalEntry(resource));
+        if (this.#state !== "open") {
+            this.close();
+
+            throw new RuntimeClosedException(this);
         }
 
         return resource;
@@ -193,6 +202,7 @@ export class RuntimeController extends AbortController implements Disposable {
 
     /**
      * Registers a cleanup callback in the resource disposal order.
+     * After closure begins, queues the callback and throws RuntimeClosedException.
      * @category runtime
      */
     public defer = (cleanup: Fn<[], Promisify<void>>): void => {
@@ -201,51 +211,56 @@ export class RuntimeController extends AbortController implements Disposable {
 
     /**
      * Aborts synchronously, then disposes owned resources sequentially in reverse registration order.
-     * Always returns the same promise; await it to observe completion and cleanup errors.
+     * Returns the current batch's promise; new post-close registrations start a fresh batch.
+     * Await it outside this controller's own cleanup callbacks to observe completion and errors.
      * @category runtime
      */
     public close = (reason?: unknown): Promise<void> => {
-        if (this.#closing) {
+        if (this.#closing && (this.#active || this.#resources.length === 0)) {
             return this.#closing;
         }
 
-        this.#state = "closing";
+        const firstClose = this.#state === "open";
 
-        const resources = [...this.#resources.values()];
+        if (firstClose) {
+            this.#state = "closing";
+        }
+
         const errors: unknown[] = [];
 
-        this.#resources.clear();
-        this.#closing = Promise.resolve()
-            .then(async () => {
-                while (resources.length) {
-                    const entry = resources.pop()!;
+        this.#active = true;
+        this.#closing = Promise.resolve().then(async () => {
+            while (this.#resources.length) {
+                const entry = this.#resources.pop()!;
 
-                    try {
-                        await entry.dispose();
-                    } catch (error) {
-                        errors.push(error);
-                    }
+                try {
+                    await entry.dispose();
+                } catch (error) {
+                    errors.push(error);
                 }
+            }
 
-                if (errors.length === 1) throw errors[0];
-                if (errors.length > 1) throw new AggregateError(errors, "Runtime cleanup failed");
-            })
-            .finally(() => {
-                this.#state = "closed";
-            });
+            this.#active = false;
+            this.#state = "closed";
+
+            if (errors.length === 1) throw errors[0];
+            if (errors.length > 1) throw new AggregateError(errors, "Runtime cleanup failed");
+        });
 
         // Synchronous disposal starts cleanup without awaiting it; retain the original rejection for close().
         void this.#closing.catch(() => undefined);
 
-        try {
-            super.abort(reason);
-        } catch (error) {
-            errors.push(error);
-        } finally {
+        if (firstClose) {
             try {
-                this.#release();
+                super.abort(reason);
             } catch (error) {
                 errors.push(error);
+            } finally {
+                try {
+                    this.#release();
+                } catch (error) {
+                    errors.push(error);
+                }
             }
         }
 
