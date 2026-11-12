@@ -1,20 +1,20 @@
-import {isInstance} from "@typesec/the";
+import {is, isInstance} from "@typesec/the";
 import type {Fn, Promisify, Rec} from "@typesec/the/type";
 
 /**
- * Whether the value implements `Symbol.asyncDispose`.
+ * Whether the value, an object or a function, implements `Symbol.asyncDispose`.
  * @category guard
  */
 export function isAsyncDisposable(res: unknown): res is AsyncDisposable {
-    return isInstance(res) && Reflect.has(res, Symbol.asyncDispose);
+    return (isInstance(res) || is(res, "function")) && Reflect.has(res, Symbol.asyncDispose);
 }
 
 /**
- * Whether the value implements `Symbol.dispose`.
+ * Whether the value, an object or a function, implements `Symbol.dispose`.
  * @category guard
  */
 export function isDisposable(res: unknown): res is Disposable {
-    return isInstance(res) && Reflect.has(res, Symbol.dispose);
+    return (isInstance(res) || is(res, "function")) && Reflect.has(res, Symbol.dispose);
 }
 
 /**

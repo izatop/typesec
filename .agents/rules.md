@@ -61,6 +61,19 @@ Search first for anything that sounds generic: grouping a list, comparing string
 shifting a date, reading environment variables, guarding a type, waiting on a signal. Reimplementing
 one of these is the most common mistake in a TypeSec codebase.
 
+## Code style
+
+- Separate logical blocks with blank lines; keep arrange, act and assert visibly distinct in tests.
+  Consecutive single-line statements of one block stay together: a blank line marks a change of
+  purpose, not every statement. Measuring `before`, calling the function and measuring `after` is one
+  block; the `expect` calls that follow are the next one.
+- After an expanded multiline statement, such as a call with callbacks or an object/array literal,
+  leave a blank line before the next statement, even when both belong to the same logical phase.
+  For example, separate `const pending = promise.then(...)` from `this.#pending.add(pending)`.
+- Do not insert blank lines between adjacent closing delimiters or before `else`, `catch` or `finally`.
+- Check these boundaries during independent style review. A passing formatter check does not replace
+  this check: the formatter preserves blank lines but does not establish every logical boundary.
+
 ## Imports
 
 - Sources are `.mts` and import each other through `.mjs` specifiers: `import {fn} from "./fn.mjs"`.

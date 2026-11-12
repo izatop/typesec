@@ -2,11 +2,11 @@ import {ApplicationException} from "@typesec/the/errors";
 import type {RuntimeController} from "./RuntimeController.mjs";
 
 /**
- * Raised when a resource is registered with a controller that has begun closing.
+ * Raised when work or a resource is registered with a controller that has begun closing.
  * @category exception
  */
 export class RuntimeClosedException extends ApplicationException {
-    /** Await this controller's close() outside its own disposer to observe the current cleanup batch. */
+    /** Await this controller's close() outside its work and disposers to observe the current cleanup batch. */
     public readonly controller: RuntimeController;
 
     /** Keeps the rejected registration's controller available for observing cleanup. */

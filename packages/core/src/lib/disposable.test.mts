@@ -22,14 +22,22 @@ describe("disposable", () => {
         expect(isDisposable(resource)).toBeTrue();
         expect(isDisposable({})).toBeFalse();
     });
+
+    test("callable resources should count by their hooks like objects", () => {
+        const sync = Object.assign(() => void 0, {[Symbol.dispose]: () => void 0});
+        const async = Object.assign(() => void 0, {[Symbol.asyncDispose]: async () => void 0});
+
+        expect(isDisposable(sync)).toBeTrue();
+        expect(isAsyncDisposable(sync)).toBeFalse();
+        expect(isAsyncDisposable(async)).toBeTrue();
+        expect(isDisposable(async)).toBeFalse();
+        expect(isDisposable(() => void 0)).toBeFalse();
+    });
 });
 
 describe("disposal adapters", () => {
     test("toDisposable should defer cleanup until using exits and preserve its receiver", () => {
-        let receiver: unknown;
-        const cleanup = mock(function (this: unknown) {
-            receiver = this;
-        });
+        const cleanup = mock(() => void 0);
         const resource = toDisposable(cleanup);
 
         expect(cleanup).not.toHaveBeenCalled();
@@ -40,7 +48,7 @@ describe("disposal adapters", () => {
         }
 
         expect(cleanup.mock.calls).toEqual([[]]);
-        expect(receiver).toBe(resource);
+        expect(cleanup.mock.contexts).toEqual([resource]);
     });
 
     test("toDisposable should propagate the original synchronous cleanup error", () => {
@@ -65,10 +73,8 @@ describe("disposal adapters", () => {
         const thenable: PromiseLike<void> = {
             then: (resolve, reject) => gate.then(resolve, reject),
         };
-        let receiver: unknown;
         let settled = false;
-        const cleanup = mock(function (this: unknown) {
-            receiver = this;
+        const cleanup = mock(() => {
             markStarted();
 
             return thenable;
@@ -90,7 +96,7 @@ describe("disposal adapters", () => {
 
             expect(settled).toBeFalse();
             expect(cleanup.mock.calls).toEqual([[]]);
-            expect(receiver).toBe(resource);
+            expect(cleanup.mock.contexts).toEqual([resource]);
         } finally {
             release();
             await pending;
@@ -119,10 +125,7 @@ describe("disposal adapters", () => {
     test("withDisposable adapters should retain target identity and the disposal receiver", async () => {
         const object = {name: "resource"};
         const promise = Promise.resolve(42);
-        const receivers: unknown[] = [];
-        const cleanup = mock(function (this: unknown) {
-            receivers.push(this);
-        });
+        const cleanup = mock(() => void 0);
         const resource = withDisposable(object, cleanup);
         const pending = withDisposablePending(promise, cleanup);
 
@@ -137,7 +140,7 @@ describe("disposal adapters", () => {
             expect(await task).toBe(42);
         }
 
-        expect(receivers).toEqual([promise, object]);
+        expect(cleanup.mock.contexts).toEqual([promise, object]);
         expect(cleanup.mock.calls).toEqual([[], []]);
     });
 });

@@ -77,6 +77,7 @@ Each entrypoint is a function (closure-style): define a protocol (HTTP, CLI, etc
 - Scope and style:
     - Prefer fast, isolated unit tests without external I/O.
     - Keep files small and focused.
+    - Separate arrange, act and assert with blank lines, but keep consecutive single-line statements of one phase together. After an expanded multiline statement, leave a blank line before the next statement, even within the same logical phase.
     - Test observable behavior instead of export inventories, alias declaration mirrors, or empty placeholders.
     - For runtime guards, exercise both positive and negative paths.
     - Keep compile-time tests for generic inference, narrowing, overload selection, and negative constraints.

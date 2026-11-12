@@ -32,10 +32,13 @@ export class RuntimeController extends AbortController implements Disposable {
     readonly #disposer = new DisposableListener();
     readonly #resources: DisposalEntry[] = [];
     readonly #seen = new WeakSet<Disposable | AsyncDisposable>();
+    readonly #pending = new Set<Promise<void>>();
 
-    #state: "open" | "closing" | "closed" = "open";
-    #active = false;
-    #closing: Promise<void> | undefined;
+    // Admission ends once; later cleanup batches may cycle between closing and closed.
+    #state:
+        | {status: "open"}
+        | {status: "closing"; promise: Promise<void>; errors: unknown[]}
+        | {status: "closed"; promise: Promise<void>} = {status: "open"};
 
     static readonly #ref = new Ref(() => new this(null, "lifecycle"));
 
@@ -71,14 +74,14 @@ export class RuntimeController extends AbortController implements Disposable {
         return this.lifecycle.trap();
     };
 
-    /** A fresh child of the root controller. */
+    /** A fresh child owned by the root controller, whose closure waits for the child's work and cleanup. */
     public static clone = (id?: string): RuntimeController => {
         this.lifecycle.#trace.log("clone(%s)", id);
 
         return this.lifecycle.clone(id);
     };
 
-    /** A child controller that aborts when this one does. */
+    /** Creates an owned child; abort cascades to it, and closure waits for its work and cleanup. */
     public clone = (id?: string): RuntimeController => {
         return new RuntimeController(this, id);
     };
@@ -154,6 +157,28 @@ export class RuntimeController extends AbortController implements Disposable {
         }
     };
 
+    /**
+     * Starts work synchronously and keeps this controller's resources alive until it settles.
+     * Task failures reject the returned promise without failing cleanup, and stay unhandled when the caller drops it.
+     * A controller that has begun closing throws RuntimeClosedException synchronously, without calling the task.
+     * Do not await this controller's or an ancestor's close() from the task, since closure waits for its work.
+     * @category runtime
+     */
+    public track = <R,>(task: Fn<[], Promisify<R>>): Promise<R> => {
+        if (this.#state.status !== "open") {
+            throw new RuntimeClosedException(this);
+        }
+
+        // Closure drains on a later microtask, so registering after the synchronous call is safe.
+        const promise = new Promise<R>((resolve) => resolve(task()));
+        const settle = () => void this.#pending.delete(pending);
+        const pending = promise.then(settle, settle);
+
+        this.#pending.add(pending);
+
+        return promise.then();
+    };
+
     /** Registers the exit-signal handlers, once per controller. */
     public trap = (): this => {
         assert(!this.#disposer.disposed, "trap(): controller already disposed");
@@ -189,11 +214,13 @@ export class RuntimeController extends AbortController implements Disposable {
         if (!this.#seen.has(resource)) {
             this.#seen.add(resource);
             this.#resources.push(new DisposalEntry(resource));
+
+            if (this.#state.status === "closed") {
+                this.#startClose();
+            }
         }
 
-        if (this.#state !== "open") {
-            this.close();
-
+        if (this.#state.status !== "open") {
             throw new RuntimeClosedException(this);
         }
 
@@ -210,61 +237,13 @@ export class RuntimeController extends AbortController implements Disposable {
     };
 
     /**
-     * Aborts synchronously, then disposes owned resources sequentially in reverse registration order.
+     * Aborts synchronously, waits for tracked work and clone descendants, then disposes owned resources in reverse order.
      * Returns the current batch's promise; new post-close registrations start a fresh batch.
-     * Await it outside this controller's own cleanup callbacks to observe completion and errors.
+     * Await it outside this controller's work and cleanup callbacks to observe completion and errors.
      * @category runtime
      */
     public close = (reason?: unknown): Promise<void> => {
-        if (this.#closing && (this.#active || this.#resources.length === 0)) {
-            return this.#closing;
-        }
-
-        const firstClose = this.#state === "open";
-
-        if (firstClose) {
-            this.#state = "closing";
-        }
-
-        const errors: unknown[] = [];
-
-        this.#active = true;
-        this.#closing = Promise.resolve().then(async () => {
-            while (this.#resources.length) {
-                const entry = this.#resources.pop()!;
-
-                try {
-                    await entry.dispose();
-                } catch (error) {
-                    errors.push(error);
-                }
-            }
-
-            this.#active = false;
-            this.#state = "closed";
-
-            if (errors.length === 1) throw errors[0];
-            if (errors.length > 1) throw new AggregateError(errors, "Runtime cleanup failed");
-        });
-
-        // Synchronous disposal starts cleanup without awaiting it; retain the original rejection for close().
-        void this.#closing.catch(() => undefined);
-
-        if (firstClose) {
-            try {
-                super.abort(reason);
-            } catch (error) {
-                errors.push(error);
-            } finally {
-                try {
-                    this.#release();
-                } catch (error) {
-                    errors.push(error);
-                }
-            }
-        }
-
-        return this.#closing;
+        return this.#state.status === "open" ? this.#startClose(reason) : this.#state.promise;
     };
 
     /** Whether the controller holds this child. */
@@ -274,7 +253,10 @@ export class RuntimeController extends AbortController implements Disposable {
         return this.#children.has(child);
     };
 
-    /** Attaches a child so it aborts with this controller; aborts it at once when this one already has. */
+    /**
+     * Adds only an abort link, without ownership; aborts the child at once when this controller already has.
+     * The link is dropped as soon as the child aborts, whichever side aborts first.
+     */
     public enqueue = (child: AbortController, throwIfAborted = false): this => {
         this.#trace.log("enqueue(%s)", identify(child));
 
@@ -289,23 +271,25 @@ export class RuntimeController extends AbortController implements Disposable {
             return this;
         }
 
-        assert(!this.#disposer.disposed, this.#trace.format("enqueue(%s): parent already disposed", identify(child)));
-
-        if (this.#children.has(child)) {
+        if (child.signal.aborted || this.#children.has(child)) {
             return this;
         }
 
         const onAbort = () => child.abort();
         this.signal.addEventListener("abort", onAbort, {once: true});
         this.#children.set(child, onAbort);
+        child.signal.addEventListener("abort", () => this.detach(child), {once: true});
 
         return this;
     };
 
-    /** Removes a child from the cascade. */
+    /** Removes an aborted child's cascade link; clone ownership and pending cleanup remain unchanged. */
     public detach = (child: AbortController) => {
         this.#trace.log("detach(%s)", identify(child));
+        assert(child.signal.aborted, this.#trace.format("detach(%s): child is still running", identify(child)));
+
         const listener = this.#children.get(child);
+
         if (listener) {
             this.signal.removeEventListener("abort", listener);
             this.#children.delete(child);
@@ -322,15 +306,78 @@ export class RuntimeController extends AbortController implements Disposable {
         this.close();
     }
 
-    #release(): void {
-        this.#parent?.detach(this);
+    #startClose(reason?: unknown): Promise<void> {
+        assert(this.#state.status !== "closing", "close(): cleanup is already running");
 
-        for (const child of this.#children.keys()) {
-            this.detach(child);
+        const firstClose = this.#state.status === "open";
+        const errors: unknown[] = [];
+        const promise = Promise.resolve().then(async () => {
+            while (this.#pending.size || this.#resources.length) {
+                if (this.#pending.size) {
+                    await Promise.all(this.#pending);
+
+                    continue;
+                }
+
+                const entry = this.#resources.pop()!;
+
+                try {
+                    await entry.dispose();
+                } catch (error) {
+                    errors.push(error);
+                }
+            }
+
+            this.#state = {status: "closed", promise};
+
+            if (errors.length === 1) throw errors[0];
+            if (errors.length > 1) throw new AggregateError(errors, "Runtime cleanup failed");
+        });
+
+        this.#state = {status: "closing", promise, errors};
+
+        // Synchronous disposal starts cleanup without awaiting it; retain the original rejection for close().
+        void promise.catch(() => undefined);
+
+        if (this.#parent) {
+            this.#parent.#joinChild(promise);
         }
 
-        this.#children.clear();
-        this.#disposer.dispose();
-        this.#trace.log("disposed");
+        if (firstClose) {
+            // Listener failures are reported by the event target, so abort() itself does not throw.
+            // Dispatch aborts every linked child, and each one detaches itself.
+            super.abort(reason);
+
+            try {
+                this.#disposer.dispose();
+            } catch (error) {
+                errors.push(error);
+            }
+
+            this.#trace.log("disposed");
+        }
+
+        return promise;
+    }
+
+    #joinChild(closing: Promise<void>): void {
+        const pending = closing.then(
+            () => {
+                this.#pending.delete(pending);
+            },
+            (error) => {
+                if (this.#state.status === "closing") {
+                    this.#state.errors.push(error);
+                }
+
+                this.#pending.delete(pending);
+            },
+        );
+
+        this.#pending.add(pending);
+
+        if (this.#state.status === "closed") {
+            this.#startClose();
+        }
     }
 }

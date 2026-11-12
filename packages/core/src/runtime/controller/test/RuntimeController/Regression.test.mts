@@ -1,3 +1,4 @@
+import {AssertionException} from "@typesec/the/errors";
 import {describe, expect, spyOn, test} from "bun:test";
 import {ExitSignals} from "../../../../const.mjs";
 import {lifecycle} from "../../index.mjs";
@@ -27,6 +28,7 @@ describe("RuntimeController regressions", () => {
             expect(ExitSignals.map((signal) => process.listenerCount(signal))).toEqual(
                 initialListeners.map((count) => count + 1),
             );
+
             expect(intervals).toHaveBeenCalledTimes(1);
 
             const locker = intervals.mock.results[0]!.value;
@@ -117,27 +119,29 @@ describe("RuntimeController regressions", () => {
 
         try {
             parent.enqueue(child).enqueue(child);
+            child.abort();
+            abort.mockClear();
             parent.detach(child);
 
             parent.abort();
 
             expect(parent.has(child)).toBeFalse();
-            expect(child.signal.aborted).toBeFalse();
             expect(abort).not.toHaveBeenCalled();
         } finally {
             abort.mockRestore();
         }
     });
 
-    test("a detached child can be enqueued again with one abort callback", () => {
+    test("detach() should reject a running child without removing its abort callback", () => {
         using parent = RuntimeController.clone();
         const child = new AbortController();
         const abort = spyOn(child, "abort");
 
         try {
             parent.enqueue(child);
-            parent.detach(child);
-            parent.enqueue(child);
+
+            expect(() => parent.detach(child)).toThrow(AssertionException);
+            expect(parent.has(child)).toBeTrue();
 
             parent.abort();
 
@@ -148,22 +152,41 @@ describe("RuntimeController regressions", () => {
         }
     });
 
-    test("a generic child can remain attached to another parent after detach", () => {
+    test("a generic child that aborts itself should release every parent's cancellation link", () => {
         using first = RuntimeController.clone();
         using second = RuntimeController.clone();
         const child = new AbortController();
+        const removed = spyOn(first.signal, "removeEventListener");
 
-        first.enqueue(child);
-        second.enqueue(child);
-        first.detach(child);
+        try {
+            first.enqueue(child);
+            second.enqueue(child);
 
-        first.abort();
+            child.abort();
 
-        expect(child.signal.aborted).toBeFalse();
+            expect(first.has(child)).toBeFalse();
+            expect(second.has(child)).toBeFalse();
+            expect(removed).toHaveBeenCalledTimes(1);
+        } finally {
+            removed.mockRestore();
+        }
+    });
 
-        second.abort();
+    test("enqueue() should not link a child that has already aborted", () => {
+        using parent = RuntimeController.clone();
+        const child = new AbortController();
+        const listeners = spyOn(parent.signal, "addEventListener");
 
-        expect(child.signal.aborted).toBeTrue();
+        try {
+            child.abort();
+
+            expect(parent.enqueue(child)).toBe(parent);
+            expect(parent.has(child)).toBeFalse();
+            expect(listeners).not.toHaveBeenCalled();
+            expect(() => parent.enqueue(child, true)).toThrow(AssertionException);
+        } finally {
+            listeners.mockRestore();
+        }
     });
 
     test("trap() should reject a disposed controller before registering resources", () => {

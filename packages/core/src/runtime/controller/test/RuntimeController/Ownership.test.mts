@@ -1,9 +1,21 @@
 import {describe, expect, mock, spyOn, test} from "bun:test";
 import {ExitSignals} from "../../../../const.mjs";
 import {toAsyncDisposable, toDisposable} from "../../../../lib/dispostable.mjs";
-import {RuntimeController} from "../../index.mjs";
+import {RuntimeClosedException, RuntimeController} from "../../index.mjs";
 
 describe("RuntimeController resource ownership", () => {
+    test("should dispose a callable resource that carries a disposal hook", async () => {
+        const controller = RuntimeController.clone();
+        const cleanup = mock(() => void 0);
+        const handler = Object.assign(() => void 0, {[Symbol.dispose]: cleanup});
+
+        expect(controller.own(handler)).toBe(handler);
+
+        await controller.close();
+
+        expect(cleanup).toHaveBeenCalledTimes(1);
+    });
+
     test("should own resources by identity and dispose mixed registrations once in LIFO order", async () => {
         const controller = RuntimeController.clone();
         const order: string[] = [];
@@ -83,8 +95,8 @@ describe("RuntimeController resource ownership", () => {
             expect(settled).toBeFalse();
             expect(order).toEqual(["newer:start"]);
             expect(olderCleanup).not.toHaveBeenCalled();
-            expect(() => controller.own(rejectedResource)).toThrow();
-            expect(() => controller.defer(rejectedCleanup)).toThrow();
+            expect(() => controller.own(rejectedResource)).toThrow(RuntimeClosedException);
+            expect(() => controller.defer(rejectedCleanup)).toThrow(RuntimeClosedException);
         } finally {
             release();
             await observed;
@@ -96,8 +108,8 @@ describe("RuntimeController resource ownership", () => {
         expect(settled).toBeTrue();
         expect(order).toEqual(["newer:start", "newer:end", "older"]);
         expect(olderCleanup).toHaveBeenCalledTimes(1);
-        expect(() => controller.own(rejectedResource)).toThrow();
-        expect(() => controller.defer(rejectedCleanup)).toThrow();
+        expect(() => controller.own(rejectedResource)).toThrow(RuntimeClosedException);
+        expect(() => controller.defer(rejectedCleanup)).toThrow(RuntimeClosedException);
 
         await controller.close();
     });
