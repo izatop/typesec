@@ -5,9 +5,7 @@ import {dispose} from "../../dispose.mjs";
 describe("dispose regressions", () => {
     test("should prefer and await async disposal when both hooks exist", async () => {
         const {promise: gate, resolve: release} = Promise.withResolvers<void>();
-        let receiver: unknown;
-        const asyncCleanup = mock(async function (this: unknown) {
-            receiver = this;
+        const asyncCleanup = mock(async () => {
             await gate;
         });
         const syncCleanup = mock(() => void 0);
@@ -25,8 +23,7 @@ describe("dispose regressions", () => {
             await Promise.resolve();
 
             expect(settled).toBeFalse();
-            expect(receiver).toBe(disposable);
-            expect(asyncCleanup).toHaveBeenCalledTimes(1);
+            expect(asyncCleanup.mock.contexts).toEqual([disposable]);
             expect(syncCleanup).not.toHaveBeenCalled();
         } finally {
             release();

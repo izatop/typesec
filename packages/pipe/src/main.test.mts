@@ -727,7 +727,7 @@ describe("context", () => {
         const withRequest = context(() => ({id: "request-7"}));
         const flow = withRequest(schema(z.number())).pipe(
             issue(
-                (value: number, _ctx: {id: string}) => {
+                (_value: number, _ctx: {id: string}) => {
                     throw new Error("boom");
                 },
                 (reason, payload, ctx) => new Error(`${ctx.id}: cannot handle ${payload}`, {cause: reason}),

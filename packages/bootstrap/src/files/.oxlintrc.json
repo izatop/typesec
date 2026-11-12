@@ -49,7 +49,7 @@
       {
         "ignoreUsingDeclarations": true,
         "varsIgnorePattern": "^_",
-        "argsIgnorePattern": "^_.+"
+        "argsIgnorePattern": "^_"
       }
     ],
     "no-useless-backreference": "warn",

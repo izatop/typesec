@@ -1,6 +1,10 @@
 import {AssertionException, ValidationException} from "./errors.mjs";
 import {defnify} from "./fn.mjs";
 
+/**
+ * The exception `assert` throws for a string reason, re-exported for callers that catch it.
+ * @category assert
+ */
 export {AssertionException};
 
 /**
@@ -8,7 +12,14 @@ export {AssertionException};
  * @deprecated Use `AssertionException`; its name is `AssertionException`.
  * @category assert
  */
-export {AssertionException as AssertionError};
+export const AssertionError = AssertionException;
+
+/**
+ * Compatibility alias for `AssertionException`.
+ * @deprecated Use `AssertionException`; its name is `AssertionException`.
+ * @category assert
+ */
+export type AssertionError = AssertionException;
 
 /**
  * A failure message, a concrete exception, or a factory evaluated only when an assertion fails.

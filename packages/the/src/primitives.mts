@@ -6,8 +6,6 @@ import type {Fn, Rec} from "@typesec/the";
  */
 export type PrimitiveList = {
     Object: Rec;
-    /** @deprecated misspelled, use `Object` */
-    Objec: Rec;
     Array: any[];
     Float: number;
     Number: number;
@@ -30,11 +28,6 @@ const empty: Rec = {};
 export const primitives: PrimitiveList = {
     /** An empty plain object. */
     Object: empty,
-    /**
-     * An empty plain object.
-     * @deprecated misspelled, use `primitives.Object`
-     */
-    Objec: empty,
     /** An empty array. */
     Array: [],
     /** A non-integer number. */

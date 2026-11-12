@@ -1,4 +1,5 @@
 import {beforeEach, describe, expect, test} from "bun:test";
+import {PendingError, ServiceRef} from "./service/index.mjs";
 import {define, locator, resolve, service, state, sync, syncArray, unload} from "./service/fn.mjs";
 import {TestService} from "./test/TestService.mjs";
 import {TestService2} from "./test/TestService2.mjs";
@@ -48,6 +49,24 @@ describe("Service", () => {
         expect(instance).toBeInstanceOf(TestService);
         expect(instance).toBe(sync(TestService));
         expect(instance.randomNumber).toBe(sync(TestService).randomNumber);
+    });
+
+    test("sync throws an awaitable PendingError while the service is unbuilt", async () => {
+        let pending: unknown;
+
+        try {
+            sync(TestService);
+        } catch (reason) {
+            pending = reason;
+        }
+
+        expect(pending).toBeInstanceOf(PendingError);
+        expect(await (pending as PendingError<TestService>)).toBe(sync(TestService));
+    });
+
+    test("ServiceRef.is", () => {
+        expect(ServiceRef.is(MyServiceDef)).toBeTrue();
+        expect(ServiceRef.is(TestService)).toBeFalse();
     });
 
     test("resolve", async () => {

@@ -2,6 +2,15 @@ import {describe, expect, test} from "bun:test";
 import {date} from "./date.mjs";
 
 describe("Date Utils", async () => {
+    test("now", () => {
+        const before = Date.now();
+        const next = date.now("+1s");
+        const after = Date.now();
+
+        expect(next.getTime()).toBeGreaterThanOrEqual(before + 1000);
+        expect(next.getTime()).toBeLessThanOrEqual(after + 1000);
+    });
+
     test("shift", () => {
         const d = new Date();
         const next = date.shift(d, "+1s");
