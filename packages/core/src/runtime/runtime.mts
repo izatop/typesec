@@ -1,7 +1,7 @@
 import type {Fn, Prop} from "@typesec/the/type";
-import {AsyncLocalStorage} from "node:async_hooks";
 import {withDisposablePending, type WithDisposablePending} from "../lib/dispostable.mjs";
 import {WeakSequence} from "../lib/WeakSequence.mts";
+import {store} from "./controller/hmr.mjs";
 import {RuntimeController} from "./controller/index.mjs";
 import {lifecycle} from "./controller/index.mts";
 import {dispose} from "./dispose.mjs";
@@ -39,10 +39,8 @@ export type Runtime = {
     run<R>(task: Fn<[], R>, withContext?: RuntimeController): WithDisposablePending<R>;
 };
 
-const store = new AsyncLocalStorage<RuntimeController>();
-
 function use(): RuntimeController {
-    return store.getStore() ?? RuntimeController.lifecycle;
+    return store.context.getStore() ?? RuntimeController.lifecycle;
 }
 
 /**
@@ -131,6 +129,6 @@ export const runtime: Runtime = {
     run(task, withContext) {
         const controller = withContext ?? this.use();
 
-        return withDisposablePending(store.run(controller, task), () => dispose(withContext));
+        return withDisposablePending(store.context.run(controller, task), () => dispose(withContext));
     },
 };

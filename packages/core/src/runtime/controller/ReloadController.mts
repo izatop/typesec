@@ -1,5 +1,5 @@
 import {assert} from "@typesec/the";
-import {ReloaderStoreKey, type IReloadController, type ReloadStore} from "./private.mts";
+import {ReloaderStoreKey, store, type IReloadController, type ReloadStore} from "./hmr.mts";
 import {RuntimeController} from "./RuntimeController.mts";
 
 export class ReloadController implements IReloadController {
@@ -7,13 +7,8 @@ export class ReloadController implements IReloadController {
 
     readonly #store: ReloadStore;
 
-    private constructor(globals: typeof globalThis) {
-        this.#store = {
-            controllers: new Map(),
-            reload: this.#reload,
-        };
-
-        Object.assign(globals, {[ReloaderStoreKey]: this.#store});
+    private constructor() {
+        this.#store = Object.assign(store, {reload: this.#reload});
     }
 
     public get [ReloaderStoreKey](): ReloadStore {
@@ -32,7 +27,7 @@ export class ReloadController implements IReloadController {
     }
 
     public static watch(lifecycle: RuntimeController): IReloadController {
-        const rc = (globalThis.ReloadController ??= new this(globalThis)) as ReloadController;
+        const rc = (globalThis.ReloadController ??= new this()) as ReloadController;
         rc[ReloaderStoreKey].reload(lifecycle);
 
         return rc;
