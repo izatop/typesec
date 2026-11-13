@@ -54,13 +54,13 @@ export function service<T extends Service>(
     entries.set(ref, entry);
     latest.set(ctor, ref);
     if (is(value, "function")) {
-        if (!lazy) resolve(ref);
+        if (!lazy) kickoff(ref);
 
         return ref;
     }
 
     if (isPromise(value)) {
-        resolve(ref);
+        kickoff(ref);
 
         return ref;
     }
@@ -245,10 +245,7 @@ export async function resolve<T extends Service>(...refs: [ServiceId<T>, ...Serv
     assert(entry && (is(value, "function") || isPromise(value)), `Unknown service ${name}`);
 
     tracer.log("factory( <%s> ): %d", name, entry.pending !== undefined);
-    const pending = Promise.resolve(entry.pending ?? defnify(value));
-    entry.pending = pending;
-
-    pending.then((instance) => {
+    entry.pending ??= Promise.resolve(defnify(value)).then((instance) => {
         tracer.log("register( <%s> )", name);
         entry.instance = instance;
         entry.pending = undefined;
@@ -256,7 +253,12 @@ export async function resolve<T extends Service>(...refs: [ServiceId<T>, ...Serv
         return instance;
     });
 
-    return pending;
+    return entry.pending;
+}
+
+/** Starts an eager build and observes it; a memoized rejection stays in the entry for the first `resolve`. */
+function kickoff<T extends Service>(ref: ServiceRef<T>): void {
+    resolve(ref).catch((reason) => tracer.error("kickoff( <%s> )", identify(ref.ctor), reason));
 }
 
 /**
