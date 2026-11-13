@@ -6,6 +6,9 @@ dist/
 node_modules/
 tsconfig.tsbuildinfo
 
+# local AI documentation
+/.agents/doc/
+
 # testing
 /coverage
 

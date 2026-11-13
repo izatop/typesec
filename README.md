@@ -45,6 +45,25 @@ project already pins. A file or script the project has in a different form is sh
 replaced only if you agree; a replaced file moves to `.backup/<time>/`, which is added to
 `.gitignore`. Without a terminal it keeps everything that differs. `--no-install` skips the install.
 
+### Package cache
+
+The shared `bunfig.toml` turns on Bun's global virtual store (`install.globalStore`): packages are
+unpacked once into Bun's cache, and each project's `node_modules` links into it. Installs after a
+fresh checkout or `rm -rf node_modules` are much faster, and the copies are shared across projects.
+
+The cost is that every such project depends on the cache directory. `bun pm cache rm` empties it,
+including the store, and breaks `node_modules` in every project on the machine until `bun install`
+runs in each of them again. You rarely need it:
+
+| Goal                             | Command                                       |
+| -------------------------------- | --------------------------------------------- |
+| Pick up a version just published | `bun update <pkg>` or `bun add <pkg> --force` |
+| Free disk space                  | `bun pm cache prune` (keeps the store)        |
+| See the cache directory          | `bun pm cache`                                |
+
+Reach for `bun pm cache rm` only when the cache itself is corrupt or the store has grown too large,
+and run `bun install` in your projects afterwards.
+
 ## The model
 
 Two files make an application:

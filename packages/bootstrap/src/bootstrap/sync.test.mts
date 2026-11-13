@@ -42,6 +42,15 @@ function prompt(files: boolean, scripts: ScriptChoice[] = []): SyncPrompt & {ask
 }
 
 describe("sync", () => {
+    test("ships the configuration TypeSec itself uses", async () => {
+        const files = await Array.fromAsync(new Bun.Glob("**/*").scan({cwd: template, dot: true}));
+
+        for (const file of files) {
+            const own = await Bun.file(path.join(source, file)).text();
+            expect(own, file).toBe(await Bun.file(path.join(template, file)).text());
+        }
+    });
+
     test("scaffolds an empty project and installs", async () => {
         const installed: string[] = [];
         await writeManifest({name: "app"});

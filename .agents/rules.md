@@ -183,6 +183,13 @@ describe("fn", () => {
   deprecated alias.
 - `typesec api search --undocumented` must stay empty.
 
+## Package cache
+
+- Installs use Bun's global virtual store, so `node_modules` links into Bun's cache directory.
+- Do not run `bun pm cache rm`: it empties the store and breaks `node_modules` in every project on
+  the machine. To refresh a package use `bun update <pkg>` or `bun add <pkg> --force`; to free disk
+  space use `bun pm cache prune`. If the cache really has to be cleared, ask the user first.
+
 ## Verify before reporting done
 
 ```sh
