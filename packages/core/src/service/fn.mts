@@ -3,6 +3,7 @@ import {assert} from "@typesec/the/assert";
 import {fn, is} from "@typesec/the/fn";
 import {isPromise} from "node:util/types";
 import {isAsyncDisposable, isDisposable} from "../lib/dispostable.mjs";
+import {lifecycle} from "../runtime/controller/lifecycle.mjs";
 import {tracer} from "../tracer.mjs";
 import {
     type Service,
@@ -41,6 +42,7 @@ export function define<T extends Service>(
  * Registers how a service is built, keyed by its class.
  *
  * A lazy registration builds on first resolve; passing `lazy: false`, or a promise, starts construction at once.
+ * The factory runs as work of the generation's root controller, whichever context resolves the service first.
  * @category service
  * @example service(Database, () => Database.connect(url))
  */
@@ -50,7 +52,7 @@ export function service<T extends Service>(
     lazy = true,
 ): ServiceRef<T> {
     const ref = new ServiceRef(ctor);
-    const entry = new ServiceEntry(value);
+    const entry = new ServiceEntry(value, lifecycle);
     entries.set(ref, entry);
     latest.set(ctor, ref);
     if (is(value, "function")) {
@@ -247,13 +249,15 @@ export async function resolve<T extends Service>(...refs: [ServiceId<T>, ...Serv
     assert(entry && (is(value, "function") || isPromise(value)), `Unknown service ${name}`);
 
     tracer.log("factory( <%s> ): %d", name, entry.pending !== undefined);
-    entry.pending ??= Promise.resolve(defnify(value)).then((instance) => {
-        tracer.log("register( <%s> )", name);
-        entry.instance = instance;
-        entry.pending = undefined;
+    entry.pending ??= entry.owner
+        .run(() => defnify(value))
+        .then((instance) => {
+            tracer.log("register( <%s> )", name);
+            entry.instance = instance;
+            entry.pending = undefined;
 
-        return instance;
-    });
+            return instance;
+        });
 
     return entry.pending;
 }

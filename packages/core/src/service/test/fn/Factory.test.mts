@@ -93,7 +93,7 @@ describe("service factory", () => {
         expect(state(ref)).toEqual({known: true, resolved: false});
     });
 
-    test("should reject with a synchronous factory throw and retry on the next resolve", async () => {
+    test("should memoize a synchronous factory throw like a rejection", async () => {
         const reason = new Error("sync");
         const factory = mock((): Probe => {
             throw reason;
@@ -104,7 +104,7 @@ describe("service factory", () => {
         await expect(resolve(ref)).rejects.toBe(reason);
         await tick();
 
-        expect(factory).toHaveBeenCalledTimes(2);
+        expect(factory).toHaveBeenCalledTimes(1);
         expect(state(ref)).toEqual({known: true, resolved: false});
     });
 
