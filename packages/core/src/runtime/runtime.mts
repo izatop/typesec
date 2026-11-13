@@ -136,7 +136,7 @@ export const runtime: Runtime = {
      */
     async run(task, withContext) {
         assert(!withContext || withContext !== store.context.getStore(), "run(): cannot own the current controller");
-        await using closing = toAsyncDisposable(() => withContext?.close());
+        await using _closing = toAsyncDisposable(() => withContext?.close());
 
         return await (withContext ?? this.use()).run(task);
     },

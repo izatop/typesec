@@ -26,7 +26,7 @@ export async function main(task: MainTask): Promise<Timer> {
 
         try {
             tracer.info("await %s()", name);
-            await using closing = toAsyncDisposable(lifecycle.close);
+            await using _closing = toAsyncDisposable(lifecycle.close);
             await dispose(await lifecycle.run(task));
         } catch (reason) {
             tracer.error(reason);

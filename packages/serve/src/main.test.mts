@@ -31,7 +31,7 @@ describe("Main", () => {
             controller,
         );
 
-        await using cleanup = toAsyncDisposable(async () => {
+        await using _cleanup = toAsyncDisposable(async () => {
             controller.abort();
 
             try {

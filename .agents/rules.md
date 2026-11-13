@@ -120,9 +120,11 @@ Rules that follow from this:
   Inside a handler, `sync()` plus `locator()` avoids awaiting.
 - Anything that must be released implements `Symbol.dispose` or `Symbol.asyncDispose`; the runtime
   disposes what a handler returns.
-- `using` and `await using` bindings may exist only to trigger disposal at scope exit. Keep descriptive
-  names; no `_` prefix is required just because the binding is not read. Configure `no-unused-vars`
-  with `ignoreUsingDeclarations: true`, retaining unused-variable checks for ordinary declarations.
+- `using` and `await using` bindings may exist only to trigger disposal at scope exit. Prefix a binding
+  that is never read with `_` and keep the rest descriptive: `await using _closing = ...`. TypeScript
+  exempts `_`-prefixed names from its unused-local hint (`TS6133`), which VS Code shows even with
+  `noUnusedLocals` off. Configure `no-unused-vars` with `ignoreUsingDeclarations: true`, retaining
+  unused-variable checks for ordinary declarations.
 - Validate at the boundary with Zod. For a multi-step flow use `@typesec/sam`: `pipeline`, `schema`,
   `refine`, `match`, `transitions`.
 - Typed RPC goes through `@typesec/mrpc`: one `contract` per procedure, a `domain` of contracts, a

@@ -44,7 +44,7 @@ describe("disposal adapters", () => {
         expect(isAsyncDisposable(resource)).toBeFalse();
 
         {
-            using owned = resource;
+            using _owned = resource;
         }
 
         expect(cleanup.mock.calls).toEqual([[]]);
@@ -59,7 +59,7 @@ describe("disposal adapters", () => {
         let failure: unknown;
 
         try {
-            using owned = resource;
+            using _owned = resource;
         } catch (error) {
             failure = error;
         }
@@ -85,7 +85,7 @@ describe("disposal adapters", () => {
         expect(isDisposable(resource)).toBeFalse();
 
         const pending = (async () => {
-            await using owned = resource;
+            await using _owned = resource;
         })().then(() => {
             settled = true;
         });
@@ -134,7 +134,7 @@ describe("disposal adapters", () => {
         expect(cleanup).not.toHaveBeenCalled();
 
         {
-            using owned = resource;
+            using _owned = resource;
             using task = pending;
 
             expect(await task).toBe(42);
