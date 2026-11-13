@@ -8,6 +8,7 @@
 !bunfig.toml
 !package.json
 !tsconfig.json
+!tsconfig.*.json
 
 # The packages, at any depth under packages/ (`**` also matches no directory at all, which covers
 # packages/tsconfig.json): sources, executables and the manifests of each package. Without the
@@ -17,6 +18,7 @@
 !packages/**/bin
 !packages/**/package.json
 !packages/**/tsconfig.json
+!packages/**/tsconfig.*.json
 !packages/**/bunfig.toml
 
 # The same five for the packages of every submodule in vendor/, TypeSec among them: the lockfile
@@ -25,4 +27,5 @@
 !vendor/*/packages/**/bin
 !vendor/*/packages/**/package.json
 !vendor/*/packages/**/tsconfig.json
+!vendor/*/packages/**/tsconfig.*.json
 !vendor/*/packages/**/bunfig.toml
