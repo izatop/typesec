@@ -14,6 +14,39 @@ Most entries are applied by `bun vendor/typesec/packages/bootstrap/bin/typesec b
 adds what is missing and asks before replacing anything that differs. Run it first, then go through
 the entries for what it does not cover.
 
+## 2026-11-14 — `bun check` is the type check, `typescript@7` replaces `@typescript/native-preview`
+
+`bun check`, built into Bun 1.4.4, reads `tsconfig.json`, follows `references` with `-b` and
+reports the same errors as TypeScript 7, with the `lib.*.d.ts` files built in and no `typescript`
+package. It has no cache and no watch mode. TypeScript 7 itself is published as `typescript@7`
+with the binary `tsc`; `@typescript/native-preview` and its `tsgo` have not been published since
+July 2026. The scripts are now:
+
+- `check`: `bun check -b -p packages`, the full check, what CI and the check before a commit run.
+  Bun runs the built-in command for a `check` script that calls `bun check`; it does not recurse.
+- `check:tsc`: `bun tsc -b packages`, and `check:tsc:watch` with `-w`: incremental through
+  `.tsbuildinfo`, for the development loop.
+- `check:watch` is gone. `typescript` replaces `@typescript/native-preview` in `catalogs.build`
+  and `devDependencies`.
+
+`bootstrap sync` now offers to remove what TypeSec stopped shipping, one question each: an obsolete
+script, shown with its current value, and an obsolete dev dependency together with its catalog
+entries. Without a terminal it removes nothing.
+
+Migrate:
+
+- Run `bootstrap sync`: replace `check`, remove `check:watch` and `@typescript/native-preview`,
+  accept `.vscode/settings.json`. It installs `typescript@7` and drops the preview package.
+- Agent instructions and docs: `bun run check:tsc:watch` while working, `bun run check` before a
+  commit, as `.agents/rules.md` says. Anything that called `tsgo` calls `tsc`.
+- VS Code: the extension `typescriptteam.native-preview` is now listed as "TypeScript 7" under the
+  same id. The template settings point it at `node_modules/typescript` through `js/ts.tsdk.path`,
+  so the editor checks with the same version as `bun check`. Keep the extension; without it VS
+  Code falls back to its bundled TypeScript 5.
+
+Check: `bun run check` prints `No type errors in … files across … projects`, `bun tsc --version`
+prints `Version 7.0.2`, and `grep -rn native-preview package.json` finds nothing.
+
 ## 2026-11-13 — Submodules live in `vendor/`, `typesec:api` script
 
 Every check covers the repository's own code only. A submodule changes independently of the project

@@ -20,6 +20,10 @@ export type SyncPrompt = {
     /** Shown the diff from the project's file to the template; true replaces the file. */
     replaceFile(file: string, diff: string): Promise<boolean>;
     replaceScript(name: string, current: string, proposed: string): Promise<ScriptChoice>;
+    /** TypeSec stopped shipping this script in favour of `replacement`; true removes it. */
+    removeScript(name: string, current: string, replacement: string): Promise<boolean>;
+    /** TypeSec replaced this package with `replacement`; true removes it and its catalog entries. */
+    removeDependency(name: string, replacement: string): Promise<boolean>;
 };
 
 /**
@@ -61,8 +65,9 @@ const BACKUP = ".backup";
 const VENDOR = "vendor/*/packages/**";
 
 const SCRIPTS: Record<string, string> = {
-    check: "bun tsgo -b packages",
-    "check:watch": "bun tsgo -b packages -w",
+    check: "bun check -b -p packages",
+    "check:tsc": "bun tsc -b packages",
+    "check:tsc:watch": "bun tsc -b packages -w",
     test: "bun test",
     "test:watch": "bun --watch test",
     "test:coverage": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov",
@@ -75,9 +80,19 @@ const SCRIPTS: Record<string, string> = {
 
 const DEV_DEPENDENCIES: Record<string, string> = {
     "@types/bun": "catalog:",
-    "@typescript/native-preview": "catalog:build",
     "@typesec/bootstrap": "workspace:*",
     oxlint: "catalog:build",
+    typescript: "catalog:build",
+};
+
+/** Scripts earlier versions of TypeSec added, by the script that took their place. */
+const OBSOLETE_SCRIPTS: Record<string, string> = {
+    "check:watch": "check:tsc:watch",
+};
+
+/** Dev dependencies earlier versions of TypeSec added, by the package that took their place. */
+const OBSOLETE_DEPENDENCIES: Record<string, string> = {
+    "@typescript/native-preview": "typescript",
 };
 
 /**
@@ -85,8 +100,9 @@ const DEV_DEPENDENCIES: Record<string, string> = {
  * workspace globs, dev dependencies and scripts.
  *
  * Missing pieces are added. A file or script the project has in a different form is replaced only
- * when the prompt agrees, and a replaced file is moved to `.backup/<time>/` first. Catalog entries
- * and dependencies the project already pins are never changed.
+ * when the prompt agrees, and a replaced file is moved to `.backup/<time>/` first. A script or dev
+ * dependency that TypeSec stopped shipping is removed only when the prompt agrees. Catalog entries
+ * and dependencies the project already pins are never changed otherwise.
  * @category tooling
  */
 export async function sync(options: SyncOptions): Promise<void> {
@@ -116,7 +132,9 @@ export async function sync(options: SyncOptions): Promise<void> {
 
     syncWorkspaces(manifest, log);
     syncCatalogs(manifest, typesec, log);
+    await removeDependencies(manifest, options.prompt, log);
     syncDependencies(manifest, log);
+    await removeScripts(manifest, options.prompt, log);
     await syncScripts(manifest, scriptsFor(submodule), options.prompt, log);
 
     if (JSON.stringify(manifest) !== before) {
@@ -265,6 +283,31 @@ function missingEntries(
     return Object.keys(missing).length > 0 ? missing : undefined;
 }
 
+/** Every catalog the manifest holds, at the top level and under `workspaces`. */
+function catalogsOf(manifest: Manifest): Catalog[] {
+    const workspaces = Array.isArray(manifest.workspaces) ? undefined : manifest.workspaces;
+    const groups = [manifest.catalogs, workspaces?.catalogs].flatMap((catalogs) => Object.values(catalogs ?? {}));
+
+    return [manifest.catalog, workspaces?.catalog, ...groups].filter((catalog) => catalog !== undefined);
+}
+
+/** Offers to drop a dev dependency TypeSec replaced, with the catalog entries that pinned it. */
+async function removeDependencies(manifest: Manifest, prompt: SyncPrompt | undefined, log: (line: string) => void) {
+    for (const [name, replacement] of Object.entries(OBSOLETE_DEPENDENCIES)) {
+        const catalogs = catalogsOf(manifest).filter((catalog) => catalog[name] !== undefined);
+        if (manifest.devDependencies?.[name] === undefined && catalogs.length === 0) continue;
+
+        if (!(await prompt?.removeDependency(name, replacement))) {
+            log(`devDependencies: kept ${name}, TypeSec replaced it with ${replacement}`);
+            continue;
+        }
+
+        delete manifest.devDependencies?.[name];
+        for (const catalog of catalogs) delete catalog[name];
+        log(`devDependencies: removed ${name}, replaced by ${replacement}`);
+    }
+}
+
 function syncDependencies(manifest: Manifest, log: (line: string) => void) {
     const dependencies = (manifest.devDependencies ??= {});
 
@@ -273,6 +316,24 @@ function syncDependencies(manifest: Manifest, log: (line: string) => void) {
 
         dependencies[name] = version;
         log(`devDependencies: added ${name}@${version}`);
+    }
+}
+
+/** Offers to drop a script TypeSec replaced; the project may have changed it, so the prompt sees it. */
+async function removeScripts(manifest: Manifest, prompt: SyncPrompt | undefined, log: (line: string) => void) {
+    const scripts = manifest.scripts ?? {};
+
+    for (const [name, replacement] of Object.entries(OBSOLETE_SCRIPTS)) {
+        const current = scripts[name];
+        if (current === undefined) continue;
+
+        if (!(await prompt?.removeScript(name, current, replacement))) {
+            log(`scripts: kept ${name} (${current}), TypeSec replaced it with ${replacement}`);
+            continue;
+        }
+
+        delete scripts[name];
+        log(`scripts: removed ${name}, replaced by ${replacement}`);
     }
 }
 

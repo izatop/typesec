@@ -26,7 +26,7 @@ const read = (file: string) => Bun.file(path.join(target, file)).text();
 const manifest = async () => JSON.parse(await read("package.json"));
 const writeManifest = (value: object) => Bun.write(path.join(target, "package.json"), JSON.stringify(value));
 
-function prompt(files: boolean, scripts: ScriptChoice[] = []): SyncPrompt & {asked: string[]} {
+function prompt(files: boolean, scripts: ScriptChoice[] = [], removals = false): SyncPrompt & {asked: string[]} {
     const asked: string[] = [];
 
     return {
@@ -41,8 +41,27 @@ function prompt(files: boolean, scripts: ScriptChoice[] = []): SyncPrompt & {ask
 
             return scripts.shift() ?? "keep";
         },
+        async removeScript(name) {
+            asked.push(`remove ${name}`);
+
+            return removals;
+        },
+        async removeDependency(name) {
+            asked.push(`remove ${name}`);
+
+            return removals;
+        },
     };
 }
+
+/** A project set up by the TypeSec that shipped `tsgo`, before `bun check` and `typescript@7`. */
+const legacy = () =>
+    writeManifest({
+        name: "app",
+        workspaces: {packages: [], catalogs: {build: {"@typescript/native-preview": "^7.0.0-dev.20260707.2"}}},
+        scripts: {check: "bun tsgo -b packages", "check:watch": "bun tsgo -b packages -w"},
+        devDependencies: {"@typescript/native-preview": "catalog:build"},
+    });
 
 describe("sync", () => {
     test("ships the configuration TypeSec itself uses", async () => {
@@ -61,6 +80,51 @@ describe("sync", () => {
         await sync({target, source, now, log: (line) => logs.push(line)});
 
         expect(logs.filter((line) => line.startsWith("scripts:"))).toEqual(["scripts: added typesec:api"]);
+        expect(logs.filter((line) => line.startsWith("devDependencies:"))).toEqual([]);
+    });
+
+    test("removes an obsolete script and dependency with their catalog entries when the prompt agrees", async () => {
+        await legacy();
+        const answers = prompt(false, ["replace"], true);
+
+        await sync({target, source, now, prompt: answers});
+
+        const {scripts, devDependencies, workspaces} = await manifest();
+        expect(answers.asked).toContain("remove check:watch");
+        expect(answers.asked).toContain("remove @typescript/native-preview");
+        expect(scripts["check:watch"]).toBeUndefined();
+        expect(scripts.check).toBe("bun check -b -p packages");
+        expect(scripts["check:tsc:watch"]).toBe("bun tsc -b packages -w");
+        expect(devDependencies["@typescript/native-preview"]).toBeUndefined();
+        expect(devDependencies.typescript).toBe("catalog:build");
+        expect(workspaces.catalogs.build["@typescript/native-preview"]).toBeUndefined();
+        expect(workspaces.catalogs.build.typescript).toBeDefined();
+    });
+
+    test("keeps an obsolete script and dependency when the prompt declines", async () => {
+        await legacy();
+
+        await sync({target, source, now, prompt: prompt(false, ["keep"], false)});
+
+        const {scripts, devDependencies, workspaces} = await manifest();
+        expect(scripts["check:watch"]).toBe("bun tsgo -b packages -w");
+        expect(devDependencies["@typescript/native-preview"]).toBe("catalog:build");
+        expect(workspaces.catalogs.build["@typescript/native-preview"]).toBe("^7.0.0-dev.20260707.2");
+    });
+
+    test("removes nothing without a prompt", async () => {
+        await legacy();
+        const logs: string[] = [];
+
+        await sync({target, source, now, log: (line) => logs.push(line)});
+
+        const {scripts, devDependencies} = await manifest();
+        expect(scripts["check:watch"]).toBe("bun tsgo -b packages -w");
+        expect(devDependencies["@typescript/native-preview"]).toBe("catalog:build");
+        expect(logs).toContain(
+            "scripts: kept check:watch (bun tsgo -b packages -w), TypeSec replaced it with check:tsc:watch",
+        );
+        expect(logs).toContain("devDependencies: kept @typescript/native-preview, TypeSec replaced it with typescript");
     });
 
     test("scaffolds an empty project and installs", async () => {

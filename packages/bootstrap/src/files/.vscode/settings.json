@@ -49,5 +49,6 @@
     "**/.pnp.*": true
   },
   "npm.packageManager": "bun",
-  "npm.scriptRunner": "bun"
+  "npm.scriptRunner": "bun",
+  "js/ts.tsdk.path": "node_modules/typescript"
 }

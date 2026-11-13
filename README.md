@@ -414,7 +414,8 @@ bun run typesec:api search <keywords>
 - The package list of the build lives in `packages/tsconfig.json`, which is also what the API index reads.
 
 ```sh
-bun run check       # typecheck every package
+bun run check       # typecheck every package with bun check
+bun run check:tsc:watch   # incremental tsc -b while editing
 bun test            # run the suite
 bun run lint        # oxlint
 bun run fmt:check   # bun fmt

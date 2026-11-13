@@ -222,10 +222,21 @@ describe("fn", () => {
   the machine. To refresh a package use `bun update <pkg>` or `bun add <pkg> --force`; to free disk
   space use `bun pm cache prune`. If the cache really has to be cleared, ask the user first.
 
+## Type checking
+
+Two checkers read the same `tsconfig.json` files and report the same errors; they differ in what
+they cache.
+
+- While working, use the incremental one: `bun run check:tsc:watch` keeps `tsc -b` running and
+  re-checks only what changed; `bun run check:tsc` is the one-off form with the same `.tsbuildinfo`
+  cache.
+- Before reporting done and before every commit, run `bun run check`: Bun's built-in `bun check`
+  checks every project from scratch, needs no cache and is what CI runs.
+
 ## Verify before reporting done
 
 ```sh
-bun run check       # types
+bun run check       # types, bun check
 bun test            # suite
 bun run lint        # oxlint
 bun fmt             # bun fmt, then re-run check

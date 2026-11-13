@@ -20,6 +20,18 @@ function terminalPrompt(terminal: Interface): SyncPrompt {
 
             return choices[answer.trim().toLowerCase()] ?? "keep";
         },
+        async removeScript(name, current, replacement) {
+            write(`\nscripts.${name}: ${current}\n  TypeSec replaced it with scripts.${replacement}`);
+            const answer = await terminal.question(`Remove scripts.${name}? [y/N] `);
+
+            return answer.trim().toLowerCase() === "y";
+        },
+        async removeDependency(name, replacement) {
+            write(`\ndevDependencies.${name}\n  TypeSec replaced it with ${replacement}`);
+            const answer = await terminal.question(`Remove ${name} and its catalog entries? [y/N] `);
+
+            return answer.trim().toLowerCase() === "y";
+        },
     };
 }
 
