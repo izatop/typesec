@@ -62,6 +62,20 @@ disk`.
   such as `packages/**`.
 - Check: the image build gets through `bun install --frozen-lockfile`.
 
+## 2026-11-13 — Service instances are owned and released once
+
+A disposable service instance, built by its factory or registered as a value, is owned by the root
+controller that registered it and disposed once when that controller closes. `unload` releases the
+instance through the owner, one microtask later, and the owner's `close()` does not dispose it again.
+An instance with both hooks gets `Symbol.asyncDispose` only. `RuntimeController.release(resource)` is
+new: it disposes one owned resource ahead of closure. `own` refuses a resource another controller
+already owns.
+
+- Migrate: drop manual disposal of services on shutdown; the lifecycle does it. A test that reads
+  state right after `unload` awaits a tick first. Never `own` a resolved service on a child
+  controller.
+- Check: `bun test` passes; a disposable service closes exactly once on `lifecycle.close()`.
+
 ## 2026-11-13 — Service factories run under the generation root
 
 `resolve` runs a factory as tracked work of the root controller that registered the service, not in
