@@ -6,6 +6,14 @@ they do not replace the project's own conventions.
 Throughout, `<typesec>` is the path to the TypeSec checkout — the submodule directory in a
 consuming project, or `.` inside the checkout itself.
 
+## Language
+
+- Everything committed to the TypeSec repository is in English: code, identifiers, comments, JSDoc,
+  test names, documentation, commit messages and pull request descriptions.
+- Conversation with the user and the local notes in `.agents/doc/` may use the user's language;
+  nothing from them is committed.
+- A consuming project follows its own language convention.
+
 ## Local AI working documentation
 
 - Use `.agents/doc/` for local AI plans, task status, decisions, implementation reports, reviews and fixes.
