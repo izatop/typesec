@@ -42,7 +42,8 @@ export function define<T extends Service>(
  * Registers how a service is built, keyed by its class.
  *
  * A lazy registration builds on first resolve; passing `lazy: false`, or a promise, starts construction at once.
- * The factory runs as work of the generation's root controller, whichever context resolves the service first.
+ * The factory runs as work of the generation's root controller, whichever context resolves the service first,
+ * and a disposable instance is owned by that controller, which disposes it once when it closes.
  * @category service
  * @example service(Database, () => Database.connect(url))
  */
@@ -67,13 +68,13 @@ export function service<T extends Service>(
         return ref;
     }
 
-    entry.instance = value as T;
+    entry.instance = adopt(entry, value as T);
 
     return ref;
 }
 
 /**
- * Drops a built instance, disposing it first, so the next resolve rebuilds it.
+ * Drops a built instance and releases it through its owner, so the next resolve rebuilds it and closure skips it.
  * @category service
  */
 export function unload<T extends Service>(ref: ServiceId<T>): void {
@@ -81,12 +82,8 @@ export function unload<T extends Service>(ref: ServiceId<T>): void {
     if (entry?.instance) {
         const instance = entry.instance;
         entry.instance = undefined;
-        if (isAsyncDisposable(instance)) {
-            instance[Symbol.asyncDispose]();
-        }
-
-        if (isDisposable(instance)) {
-            instance[Symbol.dispose]();
+        if (isDisposable(instance) || isAsyncDisposable(instance)) {
+            void entry.owner.release(instance);
         }
     }
 }
@@ -253,13 +250,18 @@ export async function resolve<T extends Service>(...refs: [ServiceId<T>, ...Serv
         .run(() => defnify(value))
         .then((instance) => {
             tracer.log("register( <%s> )", name);
-            entry.instance = instance;
+            entry.instance = adopt(entry, instance);
             entry.pending = undefined;
 
             return instance;
         });
 
     return entry.pending;
+}
+
+/** Hands a disposable instance to the entry's owner, which disposes it once; anything else has nothing to release. */
+function adopt<T extends Service>(entry: ServiceEntry<T>, instance: T): T {
+    return isDisposable(instance) || isAsyncDisposable(instance) ? entry.owner.own(instance) : instance;
 }
 
 /** Starts an eager build and observes it; a memoized rejection stays in the entry for the first `resolve`. */

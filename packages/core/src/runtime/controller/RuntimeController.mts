@@ -1,4 +1,4 @@
-import {assert} from "@typesec/the/assert";
+import {assert, AssertionException} from "@typesec/the/assert";
 import {identify} from "@typesec/the/object";
 import {task} from "@typesec/the/task";
 import type {Fn, Promisify} from "@typesec/the/type";
@@ -16,6 +16,9 @@ import {store} from "./hmr.mjs";
 import {ReloadController} from "./ReloadController.mjs";
 import {RuntimeClosedException} from "./RuntimeClosedException.mjs";
 
+/** The controller that owns each resource, so no resource is adopted by two controllers. */
+const owners = new WeakMap<Disposable | AsyncDisposable, RuntimeController>();
+
 /**
  * An `AbortController` arranged in a tree, so shutdown cascades.
  *
@@ -31,7 +34,7 @@ export class RuntimeController extends AbortController implements Disposable {
     readonly #children = new Map<AbortController, EventListener>();
     readonly #disposer = new DisposableListener();
     readonly #resources: DisposalEntry[] = [];
-    readonly #seen = new WeakSet<Disposable | AsyncDisposable>();
+    readonly #entries = new WeakMap<Disposable | AsyncDisposable, DisposalEntry>();
     readonly #pending = new Set<Promise<void>>();
 
     // Admission ends once; later cleanup batches may cycle between closing and closed.
@@ -215,14 +218,22 @@ export class RuntimeController extends AbortController implements Disposable {
     };
 
     /**
-     * Registers a resource once by identity and returns it unchanged.
+     * Registers a resource once by identity and returns it unchanged; a resource another controller owns is refused.
      * After closure begins, queues new resources for cleanup and throws RuntimeClosedException instead.
      * @category runtime
      */
     public own = <T extends Disposable | AsyncDisposable>(resource: T): T => {
-        if (!this.#seen.has(resource)) {
-            this.#seen.add(resource);
-            this.#resources.push(new DisposalEntry(resource));
+        if (!this.#entries.has(resource)) {
+            const owner = owners.get(resource);
+            assert(
+                !owner,
+                () => new AssertionException(this.#trace.format("own(%s): owned by %s", identify(resource), owner?.id)),
+            );
+
+            const entry = new DisposalEntry(resource);
+            owners.set(resource, this);
+            this.#entries.set(resource, entry);
+            this.#resources.push(entry);
 
             if (this.#state.status === "closed") {
                 this.#startClose();
@@ -234,6 +245,22 @@ export class RuntimeController extends AbortController implements Disposable {
         }
 
         return resource;
+    };
+
+    /**
+     * Disposes one owned resource ahead of closure and returns its single cleanup attempt, which close() and a
+     * repeated release share; during closure it returns the attempt in flight. The resource leaves the LIFO queue,
+     * so a later close() does not dispose it again.
+     * @category runtime
+     */
+    public release = (resource: Disposable | AsyncDisposable): Promise<void> => {
+        const entry = this.#entries.get(resource);
+        assert(entry, () => new AssertionException(this.#trace.format("release(%s): not owned", identify(resource))));
+
+        const index = this.#resources.indexOf(entry);
+        if (index >= 0) this.#resources.splice(index, 1);
+
+        return entry.dispose();
     };
 
     /**

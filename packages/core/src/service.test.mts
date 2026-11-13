@@ -113,6 +113,7 @@ describe("Service registration", () => {
         const [old, latest] = await resolve(first, second);
 
         unload(first);
+        await new Promise((done) => setImmediate(done));
 
         expect(old.disposed).toEqual(["first"]);
         expect(latest.disposed).toEqual([]);
