@@ -15,7 +15,8 @@
     },
     "catalogs": {
       "build": {
-        "oxlint": "^1.92.0"
+        "oxlint": "^1.92.0",
+        "@typescript/native-preview": "^7.0.0-dev.20260707.2"
       }
     }
   },
@@ -27,15 +28,14 @@
     "test:watch": "bun --watchtest",
     "audit": "bun audit --audit-level=high",
     "lint": "oxlint --quiet",
-    "sync": "bun typesec-sync",
+    "sync": "bun typesec bootstrap sync",
     "up": "bun update -ri --latest",
     "fmt:check": "bun fmt --check"
   },
   "devDependencies": {
     "@types/bun": "catalog:",
-    "@typescript/native-preview": "^7.0.0-dev.20260707.2",
+    "@typescript/native-preview": "catalog:build",
     "@typesec/bootstrap": "workspace:*",
-    "oxfmt": "catalog:build",
     "oxlint": "catalog:build"
   },
   "packageManager": "bun@1.4.4"

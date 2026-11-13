@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "license": "MIT",
   "bin": {
-    "typesec-api": "bin/typesec-api",
-    "typesec-sync": "bin/typesec-sync"
+    "typesec": "bin/typesec",
+    "typesec-api": "bin/typesec-api"
   },
   "type": "module",
   "module": "./src/index.mts",

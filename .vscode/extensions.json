@@ -1,3 +1,8 @@
 {
-  "recommendations": ["oxc.oxc-vscode", "oven.bun-vscode", "typescriptteam.native-preview"]
+  "recommendations": [
+    "oxc.oxc-vscode",
+    "jkillian.custom-local-formatters",
+    "oven.bun-vscode",
+    "typescriptteam.native-preview"
+  ]
 }

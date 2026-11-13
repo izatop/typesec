@@ -1,0 +1,58 @@
+{
+  "editor.detectIndentation": false,
+  "editor.defaultFormatter": "jkillian.custom-local-formatters",
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": true,
+  "editor.codeActionsOnSave": {
+    "source.removeUnusedImports": "explicit",
+    "source.sortImports": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "jkillian.custom-local-formatters"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "jkillian.custom-local-formatters"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "jkillian.custom-local-formatters"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "jkillian.custom-local-formatters"
+  },
+  "[sql]": {
+    "editor.defaultFormatter": "sqlfluff.vscode-sqlfluff"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "jkillian.custom-local-formatters"
+  },
+  "customLocalFormatters.formatters": [
+    {
+      "command": "bun fmt --stdin-filepath ${file}",
+      "languages": ["typescript", "typescriptreact", "javascript", "json", "jsonc", "markdown", "yaml", "toml"]
+    }
+  ],
+  "npm.exclude": "**/node_modules/**",
+  "search.exclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/.yarn/**": true,
+    "**/.pnp.*": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/.yarn/**": true,
+    "**/.pnp.*": true
+  },
+  "npm.packageManager": "bun",
+  "npm.scriptRunner": "bun",
+  "bun.runtime": "bun",
+  "bun.debugTerminal.enabled": true,
+  "bun.debugTerminal.stopOnEntry": false,
+  "bun.test.filePattern": "**/*{.test.,.spec.,_test_,_spec_}{js,ts,tsx,jsx,mts,cts,cjs,mjs}",
+  "bun.test.customScript": "bun test"
+}

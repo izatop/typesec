@@ -35,8 +35,15 @@ Paths below assume the submodule sits at `typesec/`. Scaffolding the shared lint
 TypeScript configuration into an existing project:
 
 ```sh
-bun typesec/packages/bootstrap/bin/typesec-sync
+bun typesec/packages/bootstrap/bin/typesec bootstrap sync
 ```
+
+The command adds what the project is missing: the configuration files, the submodule's packages to
+`workspaces`, the entries of TypeSec's catalog, the dev dependencies and the `check`, `lint`, `test`
+and `fmt:check` scripts, then runs `bun install`. It never changes a catalog entry or dependency the
+project already pins. A file or script the project has in a different form is shown as a diff and
+replaced only if you agree; a replaced file moves to `.backup/<time>/`, which is added to
+`.gitignore`. Without a terminal it keeps everything that differs. `--no-install` skips the install.
 
 ## The model
 
@@ -247,52 +254,52 @@ else — so either can be used on its own.
 
 ## API index
 
-`typesec-api` reports the public API of the project — every function, type, class and namespace member, with the
+`typesec api` reports the public API of the project — every function, type, class and namespace member, with the
 specifier to import it from and the line that declares it. It is meant for agents and for anyone who would
 rather ask than grep.
 
 ```sh
-bun packages/bootstrap/bin/typesec-api packages            # the package map and documentation coverage
-bun packages/bootstrap/bin/typesec-api search unique       # keyword search over names and descriptions
-bun packages/bootstrap/bin/typesec-api show array.uniq     # one symbol in full
+bun packages/bootstrap/bin/typesec api packages            # the package map and documentation coverage
+bun packages/bootstrap/bin/typesec api search unique       # keyword search over names and descriptions
+bun packages/bootstrap/bin/typesec api show array.uniq     # one symbol in full
 ```
 
 ```
-$ bun packages/bootstrap/bin/typesec-api search unique
+$ bun packages/bootstrap/bin/typesec api search unique
 @typesec/the/array  array.uniq<T>(values: T[]): T[] (+1 overloads)
                     Keeps the unique values, comparing the values themselves or the result of `map`.
 ```
 
 Without `--root` the command indexes the checkout the binary belongs to, whatever directory it runs
 from, so a consuming project calls the same binary through the submodule —
-`bun typesec/packages/bootstrap/bin/typesec-api search unique` — and gets TypeSec's own API.
+`bun typesec/packages/bootstrap/bin/typesec api search unique` — and gets TypeSec's own API.
 
 `--root <path>` indexes a different project instead. Nothing in the index is TypeSec-specific: it
 reads any repository shaped the same way, meaning a `packages/tsconfig.json` that lists the packages
 as project references, each with an `exports` map and `.mts` or `.tsx` sources under `src/`.
 
 ```sh
-bun typesec/packages/bootstrap/bin/typesec-api --root . packages   # your own project
+bun typesec/packages/bootstrap/bin/typesec api --root . packages   # your own project
 ```
 
-The short `bunx typesec-api` works only where `@typesec/bootstrap` is a dependency of the project:
+The short `bunx typesec api` works only where `@typesec/bootstrap` is a dependency of the project:
 listing the submodule in `workspaces` is not enough, because Bun links a binary only for a package
-something depends on. `typesec-sync` adds that dependency, which is what makes the short form work
-here.
+something depends on. `typesec bootstrap sync` adds that dependency, which is what makes the short
+form work here. The former `typesec-api` binary remains as an alias of `typesec api`.
 
-The examples below shorten the invocation to `typesec-api`. A project that reaches for it often
+The examples below shorten the invocation to `typesec api`. A project that reaches for it often
 should give it a script:
 
 ```json
-{"scripts": {"api": "bun typesec/packages/bootstrap/bin/typesec-api"}}
+{"scripts": {"api": "bun typesec/packages/bootstrap/bin/typesec api"}}
 ```
 
 Every keyword has to match, and filters narrow further:
 
 ```sh
-typesec-api search parse --package the --kind function
-typesec-api search --category state
-typesec-api search --undocumented
+typesec api search parse --package the --kind function
+typesec api search --category state
+typesec api search --undocumented
 ```
 
 `--kind` groups the labels the way a caller thinks about them: `function` covers namespace members and class
@@ -330,7 +337,7 @@ vocabulary is deliberately small:
 - `@example` is a one-liner, or an indented block;
 - `@see` and `@deprecated` carry the rest.
 
-`typesec-api search --undocumented` lists whatever is still missing one.
+`typesec api search --undocumented` lists whatever is still missing one.
 
 ## Agent rules
 
@@ -359,10 +366,10 @@ Follow the TypeSec rules in [typesec/.agents/rules.md](typesec/.agents/rules.md)
 @typesec/.agents/rules.md
 ```
 
-The rules tell an agent to run `typesec-api` through the submodule:
+The rules tell an agent to run `typesec api` through the submodule:
 
 ```sh
-bun typesec/packages/bootstrap/bin/typesec-api search <keywords>
+bun typesec/packages/bootstrap/bin/typesec api search <keywords>
 ```
 
 The command indexes the checkout it belongs to, so no `--root` is needed from a consuming project.
@@ -389,7 +396,7 @@ The command indexes the checkout it belongs to, so no `--root` is needed from a 
 bun run check       # typecheck every package
 bun test            # run the suite
 bun run lint        # oxlint
-bun run fmt:check   # oxfmt
+bun run fmt:check   # bun fmt
 ```
 
 ## Status

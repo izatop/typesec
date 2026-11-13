@@ -28,9 +28,9 @@ TypeSec carries a large utility surface. Look for what exists before adding a he
 dependency:
 
 ```sh
-bun <typesec>/packages/bootstrap/bin/typesec-api search <keywords>   # names, descriptions, signatures
-bun <typesec>/packages/bootstrap/bin/typesec-api show <name>         # one symbol in full
-bun <typesec>/packages/bootstrap/bin/typesec-api packages            # what each package is for
+bun <typesec>/packages/bootstrap/bin/typesec api search <keywords>   # names, descriptions, signatures
+bun <typesec>/packages/bootstrap/bin/typesec api show <name>         # one symbol in full
+bun <typesec>/packages/bootstrap/bin/typesec api packages            # what each package is for
 ```
 
 Without `--root` the command indexes the checkout the binary belongs to, which is what you want when
@@ -38,20 +38,20 @@ looking up what TypeSec already provides. Point it elsewhere to index a differen
 same shape — the one you are working in, for instance:
 
 ```sh
-bun <typesec>/packages/bootstrap/bin/typesec-api --root . search <keywords>
+bun <typesec>/packages/bootstrap/bin/typesec api --root . search <keywords>
 ```
 
 That shape is a `packages/tsconfig.json` listing the packages as project references, each with an
 `exports` map and `.mts` or `.tsx` sources under `src/`. Nothing about the index is
 TypeSec-specific.
 
-TypeSec is not published to npm, so `bunx typesec-api` resolves only where `@typesec/bootstrap` is a
+TypeSec is not published to npm, so `bunx typesec api` resolves only where `@typesec/bootstrap` is a
 dependency of the project — listing the submodule in `workspaces` is not enough. Anywhere else bunx
 looks the name up on the registry and fails. Running the binary by path always works. A project that
 uses it often should give it a script:
 
 ```json
-{"scripts": {"api": "bun typesec/packages/bootstrap/bin/typesec-api"}}
+{"scripts": {"api": "bun typesec/packages/bootstrap/bin/typesec api"}}
 ```
 
 Every keyword has to match. Narrow with `--package`, `--kind function|type|class|const`,
@@ -78,7 +78,7 @@ one of these is the most common mistake in a TypeSec codebase.
 
 - Sources are `.mts` and import each other through `.mjs` specifiers: `import {fn} from "./fn.mjs"`.
 - Import helpers from their subpath, not the package root: `@typesec/the/fn`, `@typesec/the/assert`,
-  `@typesec/the/object`. `typesec-api show <name>` prints the specifier to use.
+  `@typesec/the/object`. `typesec api show <name>` prints the specifier to use.
 - Never add a utility dependency without checking `@typesec/the` first. It has no dependencies of
   its own, and the project keeps it that way.
 - Use `assert` from `@typesec/the/assert`, not `node:assert` — it is runtime-neutral.
@@ -166,14 +166,14 @@ describe("fn", () => {
 ## Adding to a package's public API
 
 - Re-export the new symbol from the package entry point. A symbol its own module exports but no
-  entry re-exports is unreachable; `typesec-api search --json` reports it with `"import": null`.
+  entry re-exports is unreachable; `typesec api search --json` reports it with `"import": null`.
 - Every type that appears in a public signature must itself be exported, so a caller can write the
   type down and not only obtain it through inference.
 - Document it with a JSDoc block: one sentence on what it does and when to use it, plus
   `@category <slug>`. Optionally `@example`, `@see`, `@deprecated <reason>`.
 - Never rename a published symbol in place. Add the corrected name and keep the old one as a
   deprecated alias.
-- `typesec-api search --undocumented` must stay empty.
+- `typesec api search --undocumented` must stay empty.
 
 ## Verify before reporting done
 
@@ -184,4 +184,4 @@ bun run lint        # oxlint
 bun fmt             # bun fmt, then re-run check
 ```
 
-Do not hand-format code; `oxfmt` owns the formatting, including markdown.
+Do not hand-format code; `bun fmt` owns the formatting, including markdown.

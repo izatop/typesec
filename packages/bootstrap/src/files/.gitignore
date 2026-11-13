@@ -13,3 +13,6 @@ tsconfig.tsbuildinfo
 /docker-compose.yml
 .env
 ~*
+
+# sync backups
+/.backup/

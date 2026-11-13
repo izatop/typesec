@@ -1,4 +1,14 @@
 [install]
 linker = "isolated"
+globalStore = true
 
 minimumReleaseAge = 259200
+
+[fmt]
+flavor = "oxfmt"
+bracketSpacing = false
+arrowParens = "always"
+bracketSameLine = true
+endOfLine = "lf"
+semi = true
+sortPackageJson = true
