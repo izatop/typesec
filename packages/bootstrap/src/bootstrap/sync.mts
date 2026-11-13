@@ -29,7 +29,10 @@ export type SyncPrompt = {
 export type SyncOptions = {
     /** The project directory, holding its root `package.json`. */
     target: string;
-    /** The TypeSec checkout whose catalog the project receives; found from this module when omitted. */
+    /**
+     * The TypeSec checkout whose catalog the project receives; found from this module when omitted.
+     * It has to be the project itself or sit in the project's `vendor/`.
+     */
     source?: string;
     prompt?: SyncPrompt;
     /** Runs after `package.json` is written; `bun install` in the CLI, omitted to skip installing. */
@@ -54,14 +57,19 @@ const TEMPLATE = path.resolve(import.meta.dir, "../files");
 
 const BACKUP = ".backup";
 
+/** Where the packages of the submodules in `vendor/` live, at any depth. */
+const VENDOR = "vendor/*/packages/**";
+
 const SCRIPTS: Record<string, string> = {
     check: "bun tsgo -b packages",
     "check:watch": "bun tsgo -b packages -w",
     test: "bun test",
     "test:watch": "bun --watch test",
+    "test:coverage": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov",
     audit: "bun audit --audit-level=high",
     lint: "oxlint --quiet",
     "fmt:check": "bun fmt --check",
+    sync: "bun typesec bootstrap sync",
     up: "bun update -ri --latest",
 };
 
@@ -91,19 +99,29 @@ export async function sync(options: SyncOptions): Promise<void> {
         throw new Error(`No package.json in ${target}: run sync from the project root.`);
     }
 
+    const submodule = path.relative(target, source).split(path.sep).join("/");
+
+    if (submodule !== "" && !/^vendor\/[^/]+$/.test(submodule)) {
+        throw new Error(
+            `TypeSec has to sit in vendor/ of the project, such as vendor/typesec, not in ${submodule}.\n` +
+                `Move the submodule there and run sync again.`,
+        );
+    }
+
     await syncFiles(target, options.now ?? new Date(), options.prompt, log);
 
     const manifest: Manifest = await manifestFile.json();
     const before = JSON.stringify(manifest);
     const typesec: Manifest = await Bun.file(path.join(source, "package.json")).json();
 
-    syncWorkspaces(manifest, path.relative(target, source), log);
+    syncWorkspaces(manifest, log);
     syncCatalogs(manifest, typesec, log);
     syncDependencies(manifest, log);
-    await syncScripts(manifest, options.prompt, log);
+    await syncScripts(manifest, scriptsFor(submodule), options.prompt, log);
 
     if (JSON.stringify(manifest) !== before) {
         await Bun.write(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`);
+        await format(target, log);
         log("package.json: updated");
     }
 
@@ -165,15 +183,36 @@ function workspacesOf(manifest: Manifest): Exclude<Manifest["workspaces"], strin
     return manifest.workspaces;
 }
 
-/** The project has to list TypeSec's packages among its workspaces for `workspace:*` to resolve. */
-function syncWorkspaces(manifest: Manifest, relative: string, log: (line: string) => void) {
-    const glob = path.posix.join(relative.split(path.sep).join("/"), "packages/*");
+/**
+ * Leaves `package.json` the way the project's own `fmt:check` expects it, key order included:
+ * the keys sync adds land wherever they were created.
+ */
+async function format(target: string, log: (line: string) => void) {
+    const proc = Bun.spawn(["bun", "fmt", "--no-script", "package.json"], {
+        cwd: target,
+        stdout: "ignore",
+        stderr: "ignore",
+    });
+
+    if ((await proc.exited) !== 0) log("package.json: bun fmt could not format it");
+}
+
+/**
+ * The scripts the project receives. Inside a project `typesec api` indexes that project, so one
+ * that holds TypeSec as a submodule also gets `typesec:api`, pointed at the submodule.
+ */
+function scriptsFor(submodule: string): Record<string, string> {
+    return submodule === "" ? SCRIPTS : {...SCRIPTS, "typesec:api": `typesec api --root ${submodule}`};
+}
+
+/** The packages of every submodule in `vendor/` become workspaces of the project, TypeSec among them. */
+function syncWorkspaces(manifest: Manifest, log: (line: string) => void) {
     const listed = Array.isArray(manifest.workspaces) ? manifest.workspaces : manifest.workspaces?.packages;
-    if (listed?.includes(glob)) return;
+    if (listed?.includes(VENDOR)) return;
 
     const workspaces = workspacesOf(manifest);
-    workspaces.packages = [...(workspaces.packages ?? []), glob];
-    log(`workspaces: added ${glob}`);
+    workspaces.packages = [...(workspaces.packages ?? []), VENDOR];
+    log(`workspaces: added ${VENDOR}`);
 }
 
 /** TypeSec's packages name their dependencies through `catalog:`, which resolves against the project. */
@@ -237,11 +276,16 @@ function syncDependencies(manifest: Manifest, log: (line: string) => void) {
     }
 }
 
-async function syncScripts(manifest: Manifest, prompt: SyncPrompt | undefined, log: (line: string) => void) {
+async function syncScripts(
+    manifest: Manifest,
+    wanted: Record<string, string>,
+    prompt: SyncPrompt | undefined,
+    log: (line: string) => void,
+) {
     const scripts = (manifest.scripts ??= {});
     let replaceAll = false;
 
-    for (const [name, command] of Object.entries(SCRIPTS)) {
+    for (const [name, command] of Object.entries(wanted)) {
         const current = scripts[name];
         if (current === command) continue;
 

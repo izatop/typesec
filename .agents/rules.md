@@ -4,7 +4,8 @@ Rules for writing code in a project built on TypeSec. They describe what this fr
 they do not replace the project's own conventions.
 
 Throughout, `<typesec>` is the path to the TypeSec checkout — the submodule directory in a
-consuming project, or `.` inside the checkout itself.
+consuming project, which is always under `vendor/` and normally `vendor/typesec`, or `.` inside the
+checkout itself.
 
 ## Language
 
@@ -13,6 +14,13 @@ consuming project, or `.` inside the checkout itself.
 - Conversation with the user and the local notes in `.agents/doc/` may use the user's language;
   nothing from them is committed.
 - A consuming project follows its own language convention.
+
+## Updating TypeSec
+
+- After updating the TypeSec submodule, read the new entries of `<typesec>/.agents/CHANGELOG.md` and
+  apply their migrations. Run `typesec bootstrap sync` first; it covers most of them.
+- A change to TypeSec that a consuming project has to act on gets a changelog entry in the same
+  commit: what changed, how to migrate, how to check.
 
 ## Local AI working documentation
 
@@ -41,26 +49,22 @@ bun <typesec>/packages/bootstrap/bin/typesec api show <name>         # one symbo
 bun <typesec>/packages/bootstrap/bin/typesec api packages            # what each package is for
 ```
 
-Without `--root` the command indexes the checkout the binary belongs to, which is what you want when
-looking up what TypeSec already provides. Point it elsewhere to index a different project of the
-same shape — the one you are working in, for instance:
+Without `--root` the command indexes the project around the working directory: the nearest
+directory at or above it with a `packages/tsconfig.json` listing the packages as project references,
+each with an `exports` map and `.mts` or `.tsx` sources under `src/`. Nothing about the index is
+TypeSec-specific. Inside the TypeSec checkout that project is TypeSec. A consuming project of the
+same shape gets its own packages, so there TypeSec's API takes `--root <typesec>`, which is what the
+`typesec:api` script added by `typesec bootstrap sync` runs:
 
 ```sh
-bun <typesec>/packages/bootstrap/bin/typesec api --root . search <keywords>
+bun run typesec:api search <keywords>                                 # what TypeSec provides
+bun <typesec>/packages/bootstrap/bin/typesec api search <keywords>    # what the project provides
 ```
 
-That shape is a `packages/tsconfig.json` listing the packages as project references, each with an
-`exports` map and `.mts` or `.tsx` sources under `src/`. Nothing about the index is
-TypeSec-specific.
-
-TypeSec is not published to npm, so `bunx typesec api` resolves only where `@typesec/bootstrap` is a
-dependency of the project — listing the submodule in `workspaces` is not enough. Anywhere else bunx
-looks the name up on the registry and fails. Running the binary by path always works. A project that
-uses it often should give it a script:
-
-```json
-{"scripts": {"api": "bun typesec/packages/bootstrap/bin/typesec api"}}
-```
+Only when no such project surrounds the working directory does the command fall back to the checkout
+the binary belongs to. TypeSec is not published to npm, so the short `typesec` binary resolves only
+where `@typesec/bootstrap` is a dependency of the project, which sync adds; running the binary by
+path always works.
 
 Every keyword has to match. Narrow with `--package`, `--kind function|type|class|const`,
 `--category`, `--limit`; add `--json` or `--yaml` to parse the result.
@@ -182,6 +186,34 @@ describe("fn", () => {
 - Never rename a published symbol in place. Add the corrected name and keep the old one as a
   deprecated alias.
 - `typesec api search --undocumented` must stay empty.
+
+## Vendored submodules
+
+- Every check covers the repository's own code and nothing else: tests, formatting and lint, during
+  development and in CI/CD. A submodule changes independently of the project and has a pipeline of
+  its own, which is where its code is checked. Depending on the project it can bring thousands of
+  files; running tests and lint over them on every change slows the development loop and adds CI/CD
+  overhead that grows with each submodule, and it finds nothing the project can fix.
+- That is why submodules are isolated in `vendor/` at the project root, and why the shared
+  configuration leaves the root `vendor/` out of `bun test`, `bun fmt` and oxlint (`bunfig.toml`,
+  `.oxlintrc.json`). Keep it that way: do not add a submodule outside `vendor/`, and do not point a
+  check, a script or a CI job at `vendor/`.
+- TypeSec itself always sits there, at `vendor/typesec`, never at the project root:
+  `typesec bootstrap sync` refuses to run from a checkout outside `vendor/`.
+- `typesec bootstrap sync` lists `vendor/*/packages/**` in `workspaces`, so the packages of every
+  submodule, at any depth under its `packages/`, resolve as workspace packages of the project.
+  Every directory there that holds a `package.json` counts as one. Their `catalog:` dependencies resolve
+  against the project's catalog, which therefore has to carry the entries they name.
+- The patterns are anchored to the root on purpose. A directory named `vendor` deeper in the tree is
+  the project's own code and is checked like any other. Do not widen them to `**/vendor/**`.
+
+## Docker context
+
+- `.dockerignore` denies by default: its first pattern is `*`, and only what is allowed explicitly
+  gets into the image. What is not allowed is forbidden.
+- Allow by name, one line per file or directory the image needs, as the template does for `src`,
+  `bin` and the manifests of the packages. Never allow a whole tree such as `packages/**` or
+  `vendor/**`.
 
 ## Package cache
 

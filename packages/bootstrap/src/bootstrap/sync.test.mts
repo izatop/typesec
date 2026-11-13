@@ -4,15 +4,18 @@ import {tmpdir} from "node:os";
 import path from "node:path";
 import {sync, type ScriptChoice, type SyncPrompt} from "./sync.mjs";
 
-const source = path.resolve(import.meta.dir, "../../../..");
+const checkout = path.resolve(import.meta.dir, "../../../..");
 const template = path.resolve(import.meta.dir, "../files");
 const now = new Date("2026-11-13T10:20:30.000Z");
 const stamp = "2026-11-13T10-20-30-000Z";
 
 let target: string;
+let source: string;
 
 beforeEach(async () => {
     target = await mkdtemp(path.join(tmpdir(), "typesec-sync-"));
+    source = path.join(target, "vendor", "typesec");
+    await Bun.write(path.join(source, "package.json"), Bun.file(path.join(checkout, "package.json")));
 });
 
 afterEach(async () => {
@@ -46,18 +49,18 @@ describe("sync", () => {
         const files = await Array.fromAsync(new Bun.Glob("**/*").scan({cwd: template, dot: true}));
 
         for (const file of files) {
-            const own = await Bun.file(path.join(source, file)).text();
+            const own = await Bun.file(path.join(checkout, file)).text();
             expect(own, file).toBe(await Bun.file(path.join(template, file)).text());
         }
     });
 
     test("ships the scripts TypeSec itself uses", async () => {
         const logs: string[] = [];
-        await Bun.write(path.join(target, "package.json"), Bun.file(path.join(source, "package.json")));
+        await Bun.write(path.join(target, "package.json"), Bun.file(path.join(checkout, "package.json")));
 
         await sync({target, source, now, log: (line) => logs.push(line)});
 
-        expect(logs.filter((line) => line.startsWith("scripts:"))).toEqual([]);
+        expect(logs.filter((line) => line.startsWith("scripts:"))).toEqual(["scripts: added typesec:api"]);
     });
 
     test("scaffolds an empty project and installs", async () => {
@@ -67,19 +70,46 @@ describe("sync", () => {
         await sync({target, source, now, install: async (dir) => void installed.push(dir)});
 
         const result = await manifest();
-        const typesec = await Bun.file(path.join(source, "package.json")).json();
+        const typesec = await Bun.file(path.join(checkout, "package.json")).json();
         expect(await read("bunfig.toml")).toBe(await Bun.file(path.join(template, "bunfig.toml")).text());
         expect(await read(".vscode/settings.json")).toContain("jkillian.custom-local-formatters");
-        expect(result.workspaces.packages).toEqual([`${path.relative(target, source)}/packages/*`]);
+        expect(result.workspaces.packages).toEqual(["vendor/*/packages/**"]);
         expect(result.workspaces.catalog).toEqual(typesec.workspaces.catalog);
         expect(result.workspaces.catalogs.build).toEqual(typesec.workspaces.catalogs.build);
         expect(result.devDependencies["@typesec/bootstrap"]).toBe("workspace:*");
         expect(result.scripts.lint).toBe("oxlint --quiet");
+        expect(result.scripts["typesec:api"]).toBe("typesec api --root vendor/typesec");
         expect(installed).toEqual([target]);
     });
 
+    test("writes a package.json that passes the project's own format check", async () => {
+        await writeManifest({name: "app"});
+
+        await sync({target, source, now});
+
+        const check = Bun.spawn(["bun", "fmt", "--check", "--no-script", "package.json"], {cwd: target});
+        expect(await check.exited).toBe(0);
+    });
+
+    test("refuses a TypeSec checkout outside vendor/ before changing anything", async () => {
+        await writeManifest({name: "app"});
+
+        await expect(sync({target, source: checkout, now})).rejects.toThrow("has to sit in vendor/");
+
+        expect(await Bun.file(path.join(target, "bunfig.toml")).exists()).toBeFalse();
+        expect(await manifest()).toEqual({name: "app"});
+    });
+
+    test("adds no typesec:api script to TypeSec itself", async () => {
+        await writeManifest({name: "typesec", workspaces: {packages: ["packages/*"]}});
+
+        await sync({target, source: target, now});
+
+        expect((await manifest()).scripts["typesec:api"]).toBeUndefined();
+    });
+
     test("fails without a package.json", async () => {
-        expect(sync({target, source})).rejects.toThrow("No package.json");
+        await expect(sync({target, source})).rejects.toThrow("No package.json");
     });
 
     test("keeps a differing file when the prompt declines", async () => {

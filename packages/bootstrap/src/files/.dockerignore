@@ -1,10 +1,28 @@
-# it excludes * by default
+# Deny by default: nothing enters the build context unless a line below allows it.
+# A new file or directory therefore stays out of the image until it is listed here.
 *
 
-# include only matter files
+# The workspace root: the lockfile and the manifests that `bun install` and the type check read.
+# A pattern without a slash matches at the root only, so these do not reach into the packages.
 !bun.lock
 !bunfig.toml
 !package.json
 !tsconfig.json
-!packages/*/src
-!packages/*/bin
+
+# The packages, at any depth under packages/ (`**` also matches no directory at all, which covers
+# packages/tsconfig.json): sources, executables and the manifests of each package. Without the
+# manifests `bun install --frozen-lockfile` fails, because the lockfile names workspaces that are
+# not on disk.
+!packages/**/src
+!packages/**/bin
+!packages/**/package.json
+!packages/**/tsconfig.json
+!packages/**/bunfig.toml
+
+# The same five for the packages of every submodule in vendor/, TypeSec among them: the lockfile
+# lists them as workspaces too. Nothing else of a submodule is allowed.
+!vendor/*/packages/**/src
+!vendor/*/packages/**/bin
+!vendor/*/packages/**/package.json
+!vendor/*/packages/**/tsconfig.json
+!vendor/*/packages/**/bunfig.toml

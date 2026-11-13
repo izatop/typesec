@@ -111,5 +111,5 @@
     "builtin": true
   },
   "globals": {},
-  "ignorePatterns": []
+  "ignorePatterns": ["/vendor/"]
 }

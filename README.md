@@ -15,13 +15,13 @@ TypeSec is not published to npm. A project consumes it as a git submodule and re
 `@typesec/*` specifiers through its own workspaces:
 
 ```sh
-git submodule add https://github.com/izatop/typesec.git typesec
+git submodule add https://github.com/izatop/typesec.git vendor/typesec
 ```
 
 ```json
 {
     "workspaces": {
-        "packages": ["packages/*", "typesec/packages/*"]
+        "packages": ["packages/*", "vendor/*/packages/**"]
     }
 }
 ```
@@ -31,16 +31,22 @@ the workspace root — your project, not the submodule. Your catalog therefore h
 entries the packages name; the `workspaces.catalog` of this repository is the reference list, and a
 missing one fails `bun install` with `<name>@catalog: is not in the catalog`.
 
-Paths below assume the submodule sits at `typesec/`. Scaffolding the shared lint, format and
-TypeScript configuration into an existing project:
+`vendor/` at the project root is the place for submodules. Checks cover the repository's own code
+only, so the shared configuration leaves `vendor/` out of `bun test`, `bun fmt` and oxlint: a
+submodule changes independently and is checked by its own pipeline, and re-running its tests and lint
+in every project that pins it slows the development loop and adds CI/CD overhead. TypeSec always sits
+there, never at the project root: `bootstrap sync` refuses to run from a checkout outside `vendor/`.
+Paths below assume `vendor/typesec/`. Scaffolding the shared lint, format and TypeScript
+configuration into an existing project:
 
 ```sh
-bun typesec/packages/bootstrap/bin/typesec bootstrap sync
+bun vendor/typesec/packages/bootstrap/bin/typesec bootstrap sync
 ```
 
-The command adds what the project is missing: the configuration files, the submodule's packages to
-`workspaces`, the entries of TypeSec's catalog, the dev dependencies and the `check`, `lint`, `test`
-and `fmt:check` scripts, then runs `bun install`. It never changes a catalog entry or dependency the
+The command adds what the project is missing: the configuration files, the packages of every
+submodule in `vendor/` to `workspaces`, the entries of TypeSec's catalog, the dev dependencies and the shared
+scripts (`check`, `test`, `lint`, `audit`, `fmt:check`, `sync`, `typesec:api` and their variants),
+then runs `bun install`. It never changes a catalog entry or dependency the
 project already pins. A file or script the project has in a different form is shown as a diff and
 replaced only if you agree; a replaced file moves to `.backup/<time>/`, which is added to
 `.gitignore`. Without a terminal it keeps everything that differs. `--no-install` skips the install.
@@ -169,7 +175,7 @@ export default command({
 ```
 
 ```sh
-bun typesec/packages/cli/bin ./src/index.mts daily -d 2026-01-01
+bun vendor/typesec/packages/cli/bin ./src/index.mts daily -d 2026-01-01
 ```
 
 `option` and `require` build the parser one flag at a time, and `parse` returns a record whose keys — and whose
@@ -289,29 +295,26 @@ $ bun packages/bootstrap/bin/typesec api search unique
                     Keeps the unique values, comparing the values themselves or the result of `map`.
 ```
 
-Without `--root` the command indexes the checkout the binary belongs to, whatever directory it runs
-from, so a consuming project calls the same binary through the submodule —
-`bun typesec/packages/bootstrap/bin/typesec api search unique` — and gets TypeSec's own API.
-
-`--root <path>` indexes a different project instead. Nothing in the index is TypeSec-specific: it
-reads any repository shaped the same way, meaning a `packages/tsconfig.json` that lists the packages
-as project references, each with an `exports` map and `.mts` or `.tsx` sources under `src/`.
+Nothing in the index is TypeSec-specific: it reads any repository shaped the same way, meaning a
+`packages/tsconfig.json` that lists the packages as project references, each with an `exports` map
+and `.mts` or `.tsx` sources under `src/`. Without `--root` the command indexes the project around
+the working directory, and falls back to the checkout the binary belongs to when there is none. A
+consuming project is usually shaped like TypeSec, so there the plain command reports the project's
+own packages and TypeSec's API takes `--root`:
 
 ```sh
-bun typesec/packages/bootstrap/bin/typesec api --root . packages   # your own project
+bun vendor/typesec/packages/bootstrap/bin/typesec api packages                         # your own project
+bun vendor/typesec/packages/bootstrap/bin/typesec api --root vendor/typesec packages   # TypeSec
 ```
 
-The short `bunx typesec api` works only where `@typesec/bootstrap` is a dependency of the project:
-listing the submodule in `workspaces` is not enough, because Bun links a binary only for a package
-something depends on. `typesec bootstrap sync` adds that dependency, which is what makes the short
-form work here. The former `typesec-api` binary remains as an alias of `typesec api`.
+`typesec bootstrap sync` gives the project a `typesec:api` script for the second form, so looking up
+what TypeSec provides is `bun run typesec:api search unique`. The script calls the short `typesec`
+binary, which resolves only where `@typesec/bootstrap` is a dependency of the project: listing the
+submodule in `workspaces` is not enough, because Bun links a binary only for a package something
+depends on. Sync adds that dependency too. The former `typesec-api` binary remains as an alias of
+`typesec api`.
 
-The examples below shorten the invocation to `typesec api`. A project that reaches for it often
-should give it a script:
-
-```json
-{"scripts": {"api": "bun typesec/packages/bootstrap/bin/typesec api"}}
-```
+The examples below shorten the invocation to `typesec api`.
 
 Every keyword has to match, and filters narrow further:
 
@@ -370,28 +373,27 @@ submodule commit pins its version along with the code it describes. **Reference 
 A copy would drift from the very commit the submodule pins.
 
 Add one line to the instruction file your agent reads. Paths are relative to the file that holds
-them, and `typesec/` is wherever the submodule sits:
+them:
 
 ```md
 <!-- AGENTS.md — read by most agents -->
 
-Follow the TypeSec rules in [typesec/.agents/rules.md](typesec/.agents/rules.md).
+Follow the TypeSec rules in [vendor/typesec/.agents/rules.md](vendor/typesec/.agents/rules.md).
 ```
 
 ```md
 <!-- CLAUDE.md — @ imports the file into every session -->
 
 @AGENTS.md
-@typesec/.agents/rules.md
+@vendor/typesec/.agents/rules.md
 ```
 
-The rules tell an agent to run `typesec api` through the submodule:
+The rules tell an agent to look TypeSec's API up before writing a helper. In a consuming project
+that is the `typesec:api` script, which points `--root` at the submodule:
 
 ```sh
-bun typesec/packages/bootstrap/bin/typesec api search <keywords>
+bun run typesec:api search <keywords>
 ```
-
-The command indexes the checkout it belongs to, so no `--root` is needed from a consuming project.
 
 ## Conventions
 

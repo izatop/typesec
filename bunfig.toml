@@ -12,3 +12,12 @@ bracketSameLine = true
 endOfLine = "lf"
 semi = true
 sortPackageJson = true
+# vendor/ at the project root holds git submodules. Each is formatted, linted and tested in its own
+# repository, so this project skips them here, in [test] below and in .oxlintrc.json. The patterns
+# are anchored to the root: a directory named vendor deeper in the tree is checked like any other.
+# .dockerignore has no parser in bun fmt; listing it keeps format-on-save from failing on it.
+ignorePatterns = ["/vendor/", ".dockerignore"]
+
+[test]
+# The root vendor/ only, see [fmt] above. A leading slash would match nothing here.
+pathIgnorePatterns = ["vendor/**"]
