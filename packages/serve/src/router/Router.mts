@@ -1,4 +1,3 @@
-import {locator} from "@typesec/core";
 import {override, type Override} from "@typesec/the";
 import type {Application, Handle, HandleEntry, Meta, ProtoAbstract} from "@typesec/unit";
 import {z} from "zod";
@@ -121,9 +120,7 @@ export class Router<TContext, TTransforms extends RestTransforms = {}, TRet = Re
     ): Handle<TContext, ProtoAbstract<ServeInput>, ServeInput, Response> {
         return async (...args) => {
             try {
-                return await locator(function wrapOnErrorServiceLocate() {
-                    return handle(...args);
-                });
+                return await handle(...args);
             } catch (reason) {
                 if (this.#error) {
                     return this.#error(reason);

@@ -117,7 +117,7 @@ Rules that follow from this:
 - Reach the runtime through `runtime` from `@typesec/core`; it resolves per async context. Do not
   read `process.env.NODE_ENV` directly — use `runtime.isProduction()` and its siblings.
 - Register a dependency with `service(Class, factory)` and read it with `await resolve(Class)`.
-  Inside a handler, `sync()` plus `locator()` avoids awaiting.
+  `sync()`, `syncArray()` and `locator()` are deprecated: the throw-and-retry protocol is easy to misplace.
 - Anything that must be released implements `Symbol.dispose` or `Symbol.asyncDispose`; the runtime
   disposes what a handler returns.
 - `using` and `await using` bindings may exist only to trigger disposal at scope exit. Prefix a binding

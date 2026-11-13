@@ -1,4 +1,4 @@
-import {dispose, locator, resolve, runtime, service} from "@typesec/core";
+import {dispose, resolve, runtime, service} from "@typesec/core";
 import {ContextResolver} from "./ContextResolver.mjs";
 import type {Application, Factory, SetupOptions} from "./interfaces.mjs";
 import type {ProtoAbstract} from "./ProtoAbstract.mjs";
@@ -25,9 +25,7 @@ export function context<TProto extends ProtoAbstract<TIn>, TIn, TRet, TContext>(
                 const instance = new proto(request);
                 tracer.log("call( <%s>, <%o> )", handleMeta.name, request);
 
-                const response = await locator(function locateService() {
-                    return handle.call(instance, {proto: instance, request, context});
-                });
+                const response = await handle.call(instance, {proto: instance, request, context});
 
                 proto.validate(response);
 

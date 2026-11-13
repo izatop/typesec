@@ -116,6 +116,7 @@ export function state<T extends Service>(ref: ServiceId<T>): ServiceState<T> {
 /**
  * Reads several services synchronously, throwing one `PendingServiceList` covering every one still unbuilt.
  * @category service
+ * @deprecated Read services with `await resolve()`. The throw-and-retry protocol behind `sync` only works under `locator`, and a call outside it breaks the handler.
  */
 export function syncArray<T1 extends Service, T2 extends Service>(t1: ServiceId<T1>, t2: ServiceId<T2>): [T1, T2];
 export function syncArray<T1 extends Service, T2 extends Service, T3 extends Service>(
@@ -156,6 +157,7 @@ export function syncArray<T extends Service>(...refs: ServiceId<T>[]): T[] {
  *
  * Throws `PendingService` when the instance does not exist yet, which `locator` turns into a wait and a retry.
  * @category service
+ * @deprecated Read services with `await resolve()`. The throw-and-retry protocol behind `sync` only works under `locator`, and a call outside it breaks the handler.
  */
 export function sync<T extends Service>(ref: ServiceId<T>): T {
     ref = ensureRef(ref);
@@ -266,6 +268,7 @@ function kickoff<T extends Service>(ref: ServiceRef<T>): void {
  *
  * This is what makes `sync` usable inside a handler: the first attempt throws a pending service, the locator awaits it and runs the function again.
  * @category service
+ * @deprecated Read services with `await resolve()` inside the handler instead of wrapping it; the retry re-runs the whole function.
  * @example await locator(() => handle({context, request}))
  */
 export async function locator<F extends Fn<[], any>>(fn: F): Promise<ReturnType<F>> {
