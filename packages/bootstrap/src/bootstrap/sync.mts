@@ -59,6 +59,7 @@ const SCRIPTS: Record<string, string> = {
     "check:watch": "bun tsgo -b packages -w",
     test: "bun test",
     "test:watch": "bun --watch test",
+    audit: "bun audit --audit-level=high",
     lint: "oxlint --quiet",
     "fmt:check": "bun fmt --check",
     up: "bun update -ri --latest",
