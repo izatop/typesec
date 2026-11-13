@@ -1,8 +1,8 @@
-import {defnify, identify, type Fn, type Promisify} from "@typesec/the";
+import {defnify, identify, type Fn} from "@typesec/the";
 import {assert} from "@typesec/the/assert";
 import {fn, is} from "@typesec/the/fn";
 import {isPromise} from "node:util/types";
-import {isAsyncDisposable, isDisposable, PendingServiceList} from "../index.mjs";
+import {isAsyncDisposable, isDisposable} from "../lib/dispostable.mjs";
 import {tracer} from "../tracer.mjs";
 import {
     type Service,
@@ -15,11 +15,11 @@ import {
 } from "./interfaces.mjs";
 import {PendingError} from "./PendingError.mjs";
 import {PendingService} from "./PendingService.mjs";
+import {PendingServiceList} from "./PendingServiceList.mjs";
+import {ServiceEntry} from "./ServiceEntry.mjs";
 import {ServiceRef} from "./ServiceRef.mjs";
 
-const store = new WeakMap<ServiceRef<any>, any>();
-const registry = new Map<ServiceRef<any>, ServiceFactory<any>>();
-const pendings = new WeakMap<ServiceRef<any>, Promisify<Service>>();
+const entries = new Map<ServiceRef<any>, ServiceEntry<any>>();
 const latest = new WeakMap<ServiceCtor<any> | ServicePrivateCtor<any>, ServiceRef<any>>();
 
 /**
@@ -50,21 +50,22 @@ export function service<T extends Service>(
     lazy = true,
 ): ServiceRef<T> {
     const ref = new ServiceRef(ctor);
-    registry.set(ref, value);
+    const entry = new ServiceEntry(value);
+    entries.set(ref, entry);
     latest.set(ctor, ref);
     if (is(value, "function")) {
-        if (!lazy) resolve(ctor);
+        if (!lazy) resolve(ref);
 
         return ref;
     }
 
     if (isPromise(value)) {
-        resolve(ctor);
+        resolve(ref);
 
         return ref;
     }
 
-    store.set(ref, value);
+    entry.instance = value as T;
 
     return ref;
 }
@@ -74,16 +75,16 @@ export function service<T extends Service>(
  * @category service
  */
 export function unload<T extends Service>(ref: ServiceId<T>): void {
-    ref = ensureRef(ref);
-    const current = state(ref);
-    if (current.resolved) {
-        store.delete(ref);
-        if (isAsyncDisposable(current.instance)) {
-            current.instance[Symbol.asyncDispose]();
+    const entry = entries.get(ensureRef(ref));
+    if (entry?.instance) {
+        const instance = entry.instance;
+        entry.instance = undefined;
+        if (isAsyncDisposable(instance)) {
+            instance[Symbol.asyncDispose]();
         }
 
-        if (isDisposable(current.instance)) {
-            current.instance[Symbol.dispose]();
+        if (isDisposable(instance)) {
+            instance[Symbol.dispose]();
         }
     }
 }
@@ -104,24 +105,12 @@ export function ensureRef<T extends Service>(id: ServiceId<T>): ServiceRef<T> {
  * @category service
  */
 export function state<T extends Service>(ref: ServiceId<T>): ServiceState<T> {
-    ref = ensureRef(ref);
-    const known = registry.has(ref);
-    if (!known) {
-        return {known, resolved: false};
+    const entry = entries.get(ensureRef(ref));
+    if (!entry) {
+        return {known: false, resolved: false};
     }
 
-    const instance = store.get(ref);
-
-    return instance
-        ? {
-              known,
-              instance,
-              resolved: true,
-          }
-        : {
-              known,
-              resolved: false,
-          };
+    return entry.instance ? {known: true, instance: entry.instance, resolved: true} : {known: true, resolved: false};
 }
 
 /**
@@ -171,15 +160,14 @@ export function syncArray<T extends Service>(...refs: ServiceId<T>[]): T[] {
 export function sync<T extends Service>(ref: ServiceId<T>): T {
     ref = ensureRef(ref);
     const name = identify(ref);
-    tracer.log("sync( <%s> ): %s", name, store.has(ref));
-
-    const known = store.get(ref);
-    if (!known) {
+    const instance = entries.get(ref)?.instance;
+    tracer.log("sync( <%s> ): %s", name, instance !== undefined);
+    if (!instance) {
         tracer.log("throw PendingService( <%s> )", name);
         throw new PendingService(ref, resolve(ref));
     }
 
-    return known;
+    return instance;
 }
 
 /**
@@ -247,23 +235,23 @@ export async function resolve<T extends Service>(...refs: [ServiceId<T>, ...Serv
     const ref = ensureRef(refs[0]);
     const name = identify(ref);
 
-    tracer.log("resolve( <%s> ): %d", name, store.has(ref));
-    const known = store.get(ref);
-    if (known) {
-        return known;
+    const entry = entries.get(ref);
+    tracer.log("resolve( <%s> ): %d", name, entry?.instance !== undefined);
+    if (entry?.instance) {
+        return entry.instance;
     }
 
-    const value = registry.get(ref);
-    assert(is(value, "function") || isPromise(value), `Unknown service ${name}`);
+    const value = entry?.factory;
+    assert(entry && (is(value, "function") || isPromise(value)), `Unknown service ${name}`);
 
-    tracer.log("factory( <%s> ): %d", name, pendings.has(ref));
-    const pending = Promise.resolve(pendings.get(ref) ?? defnify(value));
-    pendings.set(ref, pending);
+    tracer.log("factory( <%s> ): %d", name, entry.pending !== undefined);
+    const pending = Promise.resolve(entry.pending ?? defnify(value));
+    entry.pending = pending;
 
     pending.then((instance) => {
         tracer.log("register( <%s> )", name);
-        store.set(ref, instance);
-        pendings.delete(ref);
+        entry.instance = instance;
+        entry.pending = undefined;
 
         return instance;
     });

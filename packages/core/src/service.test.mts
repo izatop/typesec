@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, test} from "bun:test";
 import {PendingError, ServiceRef} from "./service/index.mjs";
-import {define, locator, resolve, service, state, sync, syncArray, unload} from "./service/fn.mjs";
+import {define, ensureRef, locator, resolve, service, state, sync, syncArray, unload} from "./service/fn.mjs";
 import {TestService} from "./test/TestService.mjs";
 import {TestService2} from "./test/TestService2.mjs";
 
@@ -82,5 +82,50 @@ describe("Service", () => {
             expect(s1).toBeInstanceOf(TestService);
             expect(s2).toBeInstanceOf(TestService2);
         });
+    });
+});
+
+describe("Service registration", () => {
+    class Connection {
+        public readonly disposed: string[] = [];
+
+        constructor(public readonly label: string) {}
+
+        [Symbol.dispose]() {
+            this.disposed.push(this.label);
+        }
+    }
+
+    test("should address the latest registration by class and each registration by its ref", async () => {
+        const first = service(Connection, () => new Connection("first"));
+        const second = service(Connection, () => new Connection("second"));
+
+        expect(ensureRef(Connection)).toBe(second);
+        expect((await resolve(Connection)).label).toBe("second");
+        expect(await resolve(Connection)).toBe(await resolve(second));
+        expect((await resolve(first)).label).toBe("first");
+        expect(sync(first)).toBe(await resolve(first));
+    });
+
+    test("should unload one registration without touching the other", async () => {
+        const first = service(Connection, () => new Connection("first"));
+        const second = service(Connection, () => new Connection("second"));
+        const [old, latest] = await resolve(first, second);
+
+        unload(first);
+
+        expect(old.disposed).toEqual(["first"]);
+        expect(latest.disposed).toEqual([]);
+        expect(state(first).resolved).toBeFalse();
+        expect(state(Connection).resolved).toBeTrue();
+        expect(await resolve(first)).not.toBe(old);
+    });
+
+    test("should report a ref it never registered as unknown", async () => {
+        const foreign = new ServiceRef(Connection);
+
+        expect(state(foreign)).toEqual({known: false, resolved: false});
+        await expect(resolve(foreign)).rejects.toThrow("Unknown service");
+        expect(() => state(class Unknown {})).toThrow("Unknown service reference");
     });
 });
