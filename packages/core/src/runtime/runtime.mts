@@ -1,10 +1,11 @@
-import type {Fn, Prop} from "@typesec/the/type";
-import {withDisposablePending, type WithDisposablePending} from "../lib/dispostable.mjs";
+import {assert} from "@typesec/the/assert";
+import type {Prop} from "@typesec/the/type";
+import {toAsyncDisposable} from "../lib/dispostable.mjs";
 import {WeakSequence} from "../lib/WeakSequence.mts";
 import {store} from "./controller/hmr.mjs";
 import {RuntimeController} from "./controller/index.mjs";
 import {lifecycle} from "./controller/index.mts";
-import {dispose} from "./dispose.mjs";
+import type {Task} from "./interfaces.mjs";
 
 /**
  * One member of `RuntimeController`, as re-exposed on `runtime`.
@@ -36,7 +37,7 @@ export type Runtime = {
     wait: RuntimePick<"wait">;
     signal: AbortSignal;
     increment: () => number;
-    run<R>(task: Fn<[], R>, withContext?: RuntimeController): WithDisposablePending<R>;
+    run<R>(task: Task<R>, withContext?: RuntimeController): Promise<R>;
 };
 
 function use(): RuntimeController {
@@ -125,10 +126,18 @@ export const runtime: Runtime = {
     wait(ms) {
         return this.controller.wait(ms);
     },
-    /** Runs a task in its own async context, so nested code sees that controller. */
-    run(task, withContext) {
-        const controller = withContext ?? this.use();
+    /**
+     * Runs a task as tracked work of the current controller, or owns the one passed explicitly.
+     *
+     * The current controller stays open. An explicit one is closed once the task settles, whichever way, and its cleanup
+     * is awaited: a cleanup failure rejects the call, with the task's own error attached as `SuppressedError.suppressed`.
+     * One that has begun closing rejects with `RuntimeClosedException` once its cleanup finishes, without calling the
+     * task. Passing the current controller is refused: owning it would await a closure that waits for this call.
+     */
+    async run(task, withContext) {
+        assert(!withContext || withContext !== store.context.getStore(), "run(): cannot own the current controller");
+        await using closing = toAsyncDisposable(() => withContext?.close());
 
-        return withDisposablePending(store.context.run(controller, task), () => dispose(withContext));
+        return await (withContext ?? this.use()).run(task);
     },
 };

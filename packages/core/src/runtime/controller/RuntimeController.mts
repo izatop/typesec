@@ -7,12 +7,12 @@ import {scheduler} from "node:timers/promises";
 import {ExitSignals} from "../../const.mjs";
 import type {EnvModeType} from "../../env.mjs";
 import {DisposableListener} from "../../lib/DisposableListener.mts";
-import {toAsyncDisposable, withDisposablePending, type WithDisposablePending} from "../../lib/dispostable.mjs";
+import {toAsyncDisposable} from "../../lib/dispostable.mjs";
 import {Ref} from "../../lib/Ref.mjs";
 import {WeakSequence} from "../../lib/WeakSequence.mts";
 import {DisposalEntry} from "../DisposalEntry.mjs";
-import {dispose} from "../dispose.mjs";
 import {heartbeat} from "../heartbeat.mjs";
+import {store} from "./hmr.mjs";
 import {ReloadController} from "./ReloadController.mjs";
 import {RuntimeClosedException} from "./RuntimeClosedException.mjs";
 
@@ -141,12 +141,21 @@ export class RuntimeController extends AbortController implements Disposable {
         assert(!mode || mode === this.mode, message ?? `Only available in the ${mode} mode only`);
     };
 
-    /** Runs a task under this controller, holding the event loop open while it works. */
-    public run = <R,>(task: Fn<[], R>, lock = true): WithDisposablePending<R> => {
-        return withDisposablePending(lock ? this.runWithLock(task) : task(), () => dispose(this));
+    /**
+     * Runs a task in this controller's async context as its tracked work, leaving the controller open for more.
+     *
+     * Nested code sees this controller through `runtime.use()`, and closure waits for the task. A controller that has
+     * begun closing throws `RuntimeClosedException` synchronously, without calling the task.
+     * @category runtime
+     */
+    public run = <R,>(task: Fn<[], Promisify<R>>): Promise<R> => {
+        return this.track(() => store.context.run(this, task));
     };
 
-    /** Runs a task with a timer held open, so an idle event loop does not end the process early. */
+    /**
+     * Runs a task with a timer held open, so an idle event loop does not end the process early.
+     * @deprecated Bun clamps the timer to 1 ms, so it holds nothing; the lifecycle trap keeps the loop alive.
+     */
     public runWithLock = async <R,>(task: Fn<[], R>): Promise<R> => {
         const lock = setTimeout(() => void 0, Infinity);
 

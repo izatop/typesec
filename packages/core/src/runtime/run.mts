@@ -5,12 +5,11 @@ import {type Task} from "./interfaces.mjs";
 import {runtime} from "./runtime.mjs";
 
 /**
- * Runs a task inside a runtime controller, defaulting to the current one, and disposes the context afterwards.
+ * Runs a task through `runtime.run` with a trace: the current controller is borrowed, an explicit one is owned and closed.
  * @category runtime
  */
-export async function run<R>(task: Task<R>, withContext?: RuntimeController): Promise<Awaited<R>> {
+export function run<R>(task: Task<R>, withContext?: RuntimeController): Promise<R> {
     tracer.log("run( <%s> ): *", identify(task));
-    using pending = runtime.run(task, withContext);
 
-    return await pending;
+    return runtime.run(task, withContext);
 }
