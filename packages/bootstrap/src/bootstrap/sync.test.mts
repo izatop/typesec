@@ -51,6 +51,15 @@ describe("sync", () => {
         }
     });
 
+    test("ships the scripts TypeSec itself uses", async () => {
+        const logs: string[] = [];
+        await Bun.write(path.join(target, "package.json"), Bun.file(path.join(source, "package.json")));
+
+        await sync({target, source, now, log: (line) => logs.push(line)});
+
+        expect(logs.filter((line) => line.startsWith("scripts:"))).toEqual([]);
+    });
+
     test("scaffolds an empty project and installs", async () => {
         const installed: string[] = [];
         await writeManifest({name: "app"});

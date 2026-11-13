@@ -25,7 +25,7 @@
     "check:watch": "bun tsgo -b packages -w",
     "test": "bun test",
     "test:coverage": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov",
-    "test:watch": "bun --watchtest",
+    "test:watch": "bun --watch test",
     "audit": "bun audit --audit-level=high",
     "lint": "oxlint --quiet",
     "sync": "bun typesec bootstrap sync",
