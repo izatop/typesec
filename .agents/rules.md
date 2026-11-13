@@ -181,7 +181,7 @@ describe("fn", () => {
 bun run check       # types
 bun test            # suite
 bun run lint        # oxlint
-bun run fmt:write   # oxfmt, then re-run check
+bun fmt             # bun fmt, then re-run check
 ```
 
 Do not hand-format code; `oxfmt` owns the formatting, including markdown.

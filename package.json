@@ -15,8 +15,7 @@
     },
     "catalogs": {
       "build": {
-        "oxlint": "^1.92.0",
-        "oxfmt": "^0.76.0"
+        "oxlint": "^1.92.0"
       }
     }
   },
@@ -30,8 +29,7 @@
     "lint": "oxlint --quiet",
     "sync": "bun typesec-sync",
     "up": "bun update -ri --latest",
-    "fmt:check": "oxfmt . --check",
-    "fmt:write": "oxfmt . --write"
+    "fmt:check": "bun fmt --check"
   },
   "devDependencies": {
     "@types/bun": "catalog:",
