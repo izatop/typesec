@@ -85,6 +85,9 @@ one of these is the most common mistake in a TypeSec codebase.
 - Do not insert blank lines between adjacent closing delimiters or before `else`, `catch` or `finally`.
 - Check these boundaries during independent style review. A passing formatter check does not replace
   this check: the formatter preserves blank lines but does not establish every logical boundary.
+- A class member that must stay readable but out of enumeration and printing is a private `#field`
+  with a public getter. Do not reach for `Object.defineProperty`, `declare` fields or other
+  property-descriptor tricks on class members.
 
 ## Imports
 

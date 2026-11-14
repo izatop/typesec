@@ -105,6 +105,20 @@ disk`.
   such as `packages/**`.
 - Check: the image build gets through `bun install --frozen-lockfile`.
 
+## 2026-11-14 — Nothing is built after the root began closing
+
+Once the generation's root controller has begun closing, `service()` and `define()` throw
+`RuntimeClosedException` before registering anything, and a factory result that lands late is
+released, or dropped when it has no disposal hook, instead of published: that `resolve` and every
+later one reject with `RuntimeClosedException`, while a factory failure keeps its own reason.
+Already built instances still serve shutdown work. `RuntimeClosedException.controller` is no longer
+enumerable, so printing the exception no longer dumps the controller.
+
+- Migrate: register services at application setup, not from shutdown work; shutdown work resolves
+  only services built before the close began. A value refused by `service()` stays with the caller.
+- Check: `bun test` passes; `resolve` of an unbuilt service after `lifecycle.close()` rejects with
+  `RuntimeClosedException`.
+
 ## 2026-11-13 — Service instances are owned and released once
 
 A disposable service instance, built by its factory or registered as a value, is owned by the root

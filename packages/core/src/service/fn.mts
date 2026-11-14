@@ -4,6 +4,7 @@ import {fn, is} from "@typesec/the/fn";
 import {isPromise} from "node:util/types";
 import {isAsyncDisposable, isDisposable} from "../lib/dispostable.mjs";
 import {lifecycle} from "../runtime/controller/lifecycle.mjs";
+import {RuntimeClosedException} from "../runtime/controller/RuntimeClosedException.mjs";
 import {tracer} from "../tracer.mjs";
 import {
     type Service,
@@ -43,7 +44,9 @@ export function define<T extends Service>(
  *
  * A lazy registration builds on first resolve; passing `lazy: false`, or a promise, starts construction at once.
  * The factory runs as work of the generation's root controller, whichever context resolves the service first,
- * and a disposable instance is owned by that controller, which disposes it once when it closes.
+ * and a disposable instance is owned by that controller, which disposes it once when it closes. Once that controller
+ * has begun closing, registration is refused with `RuntimeClosedException` and a result that lands late is released,
+ * or dropped when it has no disposal hook, instead of published.
  * @category service
  * @example service(Database, () => Database.connect(url))
  */
@@ -52,6 +55,8 @@ export function service<T extends Service>(
     value: ServiceFactory<T>,
     lazy = true,
 ): ServiceRef<T> {
+    assert(lifecycle.isRunning(), () => new RuntimeClosedException(lifecycle));
+
     const ref = new ServiceRef(ctor);
     const entry = new ServiceEntry(value, lifecycle);
     entries.set(ref, entry);
@@ -181,6 +186,10 @@ export function resolveArray<T extends Service>(...refs: ServiceId<T>[]): Promis
 
 /**
  * Resolves one or more services, building each on first use and caching the instance.
+ *
+ * A result that lands after the owner began closing is released, or dropped when it has no disposal hook, and never
+ * published: that call and every later one reject with `RuntimeClosedException`, while a factory failure keeps its own
+ * reason.
  * @category service
  * @example const [db, cache] = await resolve(Database, Cache)
  */
@@ -250,10 +259,13 @@ export async function resolve<T extends Service>(...refs: [ServiceId<T>, ...Serv
         .run(() => defnify(value))
         .then((instance) => {
             tracer.log("register( <%s> )", name);
-            entry.instance = adopt(entry, instance);
+            const owned = adopt(entry, instance);
+            assert(entry.owner.isRunning(), () => new RuntimeClosedException(entry.owner));
+
+            entry.instance = owned;
             entry.pending = undefined;
 
-            return instance;
+            return owned;
         });
 
     return entry.pending;
