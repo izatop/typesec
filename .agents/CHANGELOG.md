@@ -14,6 +14,16 @@ Most entries are applied by `bun vendor/typesec/packages/bootstrap/bin/typesec b
 adds what is missing and asks before replacing anything that differs. Run it first, then go through
 the entries for what it does not cover.
 
+## 2026-11-14 — Oxlint rules fail lint on errors
+
+The root and bootstrap `.oxlintrc.json` now set all explicitly configured rules to `error`,
+except `unicorn/no-thenable`, which remains `warn` pending review of intentional test thenables.
+Unused imports and ordinary unused variables now fail `lint --quiet`. Existing exceptions for
+`using` declarations and `_`-prefixed variables and arguments remain. The plugin list is unchanged.
+
+Migrate: run `typesec bootstrap sync` and accept the updated `.oxlintrc.json`.
+Fix errors reported by `bun run lint`; run `bun x oxlint` to see warnings hidden by `--quiet`.
+
 ## 2026-11-14 — `bun check` is the type check, `typescript@7` replaces `@typescript/native-preview`
 
 `bun check`, built into Bun 1.4.4, reads `tsconfig.json`, follows `references` with `-b` and
