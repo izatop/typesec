@@ -43,7 +43,7 @@ export class RuntimeController extends AbortController implements Disposable {
     private constructor(parent?: RuntimeController | null, id?: string) {
         super();
         this.id = id ?? WeakSequence.increment(RuntimeController).toString();
-        this.#trace = wrap(`[runtime] ${id}`);
+        this.#trace = wrap(`[runtime] ${this.id}`);
         this.#resources = new ResourceStack(this.id, this.#trace);
         this.#parent = parent ?? null;
         this.#parent?.enqueue(this);
