@@ -145,6 +145,69 @@ Rules that follow from this:
 - Typed RPC goes through `@typesec/mrpc`: one `contract` per procedure, a `domain` of contracts, a
   `backend` on the server and a `client` on the caller.
 
+## Environment modes and source maps
+
+Choose predicates by the purpose of each feature. `isNotProduction()` means every mode except
+`production`; it is **not** a synonym for `isDevelopment()`. Never mechanically replace all mode
+checks with one condition.
+
+`RuntimeController.mode` reads `NODE_ENV` on access and defaults to `development` only when it is
+absent. Empty strings and unknown values are preserved. The predicates exposed through `runtime`
+from `@typesec/core` use exact comparisons:
+
+| Predicate           | True when `runtime.mode` is                                                                  |
+| ------------------- | -------------------------------------------------------------------------------------------- |
+| `isDevelopment()`   | `development`, including the fallback for absent `NODE_ENV`                                  |
+| `isStage()`         | `stage` only, not `staging`                                                                  |
+| `isTest()`          | `test`                                                                                       |
+| `isProduction()`    | `production`                                                                                 |
+| `isNotProduction()` | Anything except `production`, including `stage`, `staging`, `test`, empty and unknown values |
+
+Application policy:
+
+- **development** is interactive development. HMR, hot reload, dev-server and browser-console
+  forwarding are allowed only here. Gate them with `isDevelopment()`, not `isNotProduction()`.
+- **staging** is a deployed verification environment: no HMR, hot reload or automatic dev-server
+  activation. Detailed errors, diagnostic library builds, unminified code and source maps are
+  allowed and useful. A diagnostic build does not imply interactive development.
+- **test** is a separate test execution mode, not development, and must not automatically enable
+  HMR. Use `isTest()` for test-specific behavior. If the parent environment already defines
+  `NODE_ENV`, explicitly set `NODE_ENV=test` for tests, for example `NODE_ENV=test bun test`.
+- **production** uses optimized builds, without dev-server, HMR, hot reload or debug pages.
+  Source maps are forbidden in publicly delivered artifacts: no separate `.map` files, inline
+  maps or public source delivery through maps. Production builds generate no maps by default.
+  If error telemetry is introduced later, a separately agreed pipeline may generate maps and
+  upload them privately to telemetry; these maps must never enter the public delivery.
+
+The policy name staging does not rename the API: `EnvModeType` currently lists `stage`, not
+`staging`, and `isStage()` recognizes only `stage`. With `NODE_ENV=staging`, `isNotProduction()`
+is true and all four specific predicates above are false. Preserve existing values and API;
+renaming or adding aliases requires a separate agreed change. In a project explicitly using
+`staging`, use `runtime.mode === "staging"` when that exact environment matters.
+
+Server mode, library diagnostics, minification and source maps are separate settings. React and
+Bun may have their own conditions and defaults; configure behavior explicitly wherever these
+differ from application policy. Neither `NODE_ENV=staging` nor detailed React errors automatically
+generates source maps. Configure map generation and delivery separately. Inspect final public
+production artifacts for separate and inline maps, as well as public source delivery through maps.
+
+Examples of condition selection (wire these decisions into the relevant feature or build settings):
+
+```ts
+import {runtime} from "@typesec/core";
+
+const development = runtime.isDevelopment(); // Dev-server and browser-console forwarding gate.
+const hmr = runtime.isDevelopment() && runtime.hmr; // Development plus an explicit HMR request.
+const testBehavior = runtime.isTest(); // Test-specific behavior only.
+const detailedErrors = runtime.isNotProduction(); // Diagnostics allowed outside production.
+const minify = runtime.isProduction(); // Optimized production output.
+const sourceMaps = runtime.isNotProduction(); // Example build policy, not automatic generation.
+```
+
+`runtime.hmr` currently checks only `NODE_HMR === "Y"`; it does not enforce the development gate.
+Runtime predicates do not configure build output or enforce this policy by themselves. Changes
+to runtime/API or build configuration require separate agreement from a documentation-only task.
+
 ## Tests
 
 - Keep the primary test as `<module>.test.mts` beside the source.
