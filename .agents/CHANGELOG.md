@@ -14,6 +14,19 @@ Most entries are applied by `bun vendor/typesec/packages/bootstrap/bin/typesec b
 adds what is missing and asks before replacing anything that differs. Run it first, then go through
 the entries for what it does not cover.
 
+## 2026-11-15 — `main` releases its result before the lifecycle and yields to a reload
+
+`main(task)` disposes the task's result as part of the task's work, so the lifecycle closes its
+services only after that disposal, even when SIGINT, SIGTERM or a reload closes it first. A result the
+lifecycle already owns, such as a returned service instance, is released once through it. Under
+`bun --hot`, a `main` whose generation was replaced and that completes successfully no longer calls
+`exit(0)`: it resolves `undefined` and the process stays with the new generation. A failure still
+exits with `1`.
+
+- Migrate: `main` now returns `Promise<Timer | undefined>`; widen a variable that stores its result
+  as `Timer` to `Timer | undefined`. `clearImmediate(await main(task))` needs no change.
+- Check: `bun run check` passes; under `bun --hot`, saving the entrypoint keeps the process running.
+
 ## 2026-11-15 — Unit and integration test layout
 
 The [testing rules](rules.md#tests) replace tests beside source files with
