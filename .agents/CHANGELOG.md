@@ -14,6 +14,52 @@ Most entries are applied by `bun vendor/typesec/packages/bootstrap/bin/typesec b
 adds what is missing and asks before replacing anything that differs. Run it first, then go through
 the entries for what it does not cover.
 
+## 2026-11-15 — Unit and integration test layout
+
+The [testing rules](rules.md#tests) replace tests beside source files with
+`test/<ModuleName>/<TestCaseName>.unit.test.mts` or `.integration.test.mts`, relative to the source
+module's directory (`.tsx` for JSX). The bootstrap template and TypeSec's root `bunfig.toml` now
+exclude `["vendor/**", "**/*.integration.test.*"]`: plain `bun test`, watch and coverage select unit
+tests. No `test:unit` script is needed. TypeSec's existing suites have been migrated, preserving
+whole suites as `Behavior` where appropriate; its real HTTP suite is integration.
+
+Migrate in a consuming project such as Kitchen:
+
+1. Update the TypeSec submodule to the revision containing this entry, then read the changelog
+   entries between the old and new revisions. From the project root, run
+   `bun vendor/typesec/packages/bootstrap/bin/typesec bootstrap sync`.
+2. Review and accept the `bunfig.toml` update, preserving project-specific settings. Sync offers
+   replacement with a backup; non-interactive sync keeps differing files. Confirm `[test]` has
+   `pathIgnorePatterns = ["vendor/**", "**/*.integration.test.*"]`. Sync does not migrate test files.
+3. Inventory the existing suite before moving it. Preserve the source filename's case in
+   `ModuleName`, use PascalCase behavior names and keep tests inside the package's type-checking
+   scope. Existing primary suites may become `Behavior`; no need to split every `test()`.
+   Update relative imports, fixtures and snapshot locations. Classify real PostgreSQL, Redis, S3
+   and HTTP tests as integration, including local HTTP fixture servers. Isolated temporary
+   filesystem fixtures may stay unit. A mixed suite remains integration until separated.
+4. Update project scripts, CI jobs and test-path references. Watch and coverage inherit the unit
+   exclusions; integration and full-suite jobs must explicitly override them. Keep files
+   sequential, with no `--parallel`, global `--concurrent` or broad `concurrentTestGlob`.
+   Assess isolation before using `test.concurrent()`; tmpfs alone is not case isolation.
+
+Verify with the project's installed Bun and required services available:
+
+```sh
+bun test
+bun test --path-ignore-patterns 'vendor/**' .integration.test.
+bun test --path-ignore-patterns 'vendor/**'
+bun run check
+bun run lint
+bun run fmt:check
+```
+
+The CLI ignore option replaces the entire configured list, so retain `vendor/**` in every override.
+Compare discovered file lists and pass/skip totals against the pre-migration inventory: unit and
+integration must be disjoint and their union must match the full suite, without lost cases or
+new skips. Check watch and coverage selection too. Override inherited `NODE_ENV` with `test`
+explicitly when necessary. The selection semantics were verified with Bun 1.4.4, including `.mts`
+and JSX `.tsx` fixtures; recheck when upgrading Bun.
+
 ## 2026-11-14 — Environment and source-map policy
 
 See the canonical [environment policy](rules.md#environment-modes-and-source-maps).

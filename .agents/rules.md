@@ -210,12 +210,37 @@ to runtime/API or build configuration require separate agreement from a document
 
 ## Tests
 
-- Keep the primary test as `<module>.test.mts` beside the source.
-- Put additional suites in `test/<module>/<TestName>.test.mts`, relative to the source directory.
-  `<module>` is the source filename without its extension; preserve its casing.
-  Additional test names use PascalCase, for example `Ownership.test.mts` or `LateRegistration.test.mts`.
-  Example: `controller/test/RuntimeController/Ownership.test.mts` tests `controller/RuntimeController.mts`.
-  Do not add sibling `<module>.<TestName>.test.mts` files or use kebab-case names for additional tests.
+- Place tests in `test/<ModuleName>/<TestCaseName>.unit.test.mts` or
+  `test/<ModuleName>/<TestCaseName>.integration.test.mts`, relative to the directory containing the
+  source module. `ModuleName` matches the source filename without its extension, preserving case;
+  `TestCaseName` describes the tested behavior in PascalCase. Use `.tsx` for tests containing JSX.
+  For example, `controller/test/RuntimeController/Ownership.unit.test.mts` tests
+  `controller/RuntimeController.mts`. Keep tests within the package's type-checking scope.
+- This replaces primary tests beside sources. Existing suites may move as `Behavior`; do not split
+  every `test()` into a separate file just to migrate. A mixed suite that uses real external services
+  is integration until its independent cases are separated.
+- Unit tests run independently of real external services; isolated temporary filesystem fixtures
+  are acceptable. Integration tests use real PostgreSQL, Redis, S3 or HTTP, including local HTTP
+  servers serving synthetic fixtures.
+- Plain `bun test` runs unit tests only; do not introduce a `test:unit` script. The shared `[test]`
+  configuration is `pathIgnorePatterns = ["vendor/**", "**/*.integration.test.*"]`. Watch and coverage
+  commands inherit these exclusions. Integration and full-suite runs override them explicitly:
+
+    ```sh
+    bun test --path-ignore-patterns 'vendor/**' .integration.test. # integration only
+    bun test --path-ignore-patterns 'vendor/**'                   # full suite
+    ```
+
+    CLI `--path-ignore-patterns` replaces the entire configured list, so every override must retain
+    `vendor/**`. Verify that unit and integration selections are disjoint and together retain the
+    complete suite; a green unit run alone does not verify integration behavior.
+
+- Keep test files sequential: do not enable `--parallel`. Use `test.concurrent()` explicitly only
+  for independent cases, not a broad `concurrentTestGlob` or global `--concurrent`. Each concurrent
+  case owns its data and resources and guarantees cleanup through `finally` or an appropriate
+  disposable scope. Shared `resetDatabase`, `FLUSHDB`, mutable hook variables, system clocks and
+  global mocks require an explicit isolation assessment. Tmpfs makes storage temporary; it does
+  not isolate concurrent cases.
 - Use `bun:test`; import the module under test through its `.mjs` specifier.
 - Assert types with `isXEqualToY` and `isXExtendsOfY` from `@typesec/the/test`.
 - Cover both the passing and the failing path of a guard.
@@ -232,7 +257,7 @@ to runtime/API or build configuration require separate agreement from a document
 ```ts
 import {describe, expect, test} from "bun:test";
 import {isXEqualToY} from "@typesec/the/test";
-import {fn} from "./fn.mjs";
+import {fn} from "../../fn.mjs";
 
 describe("fn", () => {
     test("types", () => {
@@ -303,7 +328,8 @@ they cache.
 
 ```sh
 bun run check       # types, bun check
-bun test            # suite
+bun test            # unit tests
+bun test --path-ignore-patterns 'vendor/**' .integration.test. # integration tests
 bun run lint        # oxlint
 bun fmt             # bun fmt, then re-run check
 ```

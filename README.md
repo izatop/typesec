@@ -400,9 +400,11 @@ bun run typesec:api search <keywords>
 - Sources are `.mts` and import each other through `.mjs` specifiers.
 - Packages are named `@typesec/<name>`; helpers are imported through their subpath — `@typesec/the/fn`, not the
   package root.
-- Primary tests sit beside the code as `<module>.test.mts`. Additional suites go in
-  `test/<module>/<TestName>.test.mts`, relative to the source directory, with the module's extension omitted.
-  Additional test names use PascalCase, for example `test/RuntimeController/LateRegistration.test.mts`.
+- Tests live in `test/<ModuleName>/<TestCaseName>.unit.test.mts` or
+  `test/<ModuleName>/<TestCaseName>.integration.test.mts`, relative to the source module's directory.
+  Preserve the source filename's case in `ModuleName`; use PascalCase behavior names and `.tsx` for JSX.
+  Existing suites may migrate as `Behavior`. Tests remain within the package's type-checking scope.
+  See the canonical [testing rules](.agents/rules.md#tests) for classification, execution and isolation.
   Tests run on Bun's test runner. Type-level assertions use the helpers in `@typesec/the/test`:
 
     ```ts
@@ -416,10 +418,15 @@ bun run typesec:api search <keywords>
 ```sh
 bun run check       # typecheck every package with bun check
 bun run check:tsc:watch   # incremental tsc -b while editing
-bun test            # run the suite
+bun test            # unit tests; watch and coverage use the same exclusions
+bun test --path-ignore-patterns 'vendor/**' .integration.test. # integration only
+bun test --path-ignore-patterns 'vendor/**'                   # full suite
 bun run lint        # oxlint
 bun run fmt:check   # bun fmt
 ```
+
+The CLI ignore option replaces the configured list; always retain `vendor/**` in overrides.
+Test files run sequentially. Enable concurrency only with `test.concurrent()` for independent cases.
 
 ## Status
 

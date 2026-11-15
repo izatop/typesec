@@ -20,4 +20,4 @@ ignorePatterns = ["/vendor/", ".dockerignore"]
 
 [test]
 # The root vendor/ only, see [fmt] above. A leading slash would match nothing here.
-pathIgnorePatterns = ["vendor/**"]
+pathIgnorePatterns = ["vendor/**", "**/*.integration.test.*"]
