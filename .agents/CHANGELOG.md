@@ -162,6 +162,25 @@ disk`.
   such as `packages/**`.
 - Check: the image build gets through `bun install --frozen-lockfile`.
 
+## 2026-11-15 — `unload` drops builds in flight and every alias of the instance
+
+`unload(ref)` during a build drops that build: callers already waiting still get its result, which
+is then released instead of published, and the promise `unload` returns settles after that release,
+so it waits for the factory. A failed build is forgotten on `unload`, and the next `resolve` calls
+the factory again; without `unload` the failure still stays for every caller. Every registration
+holding the unloaded instance, such as `service(A, x); service(B, x)`, drops it too, and a factory
+alias like `define("b", () => resolve(A))` rebuilds onto the new instance. `resolve` of an unloaded
+value registration rejects with "Service X was unloaded and has no factory".
+
+- Migrate: do not `await unload(ref)` where its build cannot finish first, such as inside that
+  service's own factory or before releasing something the factory awaits. Registrations that must
+  survive each other's `unload` need distinct instances. To recover from a failed boot,
+  `await unload(ref)` and resolve again instead of registering the service anew.
+- Limits: an unloaded promise registration awaits the same promise again and gets the released
+  instance back; register a factory instead. A factory that hands out an object another
+  registration already released publishes it as is.
+- Check: `bun test` passes; `await unload(ref)` after a rejected build lets the next `resolve` succeed.
+
 ## 2026-11-14 — `unload` returns the release
 
 `unload(ref)` returns `Promise<void>`: it settles when the disposer has finished and rejects with its

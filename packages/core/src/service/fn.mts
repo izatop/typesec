@@ -6,6 +6,7 @@ import {isPromise} from "node:util/types";
 import {isAsyncDisposable, isDisposable} from "../lib/dispostable.mjs";
 import {lifecycle} from "../runtime/controller/lifecycle.mjs";
 import {RuntimeClosedException} from "../runtime/controller/RuntimeClosedException.mjs";
+import type {RuntimeController} from "../runtime/controller/RuntimeController.mjs";
 import {tracer} from "../tracer.mjs";
 import {
     type Service,
@@ -24,6 +25,9 @@ import {ServiceRef} from "./ServiceRef.mjs";
 
 const entries = new Map<ServiceRef<any>, ServiceEntry<any>>();
 const latest = new WeakMap<ServiceCtor<any> | ServicePrivateCtor<any>, ServiceRef<any>>();
+
+// The factory's own result behind each build, which still carries the instance when registration refuses it.
+const results = new WeakMap<Promise<Service>, Promise<Service>>();
 
 /**
  * Registers a service under a generated class identity, for a value with no class of its own.
@@ -83,21 +87,30 @@ export function service<T extends Service>(
  * Drops a built instance and releases it through its owner, returning a promise for that single release attempt.
  *
  * Await it to observe completion and the disposer's failure. A concurrent unload joins the same attempt, an entry with
- * nothing to release resolves at once, and the next resolve waits for an unfinished release before rebuilding. An
- * unknown reference rejects. Never resolve or unload a service from its own disposer: the call waits for the release
- * it is part of.
+ * nothing to release resolves at once, and the next resolve waits for an unfinished release before rebuilding. Every
+ * registration that has published the same instance drops it too; a value registration has no factory, so it stays
+ * unloaded for good. A build in flight is dropped as well: its callers still get its result, which is then released
+ * instead of published, and a failed build is forgotten, so the next resolve calls the factory again. An unknown
+ * reference rejects. Never resolve or unload a service from its own disposer or factory, directly or through another
+ * service: the call waits for the release or build it is part of.
  * @category service
  */
 export async function unload<T extends Service>(ref: ServiceId<T>): Promise<void> {
     const entry = entries.get(ensureRef(ref));
     if (entry?.instance) {
-        const instance = entry.instance;
-        entry.instance = undefined;
-        if (isDisposable(instance) || isAsyncDisposable(instance)) {
-            entry.releasing = entry.owner.release(instance).finally(() => {
-                entry.releasing = undefined;
-            });
-        }
+        drop(entry.owner, entry.instance);
+    } else if (entry?.pending) {
+        const result = results.get(entry.pending)!;
+        entry.pending = undefined;
+
+        // Registration reacts to the result first, so the instance is owned, even by a closing owner, before release.
+        holdRelease(
+            entry,
+            result.then(
+                (instance) => drop(entry.owner, instance),
+                () => undefined,
+            ),
+        );
     }
 
     return entry?.releasing;
@@ -199,7 +212,8 @@ export function resolveArray<T extends Service>(...refs: ServiceId<T>[]): Promis
  *
  * A result that lands after the owner began closing is released, or dropped when it has no disposal hook, and never
  * published: that call and every later one reject with `RuntimeClosedException`, while a factory failure keeps its own
- * reason.
+ * reason until `unload` forgets it. A build that `unload` dropped still settles its own callers but is not cached, and
+ * the next call builds anew; an unloaded value registration rejects.
  * @category service
  * @example const [db, cache] = await resolve(Database, Cache)
  */
@@ -267,24 +281,56 @@ export async function resolve<T extends Service>(...refs: [ServiceId<T>, ...Serv
         return entry.instance;
     }
 
-    const value = entry?.factory;
-    assert(entry && (is(value, "function") || isPromise(value)), `Unknown service ${name}`);
+    assert(entry, `Unknown service ${name}`);
+
+    const value = entry.factory;
+    assert(is(value, "function") || isPromise(value), `Service ${identify(ref.ctor)} was unloaded and has no factory`);
 
     tracer.log("factory( <%s> ): %d", name, entry.pending !== undefined);
-    entry.pending ??= entry.owner
-        .run(() => defnify(value))
-        .then((instance) => {
+    if (!entry.pending) {
+        const result = entry.owner.run(() => defnify(value));
+        const build: Promise<T> = result.then((instance) => {
             tracer.log("register( <%s> )", name);
             const owned = adopt(entry, instance);
             assert(entry.owner.isRunning(), () => new RuntimeClosedException(entry.owner));
 
-            entry.instance = owned;
-            entry.pending = undefined;
+            // An unload during the build dropped it: the result goes to its callers and its release, not the entry.
+            if (entry.pending === build) {
+                entry.instance = owned;
+                entry.pending = undefined;
+            }
 
             return owned;
         });
 
+        results.set(build, result);
+        entry.pending = build;
+    }
+
     return entry.pending;
+}
+
+/** Takes an instance out of every entry holding it and releases a disposable one once; each entry holds the attempt. */
+function drop<T extends Service>(owner: RuntimeController, instance: T): Promise<void> | undefined {
+    const attempt = isDisposable(instance) || isAsyncDisposable(instance) ? owner.release(instance) : undefined;
+    for (const entry of entries.values()) {
+        if (entry.instance === instance) {
+            entry.instance = undefined;
+            if (attempt) holdRelease(entry, attempt);
+        }
+    }
+
+    return attempt;
+}
+
+/** Records a release in flight on the entry until it settles; the stored promise never goes unobserved. */
+function holdRelease(entry: ServiceEntry<any>, releasing: Promise<void>): void {
+    const clear = () => {
+        if (entry.releasing === releasing) entry.releasing = undefined;
+    };
+
+    entry.releasing = releasing;
+    releasing.then(clear, clear);
 }
 
 /** Hands a disposable instance to the entry's owner, which disposes it once; anything else has nothing to release. */
