@@ -1,6 +1,7 @@
 import {defnify, identify, type Fn} from "@typesec/the";
 import {assert} from "@typesec/the/assert";
 import {fn, is} from "@typesec/the/fn";
+import {task} from "@typesec/the/task";
 import {isPromise} from "node:util/types";
 import {isAsyncDisposable, isDisposable} from "../lib/dispostable.mjs";
 import {lifecycle} from "../runtime/controller/lifecycle.mjs";
@@ -79,18 +80,27 @@ export function service<T extends Service>(
 }
 
 /**
- * Drops a built instance and releases it through its owner, so the next resolve rebuilds it and closure skips it.
+ * Drops a built instance and releases it through its owner, returning a promise for that single release attempt.
+ *
+ * Await it to observe completion and the disposer's failure. A concurrent unload joins the same attempt, an entry with
+ * nothing to release resolves at once, and the next resolve waits for an unfinished release before rebuilding. An
+ * unknown reference rejects. Never resolve or unload a service from its own disposer: the call waits for the release
+ * it is part of.
  * @category service
  */
-export function unload<T extends Service>(ref: ServiceId<T>): void {
+export async function unload<T extends Service>(ref: ServiceId<T>): Promise<void> {
     const entry = entries.get(ensureRef(ref));
     if (entry?.instance) {
         const instance = entry.instance;
         entry.instance = undefined;
         if (isDisposable(instance) || isAsyncDisposable(instance)) {
-            void entry.owner.release(instance);
+            entry.releasing = entry.owner.release(instance).finally(() => {
+                entry.releasing = undefined;
+            });
         }
     }
+
+    return entry?.releasing;
 }
 
 /**
@@ -246,6 +256,12 @@ export async function resolve<T extends Service>(...refs: [ServiceId<T>, ...Serv
     const name = identify(ref);
 
     const entry = entries.get(ref);
+
+    // A release still in flight finishes first; its failure belongs to the unload caller.
+    if (entry?.releasing) {
+        await task.tolerant(entry.releasing);
+    }
+
     tracer.log("resolve( <%s> ): %d", name, entry?.instance !== undefined);
     if (entry?.instance) {
         return entry.instance;

@@ -34,6 +34,27 @@ describe("RuntimeController release", () => {
         expect(order).toEqual(["deferred"]);
     });
 
+    test("should let close() wait for a release in flight", async () => {
+        const controller = RuntimeController.clone();
+        const gate = Promise.withResolvers<void>();
+        const resource = toAsyncDisposable(() => gate.promise);
+        const closed = mock(() => void 0);
+
+        controller.own(resource);
+
+        const released = controller.release(resource);
+        const closing = controller.close().then(closed);
+        await tick();
+
+        expect(closed).not.toHaveBeenCalled();
+
+        gate.resolve();
+        await released;
+        await closing;
+
+        expect(closed).toHaveBeenCalledTimes(1);
+    });
+
     test("should refuse a resource the controller does not own", () => {
         const controller = RuntimeController.clone();
         const foreign = toDisposable(() => void 0);

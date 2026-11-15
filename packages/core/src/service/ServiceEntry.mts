@@ -18,6 +18,9 @@ export class ServiceEntry<T extends Service> {
     /** The construction in flight. */
     public pending?: Promise<T>;
 
+    /** The release in flight, which a repeated unload joins and a new resolve waits for before rebuilding. */
+    public releasing?: Promise<void>;
+
     /** Records a registration without building anything. */
     constructor(factory: ServiceFactory<T>, owner: RuntimeController) {
         this.factory = factory;

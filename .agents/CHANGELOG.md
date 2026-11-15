@@ -14,6 +14,17 @@ Most entries are applied by `bun vendor/typesec/packages/bootstrap/bin/typesec b
 adds what is missing and asks before replacing anything that differs. Run it first, then go through
 the entries for what it does not cover.
 
+## 2026-11-14 — Environment and source-map policy
+
+See the canonical [environment policy](rules.md#environment-modes-and-source-maps).
+This documentation change does not change runtime/API or build configuration.
+
+- Migrate: review feature gates and production artifact delivery against the policy; agree on
+  implementation changes separately. Bootstrap sync does not implement these changes.
+- Check: interactive features run only in development, tests override inherited `NODE_ENV`, and
+  public production artifacts contain no separate or inline maps or source delivery through maps.
+  Account for the existing `stage`/`staging` distinction and development fallback.
+
 ## 2026-11-14 — Oxlint rules fail lint on errors
 
 The root and bootstrap `.oxlintrc.json` now set all explicitly configured rules to `error`,
@@ -104,6 +115,19 @@ disk`.
   the project allows itself, one explicit line per file or directory; do not allow a whole tree
   such as `packages/**`.
 - Check: the image build gets through `bun install --frozen-lockfile`.
+
+## 2026-11-14 — `unload` returns the release
+
+`unload(ref)` returns `Promise<void>`: it settles when the disposer has finished and rejects with its
+failure, a concurrent `unload` joins the same attempt, and an entry with nothing to release resolves
+at once. A `resolve` during an unfinished release waits for it before rebuilding. The owner's
+`close()` waits for a release in flight. `unload` of an unknown reference rejects instead of
+throwing.
+
+- Migrate: `await unload(ref)` wherever the test or the code asserts on the released state next;
+  `unload(ref); await tick()` becomes `await unload(ref)`. A dropped promise leaves a disposer failure
+  as an unhandled rejection, which exits the process under plain `bun`.
+- Check: `bun test` passes; `await unload(ref)` of a failing disposer rejects with that failure.
 
 ## 2026-11-14 — Nothing is built after the root began closing
 

@@ -250,17 +250,27 @@ export class RuntimeController extends AbortController implements Disposable {
     /**
      * Disposes one owned resource ahead of closure and returns its single cleanup attempt, which close() and a
      * repeated release share; during closure it returns the attempt in flight. The resource leaves the LIFO queue,
-     * so a later close() does not dispose it again.
+     * so a later close() does not dispose it again, but close() still waits for the attempt. The resource stays
+     * known: owning it again here is a no-op that never disposes it twice, and no other controller may adopt it.
      * @category runtime
      */
     public release = (resource: Disposable | AsyncDisposable): Promise<void> => {
         const entry = this.#entries.get(resource);
         assert(entry, () => new AssertionException(this.#trace.format("release(%s): not owned", identify(resource))));
 
+        const attempt = entry.dispose();
         const index = this.#resources.indexOf(entry);
-        if (index >= 0) this.#resources.splice(index, 1);
+        if (index >= 0) {
+            this.#resources.splice(index, 1);
 
-        return entry.dispose();
+            // Out of the queue, the attempt still counts as pending work; its failure stays with the caller.
+            const settle = () => void this.#pending.delete(pending);
+            const pending = attempt.then(settle, settle);
+
+            this.#pending.add(pending);
+        }
+
+        return attempt;
     };
 
     /**

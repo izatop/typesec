@@ -112,8 +112,7 @@ describe("Service registration", () => {
         const second = service(Connection, () => new Connection("second"));
         const [old, latest] = await resolve(first, second);
 
-        unload(first);
-        await new Promise((done) => setImmediate(done));
+        await unload(first);
 
         expect(old.disposed).toEqual(["first"]);
         expect(latest.disposed).toEqual([]);
