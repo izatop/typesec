@@ -60,6 +60,11 @@ export class ResourceStack {
         return attempt;
     }
 
+    /** Resolves once the resource's cleanup attempt settles, without starting it; undefined for a resource never held. */
+    public settled(resource: Disposable | AsyncDisposable): Promise<void> | undefined {
+        return this.#entries.get(resource)?.settled;
+    }
+
     /** Makes a drain wait for the work; its failure goes to `onError` when given, and otherwise stays with the work's holder. */
     public join(work: Promise<unknown>, onError?: (error: unknown) => void): void {
         const settle = () => void this.#pending.delete(pending);

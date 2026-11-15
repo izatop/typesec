@@ -102,4 +102,27 @@ describe("DisposalEntry", () => {
         await expect(repeated).rejects.toBe(reason);
         expect(cleanup).toHaveBeenCalledTimes(1);
     });
+
+    test("should settle without starting cleanup and resolve after a failed attempt", async () => {
+        const reason = new Error("Cleanup failed");
+        const cleanup = mock(() => {
+            throw reason;
+        });
+        const entry = new DisposalEntry(toDisposable(cleanup));
+        let settled = false;
+
+        void entry.settled.then(() => {
+            settled = true;
+        });
+
+        await Promise.resolve();
+
+        expect(settled).toBeFalse();
+        expect(cleanup).not.toHaveBeenCalled();
+
+        await expect(entry.dispose()).rejects.toBe(reason);
+        await entry.settled;
+
+        expect(settled).toBeTrue();
+    });
 });

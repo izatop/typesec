@@ -11,6 +11,9 @@ import {toAsyncDisposable} from "../../lib/dispostable.mjs";
 import {Ref} from "../../lib/Ref.mjs";
 import {WeakSequence} from "../../lib/WeakSequence.mts";
 import {ResourceStack} from "../../resource/ResourceStack.mjs";
+import {registration} from "../../service/registration.mjs";
+import type {Service, ServiceCtor, ServiceFactory, ServicePrivateCtor} from "../../service/interfaces.mjs";
+import type {ServiceRef} from "../../service/ServiceRef.mjs";
 import {heartbeat} from "../heartbeat.mjs";
 import {store} from "./hmr.mjs";
 import {ReloadController} from "./ReloadController.mjs";
@@ -236,6 +239,34 @@ export class RuntimeController extends AbortController implements Disposable {
      */
     public release = (resource: Disposable | AsyncDisposable): Promise<void> => {
         return this.#resources.release(resource);
+    };
+
+    /**
+     * Resolves once an owned resource's single cleanup attempt settles, without starting it; undefined when not owned.
+     * @internal
+     */
+    public settled = (resource: Disposable | AsyncDisposable): Promise<void> | undefined => {
+        return this.#resources.settled(resource);
+    };
+
+    /**
+     * Registers a service owned by this controller, like `service()` registers one owned by the generation root.
+     *
+     * Its factory runs as this controller's work, a disposable instance is disposed once when the controller closes,
+     * and the registration is forgotten after that. It is reached only through the returned ref: class lookup keeps
+     * answering with the root's registration. An instance another controller owns is refused. Once closing begins,
+     * registration throws RuntimeClosedException.
+     * @category runtime
+     * @example const db = scope.service(Database, () => Database.connect(url))
+     */
+    public service = <T extends Service>(
+        ctor: ServiceCtor<NoInfer<T>> | ServicePrivateCtor<NoInfer<T>>,
+        value: ServiceFactory<T>,
+        lazy = true,
+    ): ServiceRef<T> => {
+        assert(registration.register, "service(): the service registry is not loaded; import @typesec/core");
+
+        return registration.register(this, ctor, value, lazy);
     };
 
     /**

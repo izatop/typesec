@@ -1,6 +1,10 @@
 import {AsyncLock} from "../lib/index.mjs";
 import {tracer} from "../tracer.mts";
-import {runtime} from "./runtime.mjs";
+import {store} from "./controller/hmr.mjs";
+import {RuntimeController} from "./controller/RuntimeController.mjs";
+
+// The same lookup as `runtime.use()`; importing `runtime` would start the root while the controller class initializes.
+const current = (): RuntimeController => store.context.getStore() ?? RuntimeController.lifecycle;
 
 /**
  * Keeps the process alive until the controller aborts.
@@ -8,7 +12,7 @@ import {runtime} from "./runtime.mjs";
  * A server calls it after binding, so the runtime stays up until a signal or an explicit abort arrives.
  * @category runtime
  */
-export function heartbeat(ctrl: AbortController = runtime.controller): Promise<void> {
+export function heartbeat(ctrl: AbortController = current()): Promise<void> {
     tracer.log("heartbeat(%s)", ctrl.constructor.name);
 
     return AsyncLock.acquire(
@@ -20,8 +24,9 @@ export function heartbeat(ctrl: AbortController = runtime.controller): Promise<v
                     return resolve();
                 }
 
-                if (runtime.controller !== ctrl) {
-                    runtime.enqueue(ctrl);
+                const controller = current();
+                if (controller !== ctrl) {
+                    controller.enqueue(ctrl);
                 }
 
                 ctrl.signal.addEventListener(

@@ -16,6 +16,7 @@ export class DisposalEntry {
 
     #state: DisposalEntryState = "idle";
     #pending: Promise<void> | undefined;
+    #settled: PromiseWithResolvers<void> | undefined;
 
     /** Holds the resource without starting cleanup. */
     constructor(resource: Disposable | AsyncDisposable) {
@@ -25,6 +26,17 @@ export class DisposalEntry {
     /** Current progress of the single cleanup attempt. */
     public get state(): DisposalEntryState {
         return this.#state;
+    }
+
+    /** Resolves once the cleanup attempt settles, never rejecting; waiting on it does not start cleanup. */
+    public get settled(): Promise<void> {
+        if (this.#state === "settled") {
+            return Promise.resolve();
+        }
+
+        this.#settled ??= Promise.withResolvers<void>();
+
+        return this.#settled.promise;
     }
 
     /** Starts cleanup in a microtask and always returns the same promise, including after rejection. */
@@ -38,6 +50,7 @@ export class DisposalEntry {
             .then(() => dispose(this.resource))
             .finally(() => {
                 this.#state = "settled";
+                this.#settled?.resolve();
             });
 
         return this.#pending;

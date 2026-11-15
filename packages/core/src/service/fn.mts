@@ -3,7 +3,7 @@ import {assert} from "@typesec/the/assert";
 import {fn, is} from "@typesec/the/fn";
 import {task} from "@typesec/the/task";
 import {isPromise} from "node:util/types";
-import {isAsyncDisposable, isDisposable} from "../lib/dispostable.mjs";
+import {isAsyncDisposable, isDisposable, toAsyncDisposable} from "../lib/dispostable.mjs";
 import {lifecycle} from "../runtime/controller/lifecycle.mjs";
 import {RuntimeClosedException} from "../runtime/controller/RuntimeClosedException.mjs";
 import type {RuntimeController} from "../runtime/controller/RuntimeController.mjs";
@@ -20,13 +20,14 @@ import {
 import {PendingError} from "./PendingError.mjs";
 import {PendingService} from "./PendingService.mjs";
 import {PendingServiceList} from "./PendingServiceList.mjs";
+import {registration} from "./registration.mjs";
 import {ServiceEntry} from "./ServiceEntry.mjs";
 import {ServiceRef} from "./ServiceRef.mjs";
 
 const entries = new Map<ServiceRef<any>, ServiceEntry<any>>();
 const latest = new WeakMap<ServiceCtor<any> | ServicePrivateCtor<any>, ServiceRef<any>>();
 
-// The factory's own result behind each build, which still carries the instance when registration refuses it.
+// The factory's own result behind each build, which still carries the instance when a closing owner refuses it.
 const results = new WeakMap<Promise<Service>, Promise<Service>>();
 
 /**
@@ -60,39 +61,64 @@ export function service<T extends Service>(
     value: ServiceFactory<T>,
     lazy = true,
 ): ServiceRef<T> {
-    assert(lifecycle.isRunning(), () => new RuntimeClosedException(lifecycle));
+    return register(lifecycle, ctor, value, lazy);
+}
+
+/**
+ * Registers a service owned by `owner`; `service()` passes the generation root, `controller.service()` a child.
+ *
+ * Only the root's registrations answer class lookup. A child's registration is reached through its ref and forgotten
+ * once the child has disposed what it owns.
+ */
+function register<T extends Service>(
+    owner: RuntimeController,
+    ctor: ServiceCtor<NoInfer<T>> | ServicePrivateCtor<NoInfer<T>>,
+    value: ServiceFactory<T>,
+    lazy: boolean,
+): ServiceRef<T> {
+    assert(owner.isRunning(), () => new RuntimeClosedException(owner));
 
     const ref = new ServiceRef(ctor);
-    const entry = new ServiceEntry(value, lifecycle);
+    const entry = new ServiceEntry(value, owner);
+
+    // Owned before the instance, so the child forgets the entry only after disposing what the entry holds.
+    const forget = owner === lifecycle ? undefined : owner.own(toAsyncDisposable(() => forgetAfter(ref, entry)));
+
+    // A value is adopted before it is recorded; a refused one takes its cleanup back and leaves nothing behind.
+    if (!is(value, "function") && !isPromise(value)) {
+        try {
+            entry.instance = adopt(entry, value as T);
+        } catch (reason) {
+            if (forget) void owner.release(forget);
+
+            throw reason;
+        }
+    }
+
     entries.set(ref, entry);
-    latest.set(ctor, ref);
-    if (is(value, "function")) {
-        if (!lazy) kickoff(ref);
-
-        return ref;
+    if (owner === lifecycle) {
+        latest.set(ctor, ref);
     }
 
-    if (isPromise(value)) {
+    if (isPromise(value) || (is(value, "function") && !lazy)) {
         kickoff(ref);
-
-        return ref;
     }
-
-    entry.instance = adopt(entry, value as T);
 
     return ref;
 }
+
+registration.register = register;
 
 /**
  * Drops a built instance and releases it through its owner, returning a promise for that single release attempt.
  *
  * Await it to observe completion and the disposer's failure. A concurrent unload joins the same attempt, an entry with
  * nothing to release resolves at once, and the next resolve waits for an unfinished release before rebuilding. Every
- * registration that has published the same instance drops it too; a value registration has no factory, so it stays
- * unloaded for good. A build in flight is dropped as well: its callers still get its result, which is then released
- * instead of published, and a failed build is forgotten, so the next resolve calls the factory again. An unknown
- * reference rejects. Never resolve or unload a service from its own disposer or factory, directly or through another
- * service: the call waits for the release or build it is part of.
+ * registration of the same owner that has published the same instance drops it too; a value registration has no
+ * factory, so it stays unloaded for good. A build in flight is dropped as well: its callers still get its result,
+ * which is then released instead of published, and a failed build is forgotten, so the next resolve calls the factory
+ * again. An unknown reference rejects. Never resolve or unload a service from its own disposer or factory, directly
+ * or through another service: the call waits for the release or build it is part of.
  * @category service
  */
 export async function unload<T extends Service>(ref: ServiceId<T>): Promise<void> {
@@ -100,15 +126,22 @@ export async function unload<T extends Service>(ref: ServiceId<T>): Promise<void
     if (entry?.instance) {
         drop(entry.owner, entry.instance);
     } else if (entry?.pending) {
-        const result = results.get(entry.pending)!;
+        const build = entry.pending;
         entry.pending = undefined;
 
-        // Registration reacts to the result first, so the instance is owned, even by a closing owner, before release.
+        // A closing owner still took the result before refusing it, so it is released from the factory's own result;
+        // any other failure, such as a factory failure or another controller's instance, leaves nothing of ours.
         holdRelease(
             entry,
-            result.then(
+            build.then(
                 (instance) => drop(entry.owner, instance),
-                () => undefined,
+                (reason) =>
+                    reason instanceof RuntimeClosedException
+                        ? results.get(build)!.then(
+                              (instance) => drop(entry.owner, instance),
+                              () => undefined,
+                          )
+                        : undefined,
             ),
         );
     }
@@ -310,17 +343,36 @@ export async function resolve<T extends Service>(...refs: [ServiceId<T>, ...Serv
     return entry.pending;
 }
 
-/** Takes an instance out of every entry holding it and releases a disposable one once; each entry holds the attempt. */
+/**
+ * Takes an instance out of every entry of the same owner holding it and releases a disposable one once; each entry
+ * holds the attempt. Another owner's entry is never touched: a disposable cannot be shared across owners.
+ */
 function drop<T extends Service>(owner: RuntimeController, instance: T): Promise<void> | undefined {
     const attempt = isDisposable(instance) || isAsyncDisposable(instance) ? owner.release(instance) : undefined;
     for (const entry of entries.values()) {
-        if (entry.instance === instance) {
+        if (entry.owner === owner && entry.instance === instance) {
             entry.instance = undefined;
             if (attempt) holdRelease(entry, attempt);
         }
     }
 
     return attempt;
+}
+
+/**
+ * Forgets a child's entry once its instance is disposed. An instance the child owned before this registration is
+ * disposed later in the drain, so the entry waits for that disposal without holding the drain up.
+ */
+function forgetAfter<T extends Service>(ref: ServiceRef<T>, entry: ServiceEntry<T>): void {
+    const instance = entry.instance;
+
+    // Settling happens inside the instance entry's own cleanup, so the delete runs before the drain resumes.
+    const disposal = isDisposable(instance) || isAsyncDisposable(instance) ? entry.owner.settled(instance) : undefined;
+    if (disposal) {
+        void disposal.then(() => entries.delete(ref));
+    } else {
+        entries.delete(ref);
+    }
 }
 
 /** Records a release in flight on the entry until it settles; the stored promise never goes unobserved. */
