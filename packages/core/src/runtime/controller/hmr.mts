@@ -4,14 +4,14 @@ import type {RuntimeController} from "./RuntimeController.mts";
 
 export const ReloaderStoreKey = Symbol.for("@typesec/core?reload-store-key");
 
-/** Process-wide state that survives a hot reload: the lifecycle of each generation and the shared async-context host. */
+/**
+ * Process-wide data that survives a hot reload: the current generation's lifecycle, the number of reloads and the
+ * shared async-context host. It holds no code, so no generation's module graph is kept alive through it.
+ */
 export type ReloadData = {
-    controllers: Map<number, RuntimeController>;
+    lifecycle?: RuntimeController;
+    reloadCount: number;
     context: AsyncLocalStorage<RuntimeController>;
-};
-
-export type ReloadStore = ReloadData & {
-    reload(lifecycle: RuntimeController): void;
 };
 
 export type RuntimeStore = {
@@ -40,6 +40,6 @@ declare global {
  * whichever entry starts the import cycle; a graph re-evaluated by hot reload adopts what the first generation created.
  */
 export const store: ReloadData = ((globalThis as RuntimeGlobals)[ReloaderStoreKey] ??= {
-    controllers: new Map(),
+    reloadCount: 0,
     context: new AsyncLocalStorage(),
 });

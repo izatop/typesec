@@ -14,6 +14,22 @@ Most entries are applied by `bun vendor/typesec/packages/bootstrap/bin/typesec b
 adds what is missing and asks before replacing anything that differs. Run it first, then go through
 the entries for what it does not cover.
 
+## 2026-11-15 — A hot reload publishes the new generation first and cancels a pending `exit(0)`
+
+A reload now makes the new generation current before the old one is aborted: abort listeners and
+cleanup of the old generation see `globalThis.ReloadController.lifecycle` as the new root instead of
+throwing "No lifecycle found". `globalThis.ReloadController` is replaced on every reload, and the
+process-wide store keeps only data, so a replaced generation's modules can be collected. An
+`exit(0)` scheduled before a reload no longer fires once the reload has replaced the generation
+that scheduled it; any other exit code still ends the process.
+
+- Migrate: do not keep a reference to `globalThis.ReloadController` across reloads. It still
+  answers with current data, but a held reference keeps the replaced generation's modules from
+  being collected.
+- Limits: the process-wide store changed shape, so restart a `bun --hot` process that was running
+  before the update instead of letting it reload into the new code.
+- Check: under `bun --hot`, saving a file right after the entrypoint finished keeps the process running.
+
 ## 2026-11-15 — `main` releases its result before the lifecycle and yields to a reload
 
 `main(task)` disposes the task's result as part of the task's work, so the lifecycle closes its

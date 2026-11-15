@@ -47,7 +47,7 @@ export async function main(task: MainTask): Promise<Timer | undefined> {
         }
 
         // A reload has already published a newer lifecycle, which now owns the process.
-        if (!store.controllers.values().some((controller) => controller === lifecycle)) {
+        if (store.lifecycle !== lifecycle) {
             tracer.info("%s(): replaced by a reload", name);
 
             return undefined;

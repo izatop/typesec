@@ -162,4 +162,29 @@ describe("main after a reload", () => {
 
         expect(report).toEqual({events: [], exits: [1]});
     });
+
+    test("should drop an exit(0) the current generation scheduled when a reload replaces it before it fires", () => {
+        // Generation 1 is imported before main, so the reload follows main synchronously, before its exit fires.
+        const report = observe(`
+            const next = await import(${JSON.stringify(`${root}/controller/RuntimeController.mts?generation=1`)});
+
+            await main(async () => undefined);
+            next.RuntimeController.start();
+        `);
+
+        expect(report).toEqual({events: [], exits: []});
+    });
+
+    test("should still exit with 1 when a reload follows a scheduled failure", () => {
+        const report = observe(`
+            const next = await import(${JSON.stringify(`${root}/controller/RuntimeController.mts?generation=1`)});
+
+            await main(async () => {
+                throw new Error("failure");
+            });
+            next.RuntimeController.start();
+        `);
+
+        expect(report).toEqual({events: [], exits: [1]});
+    });
 });

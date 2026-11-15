@@ -1,52 +1,34 @@
 import {assert} from "@typesec/the";
-import {ReloaderStoreKey, store, type IReloadController, type ReloadStore} from "./hmr.mts";
-import {RuntimeController} from "./RuntimeController.mts";
+import {store, type IReloadController} from "./hmr.mjs";
+import type {RuntimeController} from "./RuntimeController.mjs";
 
 export class ReloadController implements IReloadController {
-    #reloadCount = 0;
-
-    readonly #store: ReloadStore;
-
-    private constructor() {
-        this.#store = Object.assign(store, {reload: this.#reload});
-    }
-
-    public get [ReloaderStoreKey](): ReloadStore {
-        return this.#store;
-    }
+    private constructor() {}
 
     public get reloadCount(): number {
-        return this.#reloadCount;
+        return store.reloadCount;
     }
 
+    /**
+     * The current generation's root. During a replaced generation's abort and cleanup it is already the new root, so
+     * work handed to it there outlives the replaced generation.
+     */
     public get lifecycle(): RuntimeController {
-        const lifecycle = this.#store.controllers.get(this.reloadCount);
-        assert(lifecycle, "No lifecycle found");
+        assert(store.lifecycle, "No lifecycle found");
 
-        return lifecycle;
+        return store.lifecycle;
     }
 
     public static watch(lifecycle: RuntimeController): IReloadController {
-        const rc = (globalThis.ReloadController ??= new this()) as ReloadController;
-        rc[ReloaderStoreKey].reload(lifecycle);
+        const previous = store.lifecycle;
+        store.reloadCount += previous ? 1 : 0;
+        store.lifecycle = lifecycle;
+        globalThis.ReloadController = new this();
 
-        return rc;
+        // The new generation is published first, so the old one's abort listeners see it; the old close drains in the
+        // background.
+        previous?.abort();
+
+        return globalThis.ReloadController;
     }
-
-    #reload = (lifecycle: RuntimeController): void => {
-        const previous = this.#store.controllers.get(this.reloadCount);
-        this.#store.controllers.delete(this.reloadCount);
-
-        if (previous) {
-            this.#increment();
-
-            using _ = previous.abort();
-        }
-
-        this.#store.controllers.set(this.reloadCount, lifecycle);
-    };
-
-    #increment = (): void => {
-        this.#reloadCount++;
-    };
 }
