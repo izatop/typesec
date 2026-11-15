@@ -188,7 +188,7 @@ export function syncArray<T extends Service>(...refs: ServiceId<T>[]): T[] {
  */
 export function sync<T extends Service>(ref: ServiceId<T>): T {
     ref = ensureRef(ref);
-    const name = identify(ref);
+    const name = identify(ref.ctor);
     const instance = entries.get(ref)?.instance;
     tracer.log("sync( <%s> ): %s", name, instance !== undefined);
     if (!instance) {
@@ -267,7 +267,7 @@ export async function resolve<T extends Service>(...refs: [ServiceId<T>, ...Serv
     }
 
     const ref = ensureRef(refs[0]);
-    const name = identify(ref);
+    const name = identify(ref.ctor);
 
     const entry = entries.get(ref);
 

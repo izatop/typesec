@@ -125,7 +125,7 @@ describe("Service registration", () => {
         const foreign = new ServiceRef(Connection);
 
         expect(state(foreign)).toEqual({known: false, resolved: false});
-        await expect(resolve(foreign)).rejects.toThrow("Unknown service");
+        await expect(resolve(foreign)).rejects.toThrow("Unknown service Connection");
         expect(() => state(class Unknown {})).toThrow("Unknown service reference");
     });
 });
