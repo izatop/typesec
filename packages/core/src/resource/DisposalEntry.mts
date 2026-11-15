@@ -1,4 +1,4 @@
-import {dispose} from "./dispose.mjs";
+import {dispose} from "../runtime/dispose.mjs";
 
 /**
  * Progress of a cleanup attempt; `settled` includes success and failure.

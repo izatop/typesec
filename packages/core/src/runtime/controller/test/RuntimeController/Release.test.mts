@@ -110,4 +110,17 @@ describe("RuntimeController release", () => {
 
         expect(cleanup).toHaveBeenCalledTimes(1);
     });
+
+    test("should refuse adoption from an owner whose id is empty", async () => {
+        const owner = RuntimeController.clone("");
+        const other = RuntimeController.clone();
+        const resource = toDisposable(() => void 0);
+
+        owner.own(resource);
+
+        expect(() => other.own(resource)).toThrow(AssertionException);
+
+        await other.close();
+        await owner.close();
+    });
 });

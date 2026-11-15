@@ -1,4 +1,4 @@
-import {assert, AssertionException} from "@typesec/the/assert";
+import {assert} from "@typesec/the/assert";
 import {identify} from "@typesec/the/object";
 import {task} from "@typesec/the/task";
 import type {Fn, Promisify} from "@typesec/the/type";
@@ -10,14 +10,11 @@ import {DisposableListener} from "../../lib/DisposableListener.mts";
 import {toAsyncDisposable} from "../../lib/dispostable.mjs";
 import {Ref} from "../../lib/Ref.mjs";
 import {WeakSequence} from "../../lib/WeakSequence.mts";
-import {DisposalEntry} from "../DisposalEntry.mjs";
+import {ResourceStack} from "../../resource/ResourceStack.mjs";
 import {heartbeat} from "../heartbeat.mjs";
 import {store} from "./hmr.mjs";
 import {ReloadController} from "./ReloadController.mjs";
 import {RuntimeClosedException} from "./RuntimeClosedException.mjs";
-
-/** The controller that owns each resource, so no resource is adopted by two controllers. */
-const owners = new WeakMap<Disposable | AsyncDisposable, RuntimeController>();
 
 /**
  * An `AbortController` arranged in a tree, so shutdown cascades.
@@ -33,9 +30,7 @@ export class RuntimeController extends AbortController implements Disposable {
     readonly #parent: RuntimeController | null;
     readonly #children = new Map<AbortController, EventListener>();
     readonly #disposer = new DisposableListener();
-    readonly #resources: DisposalEntry[] = [];
-    readonly #entries = new WeakMap<Disposable | AsyncDisposable, DisposalEntry>();
-    readonly #pending = new Set<Promise<void>>();
+    readonly #resources: ResourceStack;
 
     // Admission ends once; later cleanup batches may cycle between closing and closed.
     #state:
@@ -49,6 +44,7 @@ export class RuntimeController extends AbortController implements Disposable {
         super();
         this.id = id ?? WeakSequence.increment(RuntimeController).toString();
         this.#trace = wrap(`[runtime] ${id}`);
+        this.#resources = new ResourceStack(this.id, this.#trace);
         this.#parent = parent ?? null;
         this.#parent?.enqueue(this);
     }
@@ -183,10 +179,7 @@ export class RuntimeController extends AbortController implements Disposable {
 
         // Closure drains on a later microtask, so registering after the synchronous call is safe.
         const promise = new Promise<R>((resolve) => resolve(task()));
-        const settle = () => void this.#pending.delete(pending);
-        const pending = promise.then(settle, settle);
-
-        this.#pending.add(pending);
+        this.#resources.join(promise);
 
         return promise.then();
     };
@@ -223,21 +216,8 @@ export class RuntimeController extends AbortController implements Disposable {
      * @category runtime
      */
     public own = <T extends Disposable | AsyncDisposable>(resource: T): T => {
-        if (!this.#entries.has(resource)) {
-            const owner = owners.get(resource);
-            assert(
-                !owner,
-                () => new AssertionException(this.#trace.format("own(%s): owned by %s", identify(resource), owner?.id)),
-            );
-
-            const entry = new DisposalEntry(resource);
-            owners.set(resource, this);
-            this.#entries.set(resource, entry);
-            this.#resources.push(entry);
-
-            if (this.#state.status === "closed") {
-                this.#startClose();
-            }
+        if (this.#resources.push(resource) && this.#state.status === "closed") {
+            this.#startClose();
         }
 
         if (this.#state.status !== "open") {
@@ -255,22 +235,7 @@ export class RuntimeController extends AbortController implements Disposable {
      * @category runtime
      */
     public release = (resource: Disposable | AsyncDisposable): Promise<void> => {
-        const entry = this.#entries.get(resource);
-        assert(entry, () => new AssertionException(this.#trace.format("release(%s): not owned", identify(resource))));
-
-        const attempt = entry.dispose();
-        const index = this.#resources.indexOf(entry);
-        if (index >= 0) {
-            this.#resources.splice(index, 1);
-
-            // Out of the queue, the attempt still counts as pending work; its failure stays with the caller.
-            const settle = () => void this.#pending.delete(pending);
-            const pending = attempt.then(settle, settle);
-
-            this.#pending.add(pending);
-        }
-
-        return attempt;
+        return this.#resources.release(resource);
     };
 
     /**
@@ -358,17 +323,9 @@ export class RuntimeController extends AbortController implements Disposable {
         const firstClose = this.#state.status === "open";
         const errors: unknown[] = [];
         const promise = Promise.resolve().then(async () => {
-            while (this.#pending.size || this.#resources.length) {
-                if (this.#pending.size) {
-                    await Promise.all(this.#pending);
-
-                    continue;
-                }
-
-                const entry = this.#resources.pop()!;
-
+            while (this.#resources.size) {
                 try {
-                    await entry.dispose();
+                    await this.#resources.next();
                 } catch (error) {
                     errors.push(error);
                 }
@@ -407,20 +364,11 @@ export class RuntimeController extends AbortController implements Disposable {
     }
 
     #joinChild(closing: Promise<void>): void {
-        const pending = closing.then(
-            () => {
-                this.#pending.delete(pending);
-            },
-            (error) => {
-                if (this.#state.status === "closing") {
-                    this.#state.errors.push(error);
-                }
-
-                this.#pending.delete(pending);
-            },
-        );
-
-        this.#pending.add(pending);
+        this.#resources.join(closing, (error) => {
+            if (this.#state.status === "closing") {
+                this.#state.errors.push(error);
+            }
+        });
 
         if (this.#state.status === "closed") {
             this.#startClose();
