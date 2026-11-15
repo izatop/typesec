@@ -83,6 +83,8 @@ one of these is the most common mistake in a TypeSec codebase.
   leave a blank line before the next statement, even when both belong to the same logical phase.
   For example, separate `const pending = promise.then(...)` from `this.#pending.add(pending)`.
 - Do not insert blank lines between adjacent closing delimiters or before `else`, `catch` or `finally`.
+- A comment line inside a block starts a new logical block: put a blank line before it, unless it is
+  the first line of the block or follows another comment line.
 - Check these boundaries during independent style review. A passing formatter check does not replace
   this check: the formatter preserves blank lines but does not establish every logical boundary.
 - A class member that must stay readable but out of enumeration and printing is a private `#field`
