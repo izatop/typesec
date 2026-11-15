@@ -14,6 +14,19 @@ Most entries are applied by `bun vendor/typesec/packages/bootstrap/bin/typesec b
 adds what is missing and asks before replacing anything that differs. Run it first, then go through
 the entries for what it does not cover.
 
+## 2026-11-15 — A replaced generation's cleanup failure stops the current one
+
+Under `bun --hot`, a cleanup failure of a generation a reload has replaced is no longer silent: it is
+traced, and the first failure of each of its cleanup batches aborts the generation current at that
+moment, with the failure as `signal.reason`. A cancellation that already happened keeps its reason,
+and a child controller's failure still goes only to whoever closes it.
+
+- Migrate: make disposers that can fail during a reload tolerate it. Under `main` the process ends:
+  the replaced generation's `main` exits with `1` when its cleanup fails, and the aborted current
+  one finishes its task and exits. Without `main` the application stays stopped until the next save.
+- Check: a disposer that throws in the old generation stops the new one with that error as the
+  reason.
+
 ## 2026-11-15 — A hot reload publishes the new generation first and cancels a pending `exit(0)`
 
 A reload now makes the new generation current before the old one is aborted: abort listeners and

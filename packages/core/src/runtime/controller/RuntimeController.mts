@@ -19,6 +19,9 @@ import {store} from "./hmr.mjs";
 import {ReloadController} from "./ReloadController.mjs";
 import {RuntimeClosedException} from "./RuntimeClosedException.mjs";
 
+/** Cleanup batches, by their error list, whose failure has already aborted a later generation. */
+const routed = new WeakSet<unknown[]>();
+
 /**
  * An `AbortController` arranged in a tree, so shutdown cascades.
  *
@@ -34,6 +37,7 @@ export class RuntimeController extends AbortController implements Disposable {
     readonly #children = new Map<AbortController, EventListener>();
     readonly #disposer = new DisposableListener();
     readonly #resources: ResourceStack;
+    #published = false;
 
     // Admission ends once; later cleanup batches may cycle between closing and closed.
     #state:
@@ -71,6 +75,7 @@ export class RuntimeController extends AbortController implements Disposable {
         this.lifecycle.#trace.log("start()");
         this.signal.throwIfAborted();
 
+        this.lifecycle.#published = true;
         ReloadController.watch(this.lifecycle);
 
         return this.lifecycle.trap();
@@ -282,6 +287,8 @@ export class RuntimeController extends AbortController implements Disposable {
      * Aborts synchronously, waits for tracked work and clone descendants, then disposes owned resources in reverse order.
      * Returns the current batch's promise; new post-close registrations start a fresh batch.
      * Await it outside this controller's work and cleanup callbacks to observe completion and errors.
+     * A cleanup failure of a root a hot reload has replaced is traced, and the batch's first one also aborts the
+     * generation current at that moment.
      * @category runtime
      */
     public close = (reason?: unknown): Promise<void> => {
@@ -358,7 +365,7 @@ export class RuntimeController extends AbortController implements Disposable {
                 try {
                     await this.#resources.next();
                 } catch (error) {
-                    errors.push(error);
+                    this.#fail(errors, error);
                 }
             }
 
@@ -385,7 +392,7 @@ export class RuntimeController extends AbortController implements Disposable {
             try {
                 this.#disposer.dispose();
             } catch (error) {
-                errors.push(error);
+                this.#fail(errors, error);
             }
 
             this.#trace.log("disposed");
@@ -394,10 +401,32 @@ export class RuntimeController extends AbortController implements Disposable {
         return promise;
     }
 
+    /**
+     * Records a cleanup failure in the batch's errors. A started root a reload has replaced also traces it, and the
+     * batch's first failure routed this way aborts the generation current at that moment. A child's failure reaches
+     * its closer, and its parent while the parent is closing; the current root's reaches whoever awaits its close().
+     */
+    #fail(errors: unknown[], error: unknown): void {
+        errors.push(error);
+
+        const current = store.lifecycle;
+        if (!this.#published || !current || current === this) {
+            return;
+        }
+
+        this.#trace.error("cleanup failed: %s", error);
+        if (!routed.has(errors)) {
+            routed.add(errors);
+
+            // Deferred, so a failure raised while a reload aborts this root leaves the new root to arm its signal traps.
+            queueMicrotask(() => current.abort(error));
+        }
+    }
+
     #joinChild(closing: Promise<void>): void {
         this.#resources.join(closing, (error) => {
             if (this.#state.status === "closing") {
-                this.#state.errors.push(error);
+                this.#fail(this.#state.errors, error);
             }
         });
 
