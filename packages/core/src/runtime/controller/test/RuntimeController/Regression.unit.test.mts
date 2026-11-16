@@ -189,6 +189,23 @@ describe("RuntimeController regressions", () => {
         }
     });
 
+    test("trap() should refuse a second call without registering its listeners again", () => {
+        const parent = RuntimeController.clone();
+        const initialListeners = ExitSignals.map((signal) => process.listenerCount(signal));
+
+        try {
+            parent.trap();
+
+            expect(() => parent.trap()).toThrow("trap(): already called");
+            expect(ExitSignals.map((signal) => process.listenerCount(signal))).toEqual(
+                initialListeners.map((count) => count + 1),
+            );
+        } finally {
+            parent.abort();
+            lifecycle.detach(parent);
+        }
+    });
+
     test("trap() should reject a disposed controller before registering resources", () => {
         const parent = RuntimeController.clone();
         parent[Symbol.dispose]();
@@ -207,7 +224,7 @@ describe("RuntimeController regressions", () => {
             listeners.mockRestore();
             intervals.mockRestore();
 
-            for (const signal of ExitSignals) process.removeListener(signal, parent.abort);
+            for (const signal of ExitSignals) process.removeListener(signal, parent.terminate);
             lifecycle.detach(parent);
         }
     });

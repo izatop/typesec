@@ -6,6 +6,7 @@ import {type Tracer, wrap} from "@typesec/tracer";
 import {scheduler} from "node:timers/promises";
 import {ExitSignals} from "../../const.mjs";
 import type {EnvModeType} from "../../env.mjs";
+import {AsyncLock} from "../../lib/AsyncLock.mjs";
 import {DisposableListener} from "../../lib/DisposableListener.mts";
 import {toAsyncDisposable} from "../../lib/dispostable.mjs";
 import {Ref} from "../../lib/Ref.mjs";
@@ -16,10 +17,10 @@ import type {Service, ServiceCtor, ServiceFactory, ServicePrivateCtor} from "../
 import type {ServiceRef} from "../../service/ServiceRef.mjs";
 import {heartbeat} from "../heartbeat.mjs";
 import {store} from "./hmr.mjs";
-import {ReloadController} from "./ReloadController.mjs";
+import {ReloadController, relayed} from "./ReloadController.mjs";
 import {RuntimeClosedException} from "./RuntimeClosedException.mjs";
 
-/** Cleanup batches, by their error list, whose failure has already aborted a later generation. */
+/** Cleanup batches, by their error list, whose failure has already terminated a later generation. */
 const routed = new WeakSet<unknown[]>();
 
 /**
@@ -196,12 +197,15 @@ export class RuntimeController extends AbortController implements Disposable {
     public trap = (): this => {
         assert(!this.#disposer.disposed, "trap(): controller already disposed");
         this.signal.throwIfAborted();
-        assert(!ExitSignals.some((signal) => process.listeners(signal).includes(this.abort)), "trap(): already called");
+        assert(
+            !ExitSignals.some((signal) => process.listeners(signal).includes(this.terminate)),
+            "trap(): already called",
+        );
 
         this.#trace.log("trap(%o)", ExitSignals);
         for (const signal of ExitSignals) {
-            process.once(signal, this.abort);
-            this.#disposer.defer(() => process.removeListener(signal, this.abort));
+            process.once(signal, this.terminate);
+            this.#disposer.defer(() => process.removeListener(signal, this.terminate));
         }
 
         const locker = setInterval(() => void 0, 1_000_000_000);
@@ -287,8 +291,8 @@ export class RuntimeController extends AbortController implements Disposable {
      * Aborts synchronously, waits for tracked work and clone descendants, then disposes owned resources in reverse order.
      * Returns the current batch's promise; new post-close registrations start a fresh batch.
      * Await it outside this controller's work and cleanup callbacks to observe completion and errors.
-     * A cleanup failure of a root a hot reload has replaced is traced, and the batch's first one also aborts the
-     * generation current at that moment.
+     * A cleanup failure of a root a hot reload has replaced is traced, and the batch's first one also terminates the
+     * generation current at that moment, which without a running `main` ends the process with 1.
      * @category runtime
      */
     public close = (reason?: unknown): Promise<void> => {
@@ -350,6 +354,39 @@ export class RuntimeController extends AbortController implements Disposable {
         return task.tolerant(scheduler.wait(ms, {signal: this.signal}));
     };
 
+    /**
+     * Ends the application: closes this root and, unless a running `main` owns the exit, ends the process once cleanup
+     * finishes. An exit signal then takes its default effect, unless another listener handles it. A non-signal reason,
+     * such as a routed cleanup failure, or a failed cleanup exits with 1. A root already closing or closed is left alone.
+     * @internal
+     */
+    public terminate = (reason: unknown): void => {
+        if (this.#state.status !== "open") {
+            return;
+        }
+
+        const owned = AsyncLock.has(this);
+        const closing = this.close(reason);
+        if (owned) {
+            return;
+        }
+
+        closing.then(
+            () => {
+                const signal = ExitSignals.find((name) => name === reason);
+                if (!signal) {
+                    process.exit(1);
+                } else if (process.listenerCount(signal) === 0) {
+                    process.kill(process.pid, signal);
+                }
+            },
+            (error) => {
+                this.#trace.error("shutdown failed: %s", error);
+                process.exit(1);
+            },
+        );
+    };
+
     /** Starts closure synchronously; await close() to observe completion and errors. */
     public [Symbol.dispose](): void {
         this.close();
@@ -403,14 +440,14 @@ export class RuntimeController extends AbortController implements Disposable {
 
     /**
      * Records a cleanup failure in the batch's errors. A started root a reload has replaced also traces it, and the
-     * batch's first failure routed this way aborts the generation current at that moment. A child's failure reaches
+     * batch's first failure routed this way terminates the generation current at that moment. A child's failure reaches
      * its closer, and its parent while the parent is closing; the current root's reaches whoever awaits its close().
      */
     #fail(errors: unknown[], error: unknown): void {
         errors.push(error);
 
         const current = store.lifecycle;
-        if (!this.#published || !current || current === this) {
+        if (!this.#published || !current || current === this || (error instanceof Object && relayed.has(error))) {
             return;
         }
 
@@ -419,7 +456,7 @@ export class RuntimeController extends AbortController implements Disposable {
             routed.add(errors);
 
             // Deferred, so a failure raised while a reload aborts this root leaves the new root to arm its signal traps.
-            queueMicrotask(() => current.abort(error));
+            queueMicrotask(() => current.terminate(error));
         }
     }
 

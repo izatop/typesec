@@ -14,6 +14,21 @@ Most entries are applied by `bun vendor/typesec/packages/bootstrap/bin/typesec b
 adds what is missing and asks before replacing anything that differs. Run it first, then go through
 the entries for what it does not cover.
 
+## 2026-11-15 — One signal ends the process after cleanup
+
+`SIGINT` or `SIGTERM` now ends the process once the lifecycle's cleanup has finished, also under
+`bun --hot` and in `bun test`, which used to keep running until a second signal. Without a running
+`main` the signal is raised again after cleanup, so the process ends with the signal's usual code
+(130 or 143) instead of 0; a listener of your own for that signal takes over instead. `main` keeps
+exiting with `0`, or `1` on failure. A failed cleanup, including one of a generation a hot reload
+replaced, ends the process with `1`. Shutdown waits for replaced generations' cleanup still in
+progress, without a timeout: a second signal ends the process at once.
+
+- Migrate: scripts or CI steps that expected exit code 0 after a signal without `main` now see 130
+  or 143. To handle the signal yourself, register a listener for it. Code that looks for
+  `lifecycle.abort` among the signal listeners finds `lifecycle.terminate` instead.
+- Check: under `bun --hot`, one Ctrl+C ends the process; in `bun test`, one Ctrl+C stops the run.
+
 ## 2026-11-15 — A replaced generation's cleanup failure stops the current one
 
 Under `bun --hot`, a cleanup failure of a generation a reload has replaced is no longer silent: it is

@@ -22,7 +22,7 @@ export function checkReload(): void {
     assert.equal(current.controller.signal.aborted, false, "Current lifecycle must be running");
     assert.equal(current.reloadCount, previous ? previous.reloadCount + 1 : 0);
     for (const signal of ExitSignals) {
-        assert.equal(process.listeners(signal).filter((fn) => fn === lifecycle.abort).length, 1);
+        assert.equal(process.listeners(signal).filter((fn) => fn === lifecycle.terminate).length, 1);
     }
 
     if (previous) {

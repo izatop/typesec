@@ -7,7 +7,9 @@ const observe = (scenario: string): Record<string, unknown> => {
     const script = `
         import {lifecycle} from ${JSON.stringify(`${controller}/lifecycle.mts`)};
 
-        const report = {escaped: []};
+        const report = {escaped: [], exits: []};
+        const realExit = process.exit.bind(process);
+        process.exit = (code) => void report.exits.push(code);
         process.on("unhandledRejection", (reason) => void report.escaped.push(String(reason)));
         process.on("uncaughtException", (error) => void report.escaped.push(String(error)));
 
@@ -21,11 +23,11 @@ const observe = (scenario: string): Record<string, unknown> => {
             return next.RuntimeController;
         };
 
-        setTimeout(() => process.exit(9), 2000);
+        setTimeout(() => realExit(9), 2000);
         ${scenario}
         await tick();
         console.log(JSON.stringify(report));
-        process.exit(0);
+        realExit(0);
     `;
 
     const child = Bun.spawnSync({cmd: [process.execPath, "-e", script], stdout: "pipe", stderr: "pipe", timeout: 5000});
@@ -58,6 +60,7 @@ describe("RuntimeController cleanup failure routing", () => {
 
         expect(report).toEqual({
             escaped: [],
+            exits: [1],
             closed: "late",
             one: "AbortError: The operation was aborted.",
             two: "Error: late",
@@ -86,6 +89,7 @@ describe("RuntimeController cleanup failure routing", () => {
 
         expect(report).toEqual({
             escaped: [],
+            exits: [1],
             closed: ["Error: first", "Error: second"],
             one: "Error: first",
             two: "open",
@@ -107,7 +111,7 @@ describe("RuntimeController cleanup failure routing", () => {
             report.one = reason(one);
         `);
 
-        expect(report).toEqual({escaped: [], one: "SIGINT"});
+        expect(report).toEqual({escaped: [], exits: [], one: "SIGINT"});
     });
 
     test("should leave the current root open when a child's cleanup fails", () => {
@@ -122,7 +126,7 @@ describe("RuntimeController cleanup failure routing", () => {
             report.root = reason(lifecycle);
         `);
 
-        expect(report).toEqual({escaped: [], closed: "child", root: "open"});
+        expect(report).toEqual({escaped: [], exits: [], closed: "child", root: "open"});
     });
 
     test("should route a failure that a child of the replaced root brings into its cleanup", () => {
@@ -145,7 +149,7 @@ describe("RuntimeController cleanup failure routing", () => {
             report.one = reason(one);
         `);
 
-        expect(report).toEqual({escaped: [], closed: "child", one: "Error: child"});
+        expect(report).toEqual({escaped: [], exits: [1], closed: "child", one: "Error: child"});
     });
 
     test("should leave the current root open when a root that never started fails", () => {
@@ -161,6 +165,6 @@ describe("RuntimeController cleanup failure routing", () => {
             report.root = reason(lifecycle);
         `);
 
-        expect(report).toEqual({escaped: [], closed: "orphan", root: "open"});
+        expect(report).toEqual({escaped: [], exits: [], closed: "orphan", root: "open"});
     });
 });

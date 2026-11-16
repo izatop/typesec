@@ -283,7 +283,7 @@ describe("RuntimeController resource ownership", () => {
             ) => {
                 const result = originalRemoveListener.call(process, event, listener);
 
-                if (event === "SIGTERM" && listener === controller.abort) throw reason;
+                if (event === "SIGTERM" && listener === controller.terminate) throw reason;
 
                 return result;
             },
@@ -299,7 +299,7 @@ describe("RuntimeController resource ownership", () => {
 
             await controller.close().catch(() => undefined);
 
-            for (const signal of ExitSignals) originalRemoveListener.call(process, signal, controller.abort);
+            for (const signal of ExitSignals) originalRemoveListener.call(process, signal, controller.terminate);
         }
     });
 

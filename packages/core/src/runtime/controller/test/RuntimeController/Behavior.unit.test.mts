@@ -6,7 +6,7 @@ import {RuntimeController} from "../../RuntimeController.mjs";
 describe("RuntimeController", () => {
     test("lifecycle should be initalized", async () => {
         for (const signal of ExitSignals) {
-            expect(process.listeners(signal)).toContainValue(lifecycle.abort);
+            expect(process.listeners(signal)).toContainValue(lifecycle.terminate);
         }
     });
 
