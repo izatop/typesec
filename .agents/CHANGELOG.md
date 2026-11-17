@@ -14,6 +14,20 @@ Most entries are applied by `bun vendor/typesec/packages/bootstrap/bin/typesec b
 adds what is missing and asks before replacing anything that differs. Run it first, then go through
 the entries for what it does not cover.
 
+## 2026-11-17 — A service is registered with a value or a factory, never a promise
+
+`service`, `define` and `controller.service` take either a fixed value or a function. A function is
+always the factory, and it may return the instance or a promise of it. A promise or another thenable
+as the value is now a type error and throws at registration: it used to start an eager build, and
+after `unload` the next `resolve` published the same, already disposed instance again.
+
+- Migrate: wrap the promise in a factory and keep the eager start with `lazy: false`, building the
+  instance inside the factory: `service(Db, connect())` becomes `service(Db, () => connect(), false)`.
+  The factory runs as work of the root controller, not in the caller's context. A generic helper
+  that passes its `value: T` through no longer type-checks; type the parameter as `ServiceFactory<T>`.
+- Check: `bun run check` passes, which flags every remaining promise or thenable value; at runtime
+  such a registration throws `Service Db is registered with a promise or thenable; pass a factory`.
+
 ## 2026-11-17 — `unicorn/no-thenable` is an error
 
 The `.oxlintrc.json` template now reports an object, class or export with a `then` member as an

@@ -21,7 +21,7 @@ function release(result: MainReturns): Promise<void> {
 /**
  * Runs an entrypoint as the lifecycle's work and shuts the process down after it.
  *
- * Waits first for every eager service build of the generation (`lazy: false` or a promise): a failure ends the process
+ * Waits first for every eager service build of the generation (`lazy: false`): a failure ends the process
  * with `1` without calling the task, and a signal or reload that closes the lifecycle meanwhile ends the entrypoint
  * without calling the task, exiting `0` after a signal and resolving `undefined` after a reload. Disposes whatever the
  * task returns as part of the task's work, so the lifecycle's own resources outlive it, closes the lifecycle awaiting

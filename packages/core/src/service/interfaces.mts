@@ -1,4 +1,4 @@
-import type {Fnify, Promisify} from "@typesec/the";
+import type {Fn} from "@typesec/the";
 import type {ServiceRef} from "./ServiceRef.mjs";
 
 /**
@@ -44,10 +44,13 @@ export type ServiceId<T extends Service> = ServicePrivateCtor<T> | ServiceCtor<T
 export type ServiceInfer<T> = T extends ServiceId<infer V> ? V : never;
 
 /**
- * How an instance is produced: a value, a promise, or a function returning either.
+ * How an instance is produced: a factory function returning the instance or a promise of it, or the instance itself. A
+ * promise or another thenable is refused; wrap it in a function.
  * @category service
  */
-export type ServiceFactory<T extends Service> = Fnify<Promisify<T>>;
+export type ServiceFactory<T extends Service> =
+    | (T extends {then: (...args: never[]) => unknown} ? never : T)
+    | Fn<[], T | PromiseLike<T>>;
 
 /**
  * Registration options: an explicit constructor identity, and whether to defer construction.

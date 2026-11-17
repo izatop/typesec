@@ -38,7 +38,7 @@ export function context<TProto extends ProtoAbstract<TIn>, TIn, TRet, TContext>(
         );
     };
 
-    service(ThisContextResolver, ThisContextResolver.from(context));
+    service(ThisContextResolver, () => ThisContextResolver.from(context), false);
 
     return Object.assign(factory, {meta, proto, context}) as Application<TContext, TProto, TIn, TRet>;
 }

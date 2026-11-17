@@ -255,7 +255,7 @@ void main(
 );
 ```
 
-`main` waits for the eager services (`lazy: false` or a promise), runs the task under the lifecycle controller, disposes
+`main` waits for the eager services (`lazy: false`), runs the task under the lifecycle controller, disposes
 what it returns, closes the lifecycle and exits `0`, or `1` on failure. One `SIGINT` or `SIGTERM` closes the
 lifecycle and ends the process once its cleanup has finished; without `main` the signal is raised again after cleanup,
 so the process ends with the signal's usual code.
@@ -279,15 +279,19 @@ Every controller owns what it is given and releases it once, newest first, when 
 
 `service(Class, factory)` registers how a service is built and `await resolve(Class)` builds it once and caches it.
 
+- A function is always the factory, and it may return the instance or a promise of it. Any other value is the
+  instance itself. A promise or another thenable is refused: `service(Db, () => connect())`, not
+  `service(Db, connect())`.
 - The factory runs as work of the generation's root controller, whichever task resolves it first, so it reads the
   root through `runtime.use()` and should stop when `runtime.signal` aborts. A factory that ignores the signal holds
   shutdown up.
 - A disposable instance is owned by that root and disposed once when it closes. `await unload(ref)` releases it
-  earlier, and the next `resolve` builds anew; it also forgets a failed build, which otherwise stays for every caller.
-- `lazy: false`, or a promise as the value, starts the build at once. `main`, and a `runtime.run` called from outside
-  every controller, wait for those builds before the task and fail with the first failure in registration order. A
-  run nested in a task or a factory does not wait. An eager factory must therefore settle without the task's help,
-  and one that never settles also holds back the failure of another.
+  earlier, after which the next `resolve` runs a factory anew and rejects for a value registration. `unload` also
+  forgets a failed build, which otherwise stays for every caller.
+- `lazy: false` starts the build at once. `main`, and a `runtime.run` called from outside every controller, wait for
+  those builds before the task and fail with the first failure in registration order. A run nested in a task or a
+  factory does not wait. An eager factory must therefore settle without the task's help, and one that never settles
+  also holds back the failure of another.
 - `controller.service(Class, factory)` registers a service a child controller owns, reached through the returned ref
   and forgotten when the child closes. Its eager builds are not part of the warmup.
 - Once the root has begun closing, nothing new is registered or built.

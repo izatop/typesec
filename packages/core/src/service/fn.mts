@@ -1,8 +1,8 @@
 import {defnify, identify, type Fn} from "@typesec/the";
 import {assert} from "@typesec/the/assert";
+import {async} from "@typesec/the/async";
 import {fn, is} from "@typesec/the/fn";
 import {task} from "@typesec/the/task";
-import {isPromise} from "node:util/types";
 import {isAsyncDisposable, isDisposable, toAsyncDisposable} from "../lib/dispostable.mjs";
 import {lifecycle} from "../runtime/controller/lifecycle.mjs";
 import {RuntimeClosedException} from "../runtime/controller/RuntimeClosedException.mjs";
@@ -53,9 +53,10 @@ export function define<T extends Service>(
 /**
  * Registers how a service is built, keyed by its class.
  *
- * A lazy registration builds on first resolve; passing `lazy: false`, or a promise, starts construction at once, and
- * `main` and a `runtime.run` called from outside every controller wait for that build before their task, so it must
- * settle without the task's help.
+ * A function is the factory and returns the instance or a promise of it; any other value is the instance itself. A
+ * promise or another thenable is refused. A lazy factory builds on first resolve; `lazy: false` starts it at once,
+ * and `main` and a `runtime.run` called from outside every controller wait for that build before their task, so it
+ * must settle without the task's help.
  * The factory runs as work of the generation's root controller, whichever context resolves the service first,
  * and a disposable instance is owned by that controller, which disposes it once when it closes. Once that controller
  * has begun closing, registration is refused with `RuntimeClosedException` and a result that lands late is released,
@@ -84,6 +85,10 @@ function register<T extends Service>(
     lazy: boolean,
 ): ServiceRef<T> {
     assert(owner.isRunning(), () => new RuntimeClosedException(owner));
+    assert(
+        !async.isThenable(value),
+        `Service ${identify(ctor)} is registered with a promise or thenable; pass a factory`,
+    );
 
     const ref = new ServiceRef(ctor);
     const entry = new ServiceEntry(value, owner);
@@ -92,7 +97,7 @@ function register<T extends Service>(
     const forget = owner === lifecycle ? undefined : owner.own(toAsyncDisposable(() => forgetAfter(ref, entry)));
 
     // A value is adopted before it is recorded; a refused one takes its cleanup back and leaves nothing behind.
-    if (!is(value, "function") && !isPromise(value)) {
+    if (!is(value, "function")) {
         try {
             entry.instance = adopt(entry, value as T);
         } catch (reason) {
@@ -107,7 +112,7 @@ function register<T extends Service>(
         latest.set(ctor, ref);
     }
 
-    if (isPromise(value) || (is(value, "function") && !lazy)) {
+    if (is(value, "function") && !lazy) {
         if (owner === lifecycle) eager.add(entry);
         kickoff(ref);
     }
@@ -338,7 +343,7 @@ export async function resolve<T extends Service>(...refs: [ServiceId<T>, ...Serv
     assert(entry, `Unknown service ${name}`);
 
     const value = entry.factory;
-    assert(is(value, "function") || isPromise(value), `Service ${identify(ref.ctor)} was unloaded and has no factory`);
+    assert(is(value, "function"), `Service ${identify(ref.ctor)} was unloaded and has no factory`);
 
     tracer.log("factory( <%s> ): %d", name, entry.pending !== undefined);
     if (!entry.pending) {

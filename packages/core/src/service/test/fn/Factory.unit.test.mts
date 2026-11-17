@@ -1,5 +1,6 @@
 import {describe, expect, mock, test} from "bun:test";
-import {resolve, service, state, sync, unload} from "../../fn.mjs";
+import {lifecycle} from "../../../runtime/controller/index.mjs";
+import {define, resolve, service, state, sync, unload} from "../../fn.mjs";
 import {PendingService} from "../../PendingService.mjs";
 
 // Bun's runner fails the running test on any unhandled rejection, so a test that awaits a tick after
@@ -80,22 +81,35 @@ describe("service factory", () => {
 
             expect(factory).toHaveBeenCalledTimes(1);
             await expect(resolve(ref)).rejects.toBe(reason);
+            expect(state(ref)).toEqual({known: true, resolved: false});
 
             // A failed eager build left behind would reject every later top-level run of this process.
             await unload(ref);
         }
     });
 
-    test("should observe a rejected promise registration and report it to a later resolve", async () => {
-        const reason = new Error("rejected");
-        const ref = service(Probe, Promise.reject<Probe>(reason));
+    test("should refuse a promise or another thenable as the value and register nothing", async () => {
+        class Pending {}
+        const thenable = {
+            // oxlint-disable-next-line unicorn/no-thenable -- a foreign thenable must be refused like a promise
+            then: (done: (value: Pending) => void) => done(new Pending()),
+        };
 
-        await tick();
+        // @ts-expect-error a promise is neither a value nor a factory
+        expect(() => service(Pending, Promise.resolve(new Pending()))).toThrow(
+            "Service Pending is registered with a promise or thenable; pass a factory",
+        );
 
-        await expect(resolve(ref)).rejects.toBe(reason);
-        expect(state(ref)).toEqual({known: true, resolved: false});
+        // @ts-expect-error a thenable is neither a value nor a factory
+        expect(() => define("pending", thenable)).toThrow("is registered with a promise or thenable; pass a factory");
 
-        await unload(ref);
+        const child = lifecycle.clone("child");
+
+        // @ts-expect-error a child's registration is held to the same rule
+        expect(() => child.service(Pending, Promise.resolve(new Pending()))).toThrow("is registered with a promise");
+        await child.close();
+
+        await expect(resolve(Pending)).rejects.toThrow("Unknown service reference");
     });
 
     test("should memoize a synchronous factory throw like a rejection", async () => {

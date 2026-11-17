@@ -136,7 +136,7 @@ export const runtime: Runtime = {
      * task. Passing the current controller is refused: owning it would await a closure that waits for this call.
      *
      * Entered from outside every controller, as at startup, it first waits until every eager service build the
-     * generation's root registered (`lazy: false` or a promise) has settled, and rejects with the first failure in
+     * generation's root registered (`lazy: false`) has settled, and rejects with the first failure in
      * registration order without calling the task; a failed build keeps rejecting until `unload` forgets it. A run
      * nested in a controller's work, including one a factory starts, does not wait, since it could wait for its own
      * build.

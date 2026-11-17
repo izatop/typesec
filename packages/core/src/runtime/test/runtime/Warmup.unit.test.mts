@@ -24,7 +24,7 @@ describe("runtime.run warmup", () => {
         await using app = fixture(
             scenario(`
                 service(class Slow {}, build("slow", 30), false);
-                service(class Value {}, later(10, {}).then(() => emit("built value")));
+                service(class Quick {}, build("value", 10), false);
                 service(class Lazy {}, build("lazy", 0));
                 lifecycle.clone("child").service(class Child {}, async () => Promise.reject(new Error("child")), false);
 
