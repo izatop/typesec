@@ -14,6 +14,17 @@ Most entries are applied by `bun vendor/typesec/packages/bootstrap/bin/typesec b
 adds what is missing and asks before replacing anything that differs. Run it first, then go through
 the entries for what it does not cover.
 
+## 2026-11-17 — `unicorn/no-thenable` is an error
+
+The `.oxlintrc.json` template now reports an object, class or export with a `then` member as an
+error instead of a warning: `await` and `Promise.resolve` treat such a value as a promise and call
+its `then`.
+
+- Migrate: run `typesec bootstrap sync` to take the template. Rename an accidental `then` member;
+  where a thenable is the point, as in a test of thenable handling, add
+  `// oxlint-disable-next-line unicorn/no-thenable -- <reason>` before it.
+- Check: `bun run lint` passes.
+
 ## 2026-11-15 — One signal ends the process after cleanup
 
 `SIGINT` or `SIGTERM` now ends the process once the lifecycle's cleanup has finished, also under

@@ -90,7 +90,7 @@
     "unicorn/no-invalid-remove-event-listener": "error",
     "unicorn/no-new-array": "error",
     "unicorn/no-single-promise-in-promise-methods": "error",
-    "unicorn/no-thenable": "warn",
+    "unicorn/no-thenable": "error",
     "unicorn/no-unnecessary-await": "error",
     "unicorn/no-useless-fallback-in-spread": "error",
     "unicorn/no-useless-length-check": "error",

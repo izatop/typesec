@@ -71,6 +71,7 @@ describe("disposal adapters", () => {
         const {promise: gate, resolve: release} = Promise.withResolvers<void>();
         const {promise: started, resolve: markStarted} = Promise.withResolvers<void>();
         const thenable: PromiseLike<void> = {
+            // oxlint-disable-next-line unicorn/no-thenable -- a user thenable, not a native Promise, is under test
             then: (resolve, reject) => gate.then(resolve, reject),
         };
         let settled = false;

@@ -112,6 +112,7 @@ for (const outcome of ["resolve", "reject"] as const) {
 
 test("PromiseLike factory results become pending native promises", async () => {
     const ref = new Ref<PromiseLike<number>>(() => ({
+        // oxlint-disable-next-line unicorn/no-thenable -- a user thenable, not a native Promise, is under test
         then: (resolve, reject) => Promise.resolve(42).then(resolve, reject),
     }));
     const result = ref.ensure();

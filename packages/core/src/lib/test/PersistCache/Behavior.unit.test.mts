@@ -17,6 +17,7 @@ test("sync updater returns a synchronous value", () => {
 
 test("PromiseLike updater returns a pending Promise and then a synchronous value", async () => {
     const cache = PersistCache.create<PromiseLike<number>>(() => ({
+        // oxlint-disable-next-line unicorn/no-thenable -- a user thenable, not a native Promise, is under test
         then: (resolve, reject) => Promise.resolve(42).then(resolve, reject),
     }));
     const result = cache.ensure();
