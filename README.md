@@ -245,19 +245,78 @@ a service container, and the ambient `runtime` resolved per async context.
 import {main, resolve, runtime, service} from "@typesec/core";
 import {fn} from "@typesec/the/fn";
 
-service(Database, () => Database.connect(url));
+service(Database, () => Database.connect(url), false);
 
-await main(
+void main(
     fn.arrow("worker", async () => {
         const db = await resolve(Database);
-        await runtime.heartbeat(() => db.close());
+        await runtime.heartbeat(() => db.flush());
     }),
 );
 ```
 
-`main` runs the task under the lifecycle controller, disposes what it returns, and exits `0` or `1`. The root
-controller traps `SIGINT` and `SIGTERM`, so a signal becomes an orderly shutdown of everything the process
-started.
+`main` waits for the eager services (`lazy: false` or a promise), runs the task under the lifecycle controller, disposes
+what it returns, closes the lifecycle and exits `0`, or `1` on failure. One `SIGINT` or `SIGTERM` closes the
+lifecycle and ends the process once its cleanup has finished; without `main` the signal is raised again after cleanup,
+so the process ends with the signal's usual code.
+
+### Resources
+
+Every controller owns what it is given and releases it once, newest first, when it closes:
+
+- `own(resource)` takes a `Disposable` or `AsyncDisposable`, `defer(callback)` a cleanup callback, and
+  `release(resource)` disposes one of them ahead of closure. An object with both hooks gets `Symbol.asyncDispose`
+  only.
+- `close()` aborts at once, waits for the work started through `run` or `track` and for child controllers, then
+  disposes. Await it to observe the cleanup; several failures arrive as one `AggregateError`.
+- `clone()` creates a child the parent closes and waits for. `runtime.run(task, child)` runs a task in the child's
+  context and closes the child afterwards.
+- Once closing has begun, `own` and `defer` throw `RuntimeClosedException` and still release what they were given;
+  `track`, `run` and `service` refuse without calling or registering anything.
+- Cleanup and tracked work must not await their own controller's `close()`, or an ancestor's: closure waits for them.
+
+### Services
+
+`service(Class, factory)` registers how a service is built and `await resolve(Class)` builds it once and caches it.
+
+- The factory runs as work of the generation's root controller, whichever task resolves it first, so it reads the
+  root through `runtime.use()` and should stop when `runtime.signal` aborts. A factory that ignores the signal holds
+  shutdown up.
+- A disposable instance is owned by that root and disposed once when it closes. `await unload(ref)` releases it
+  earlier, and the next `resolve` builds anew; it also forgets a failed build, which otherwise stays for every caller.
+- `lazy: false`, or a promise as the value, starts the build at once. `main`, and a `runtime.run` called from outside
+  every controller, wait for those builds before the task and fail with the first failure in registration order. A
+  run nested in a task or a factory does not wait. An eager factory must therefore settle without the task's help,
+  and one that never settles also holds back the failure of another.
+- `controller.service(Class, factory)` registers a service a child controller owns, reached through the returned ref
+  and forgotten when the child closes. Its eager builds are not part of the warmup.
+- Once the root has begun closing, nothing new is registered or built.
+
+### `bun --hot` and `bun --watch`
+
+Under `bun --hot`, every save re-evaluates the whole module graph in the same process, and each evaluation is a new
+generation with its own root controller and services:
+
+- Start the entrypoint with `void main(...)`, not `await main(...)`, and likewise a top-level `runtime.run`: Bun defers
+  a reload while the entry's top-level `await` is pending, which includes waiting for eager services.
+- The new generation becomes current first; the replaced one is then closed in the background. Its pending factories
+  see their `runtime.signal` abort, and their results are released instead of published.
+- The two generations overlap: the new one starts before the old one's cleanup has released ports, file locks or
+  external consumers. A replaced `main` resolves `undefined` instead of exiting, and an `exit(0)` it scheduled is
+  dropped.
+- A cleanup failure of a replaced generation is traced, aborts the current one with that error and ends the process
+  with `1`. A signal waits for the replaced generations' cleanup still in flight; a second signal ends the process at
+  once.
+- Only `globalThis` survives a reload. Do not hold a reference to `globalThis.ReloadController` across reloads; each
+  generation replaces it, so read it again. Restart a process that was running before a TypeSec update instead of
+  letting it reload into the new code.
+
+`bun --watch` restarts the process instead. It runs the `SIGTERM` listeners synchronously and replaces the process
+image at once, so the lifecycle's cleanup, which runs asynchronously, does not run on a restart. Only what the
+operating system releases with the old image is released; external state, such as a lock file, has to be handled by
+the next start.
+
+Breaking changes and their migrations are listed in [`.agents/CHANGELOG.md`](.agents/CHANGELOG.md).
 
 ## Packages
 
