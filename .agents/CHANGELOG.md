@@ -25,6 +25,23 @@ its `then`.
   `// oxlint-disable-next-line unicorn/no-thenable -- <reason>` before it.
 - Check: `bun run lint` passes.
 
+## 2026-11-16 — `main` and a top-level `run` wait for eager services
+
+`main(task)`, and `runtime.run` or `run` called from outside every controller, now wait until every
+service registered with `lazy: false` or a promise has finished building before they call the task.
+A failed eager build rejects the run, or ends `main` with `1`, with the factory's own reason and
+without calling the task; with several failures the first registered one wins. A failed build keeps
+rejecting later top-level runs until `unload` forgets it. A run nested in a task or a factory does
+not wait, so services registered inside the task work as before, and a child controller's
+`controller.service()` registrations take no part. A signal during the warmup ends `main` with `0`
+without calling the task; under `bun --hot`, a `main` whose warmup a save interrupts ends as
+replaced instead of exiting with `1`.
+
+- Migrate: an eager factory must settle without help from the task, or the task never starts; make
+  such a service lazy. A top-level run no longer calls its task synchronously. Tests that leave a
+  failed eager build behind should `await unload(ref)`, since test files share one process.
+- Check: a `lazy: false` factory that throws stops `main` before the task with exit code 1.
+
 ## 2026-11-15 — One signal ends the process after cleanup
 
 `SIGINT` or `SIGTERM` now ends the process once the lifecycle's cleanup has finished, also under

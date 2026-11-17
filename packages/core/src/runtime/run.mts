@@ -5,7 +5,8 @@ import {type Task} from "./interfaces.mjs";
 import {runtime} from "./runtime.mjs";
 
 /**
- * Runs a task through `runtime.run` with a trace: the current controller is borrowed, an explicit one is owned and closed.
+ * Runs a task through `runtime.run`, which outside every controller first waits for eager services, with a trace: the
+ * current controller is borrowed, an explicit one is owned and closed.
  * @category runtime
  */
 export function run<R>(task: Task<R>, withContext?: RuntimeController): Promise<R> {

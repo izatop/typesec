@@ -14,8 +14,9 @@ export type Register = <T extends Service>(
 ) => ServiceRef<T>;
 
 /**
- * The registration the service registry installs when it loads. The controller reads it here instead of importing the
- * registry, whose `lifecycle` import would start the root before the controller class is initialized.
+ * The hooks the service registry installs when it loads: registration, and the warmup that waits for eager builds.
+ * The runtime reads them here instead of importing the registry, whose `lifecycle` import would start the root before
+ * the controller class is initialized.
  * @internal
  */
-export const registration: {register?: Register} = {};
+export const registration: {register?: Register; warmup?: () => Promise<void>} = {};

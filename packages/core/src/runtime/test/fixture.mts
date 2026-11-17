@@ -35,7 +35,7 @@ export const prelude = `
     import {store} from ${JSON.stringify(`${src}/runtime/controller/hmr.mts`)};
     import {main} from ${JSON.stringify(`${src}/runtime/main.mts`)};
     import {runtime} from ${JSON.stringify(`${src}/runtime/runtime.mts`)};
-    import {resolve, service} from ${JSON.stringify(`${src}/service/fn.mts`)};
+    import {resolve, service, unload} from ${JSON.stringify(`${src}/service/fn.mts`)};
 
     const emit = (event) => console.log("@@" + event);
     const generation = store.reloadCount;

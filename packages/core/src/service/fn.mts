@@ -25,6 +25,11 @@ import {ServiceEntry} from "./ServiceEntry.mjs";
 import {ServiceRef} from "./ServiceRef.mjs";
 
 const entries = new Map<ServiceRef<any>, ServiceEntry<any>>();
+
+// The root's registrations that build at once, in registration order, which `main` and a top-level `runtime.run` wait
+// for before their task.
+const eager = new Set<ServiceEntry<any>>();
+
 const latest = new WeakMap<ServiceCtor<any> | ServicePrivateCtor<any>, ServiceRef<any>>();
 
 // The factory's own result behind each build, which still carries the instance when a closing owner refuses it.
@@ -48,7 +53,9 @@ export function define<T extends Service>(
 /**
  * Registers how a service is built, keyed by its class.
  *
- * A lazy registration builds on first resolve; passing `lazy: false`, or a promise, starts construction at once.
+ * A lazy registration builds on first resolve; passing `lazy: false`, or a promise, starts construction at once, and
+ * `main` and a `runtime.run` called from outside every controller wait for that build before their task, so it must
+ * settle without the task's help.
  * The factory runs as work of the generation's root controller, whichever context resolves the service first,
  * and a disposable instance is owned by that controller, which disposes it once when it closes. Once that controller
  * has begun closing, registration is refused with `RuntimeClosedException` and a result that lands late is released,
@@ -101,6 +108,7 @@ function register<T extends Service>(
     }
 
     if (isPromise(value) || (is(value, "function") && !lazy)) {
+        if (owner === lifecycle) eager.add(entry);
         kickoff(ref);
     }
 
@@ -108,6 +116,19 @@ function register<T extends Service>(
 }
 
 registration.register = register;
+
+/**
+ * Waits for the build each eager root registration holds now, in flight or failed, then rethrows the first failure in
+ * registration order. It starts nothing: a built, lazy or unloaded and not yet resolved entry holds no build.
+ */
+async function warmup(): Promise<void> {
+    const builds = [...eager].flatMap((entry) => (entry.pending ? [entry.pending] : []));
+    for (const outcome of await Promise.allSettled(builds)) {
+        if (outcome.status === "rejected") throw outcome.reason;
+    }
+}
+
+registration.warmup = warmup;
 
 /**
  * Drops a built instance and releases it through its owner, returning a promise for that single release attempt.

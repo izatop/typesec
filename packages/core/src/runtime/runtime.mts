@@ -2,8 +2,9 @@ import {assert} from "@typesec/the/assert";
 import type {Prop} from "@typesec/the/type";
 import {toAsyncDisposable} from "../lib/dispostable.mjs";
 import {WeakSequence} from "../lib/WeakSequence.mts";
+import {registration} from "../service/registration.mjs";
 import {store} from "./controller/hmr.mjs";
-import {RuntimeController} from "./controller/index.mjs";
+import {RuntimeClosedException, RuntimeController} from "./controller/index.mjs";
 import {lifecycle} from "./controller/index.mts";
 import type {Task} from "./interfaces.mjs";
 
@@ -133,11 +134,30 @@ export const runtime: Runtime = {
      * is awaited: a cleanup failure rejects the call, with the task's own error attached as `SuppressedError.suppressed`.
      * One that has begun closing rejects with `RuntimeClosedException` once its cleanup finishes, without calling the
      * task. Passing the current controller is refused: owning it would await a closure that waits for this call.
+     *
+     * Entered from outside every controller, as at startup, it first waits until every eager service build the
+     * generation's root registered (`lazy: false` or a promise) has settled, and rejects with the first failure in
+     * registration order without calling the task; a failed build keeps rejecting until `unload` forgets it. A run
+     * nested in a controller's work, including one a factory starts, does not wait, since it could wait for its own
+     * build.
      */
     async run(task, withContext) {
         assert(!withContext || withContext !== store.context.getStore(), "run(): cannot own the current controller");
         await using _closing = toAsyncDisposable(() => withContext?.close());
 
-        return await (withContext ?? this.use()).run(task);
+        // Warming up inside the tracked work keeps the closed check synchronous and makes closure wait for it; a
+        // controller that began closing meanwhile refuses the task as it would have before the warmup.
+        const controller = withContext ?? this.use();
+        const warmup = store.context.getStore() ? undefined : registration.warmup;
+        const work = warmup
+            ? async () => {
+                  await warmup();
+                  assert(controller.isRunning(), () => new RuntimeClosedException(controller));
+
+                  return task();
+              }
+            : task;
+
+        return await controller.run(work);
     },
 };

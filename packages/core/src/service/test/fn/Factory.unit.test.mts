@@ -1,5 +1,5 @@
 import {describe, expect, mock, test} from "bun:test";
-import {resolve, service, state, sync} from "../../fn.mjs";
+import {resolve, service, state, sync, unload} from "../../fn.mjs";
 import {PendingService} from "../../PendingService.mjs";
 
 // Bun's runner fails the running test on any unhandled rejection, so a test that awaits a tick after
@@ -80,6 +80,9 @@ describe("service factory", () => {
 
             expect(factory).toHaveBeenCalledTimes(1);
             await expect(resolve(ref)).rejects.toBe(reason);
+
+            // A failed eager build left behind would reject every later top-level run of this process.
+            await unload(ref);
         }
     });
 
@@ -91,6 +94,8 @@ describe("service factory", () => {
 
         await expect(resolve(ref)).rejects.toBe(reason);
         expect(state(ref)).toEqual({known: true, resolved: false});
+
+        await unload(ref);
     });
 
     test("should memoize a synchronous factory throw like a rejection", async () => {
