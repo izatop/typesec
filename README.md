@@ -500,6 +500,11 @@ bun run fmt:check   # bun fmt
 The CLI ignore option replaces the configured list; always retain `vendor/**` in overrides.
 Test files run sequentially. Enable concurrency only with `test.concurrent()` for independent cases.
 
+GitHub Actions runs type checking, unit and integration tests, lint, formatting checks and a dependency
+audit on pushes to `main` and pull requests. Jobs have a ten-minute timeout and use the Bun version
+from `packageManager`. Pull requests also run dependency review. Coverage collection and report uploads
+are currently disabled in CI; `bun run test:coverage` remains available locally.
+
 ## Status
 
 In active development, pre-1.0. Package APIs may still change between versions.
