@@ -1,5 +1,7 @@
 import {describe, expect, test} from "bun:test";
+
 import z from "zod";
+
 import {contract} from "../../contract.mjs";
 
 describe("Contract", () => {

@@ -1,4 +1,5 @@
 import {relative} from "node:path/posix";
+
 import {type TracerStackLine} from "./interfaces.mjs";
 
 const lineMatch = /([^\s]+)\s\((.+):(\d+):(\d+)\)/;

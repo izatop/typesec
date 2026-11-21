@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {isXEqualToY, isXExtendsOfY} from "../../test.mjs";
 import type {
     Arrayify,
@@ -10,8 +11,8 @@ import type {
     Entries,
     Equal,
     Exact,
-    Expect,
     Expand,
+    Expect,
     Extends,
     Fn,
     Fnify,

@@ -1,6 +1,7 @@
 import {Command} from "@commander-js/extra-typings";
-import {renderPackages, renderSymbol, renderSymbols, type Format} from "./render.mjs";
+
 import type {ProjectIndex} from "./interfaces.mjs";
+import {type Format, renderPackages, renderSymbol, renderSymbols} from "./render.mjs";
 import {indexProject} from "./resolve.mjs";
 import {lookup, search} from "./search.mjs";
 import {findRoot} from "./workspace.mjs";

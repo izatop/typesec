@@ -1,5 +1,7 @@
 import {expect, expectTypeOf, test} from "bun:test";
+
 import type {Promisify} from "@typesec/the";
+
 import {PersistCache} from "../../PersistCache.mjs";
 
 async function* refresh() {

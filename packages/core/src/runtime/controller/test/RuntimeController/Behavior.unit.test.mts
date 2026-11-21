@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {ExitSignals} from "../../../../const.mjs";
 import {lifecycle} from "../../index.mjs";
 import {RuntimeController} from "../../RuntimeController.mjs";

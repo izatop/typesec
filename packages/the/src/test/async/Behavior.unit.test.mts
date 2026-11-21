@@ -1,4 +1,5 @@
 import {describe, expect, it} from "bun:test";
+
 import {async} from "../../async.mjs";
 
 const agf = async function* () {};

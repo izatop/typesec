@@ -1,8 +1,9 @@
-import {defnify, identify, type Fn} from "@typesec/the";
+import {defnify, type Fn, identify} from "@typesec/the";
 import {assert} from "@typesec/the/assert";
 import {async} from "@typesec/the/async";
 import {fn, is} from "@typesec/the/fn";
 import {task} from "@typesec/the/task";
+
 import {isAsyncDisposable, isDisposable, toAsyncDisposable} from "../lib/dispostable.mjs";
 import {lifecycle} from "../runtime/controller/lifecycle.mjs";
 import {RuntimeClosedException} from "../runtime/controller/RuntimeClosedException.mjs";

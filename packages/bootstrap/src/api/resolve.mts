@@ -1,5 +1,7 @@
-import {Glob} from "bun";
 import path from "node:path";
+
+import {Glob} from "bun";
+
 import {extract, type FileSurface, type RawSymbol} from "./extract.mjs";
 import type {PackageEntry, ProjectIndex, SymbolEntry} from "./interfaces.mjs";
 import {findRoot, readWorkspace, type WorkspacePackage} from "./workspace.mjs";

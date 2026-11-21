@@ -1,4 +1,5 @@
 import type {Fn} from "@typesec/the";
+
 import type {ServiceRef} from "./ServiceRef.mjs";
 
 /**

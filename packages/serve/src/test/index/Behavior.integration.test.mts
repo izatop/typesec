@@ -1,8 +1,10 @@
+import {describe, expect, test} from "bun:test";
+import {resolve} from "node:path";
+
 import {runtime, toAsyncDisposable} from "@typesec/core";
 import {getApplication} from "@typesec/unit";
 import type {Server} from "bun";
-import {describe, expect, test} from "bun:test";
-import {resolve} from "node:path";
+
 import {response, ServeProto} from "../../index.mjs";
 
 describe("Main", () => {

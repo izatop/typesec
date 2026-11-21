@@ -1,5 +1,7 @@
-import {AssertionException} from "@typesec/the/errors";
 import {describe, expect, spyOn, test} from "bun:test";
+
+import {AssertionException} from "@typesec/the/errors";
+
 import {ExitSignals} from "../../../../const.mjs";
 import {lifecycle} from "../../index.mjs";
 import {RuntimeController} from "../../RuntimeController.mjs";

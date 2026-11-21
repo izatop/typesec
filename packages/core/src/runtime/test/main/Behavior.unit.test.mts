@@ -1,4 +1,5 @@
 import {describe, expect, mock, spyOn, test} from "bun:test";
+
 import {lifecycle} from "../../controller/index.mjs";
 import {main} from "../../main.mjs";
 

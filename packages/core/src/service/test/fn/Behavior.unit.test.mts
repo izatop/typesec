@@ -1,8 +1,9 @@
 import {beforeEach, describe, expect, test} from "bun:test";
-import {PendingError, ServiceRef} from "../../index.mjs";
-import {define, ensureRef, locator, resolve, service, state, sync, syncArray, unload} from "../../fn.mjs";
+
 import {TestService} from "../../../test/TestService.mjs";
 import {TestService2} from "../../../test/TestService2.mjs";
+import {define, ensureRef, locator, resolve, service, state, sync, syncArray, unload} from "../../fn.mjs";
+import {PendingError, ServiceRef} from "../../index.mjs";
 
 const MyServiceDef = define("MyServiceDef", () => new TestService());
 service(TestService2, async () => new TestService2());

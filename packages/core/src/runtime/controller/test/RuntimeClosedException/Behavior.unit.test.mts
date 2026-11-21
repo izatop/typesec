@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {RuntimeClosedException, RuntimeController} from "../../index.mjs";
 
 describe("RuntimeClosedException", () => {

@@ -1,9 +1,10 @@
-import {override, type Override} from "@typesec/the";
+import {type Override, override} from "@typesec/the";
 import type {Application, Handle, HandleEntry, Meta, ProtoAbstract} from "@typesec/unit";
 import {z} from "zod";
+
 import {type ServeInput, type ServeProto} from "../index.mjs";
-import {RestProto} from "./RestProto.mjs";
 import type {RestOnError, RestTransforms, RouteArgs} from "./interfaces.mjs";
+import {RestProto} from "./RestProto.mjs";
 
 /**
  * Builds one route, accumulating its transforms and response type in the type as it goes.

@@ -1,9 +1,11 @@
-import {dispose, runtime, toAsyncDisposable} from "@typesec/core";
-import {wrap} from "@typesec/tracer";
-import {getHandle, ProtoAbstract, type MainArgs} from "@typesec/unit";
-import {FileSystemRouter, type BunRequest, type MatchedRoute, type Serve, type Server} from "bun";
 import {hostname} from "node:os";
 import path from "node:path";
+
+import {dispose, runtime, toAsyncDisposable} from "@typesec/core";
+import {wrap} from "@typesec/tracer";
+import {getHandle, type MainArgs, ProtoAbstract} from "@typesec/unit";
+import {type BunRequest, FileSystemRouter, type MatchedRoute, type Serve, type Server} from "bun";
+
 import {ServeError} from "./ServeError.mjs";
 
 /**

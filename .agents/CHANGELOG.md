@@ -14,6 +14,16 @@ Most entries are applied by `bun vendor/typesec/packages/bootstrap/bin/typesec s
 adds what is missing and asks before replacing anything that differs. Run it first, then go through
 the entries for what it does not cover.
 
+## 2026-11-21 — Bun owns import sorting
+
+VS Code now only removes unused imports on explicit save. Its `source.sortImports` and
+`source.organizeImports` actions are explicitly disabled; the configured `bun fmt` formatter
+sorts imports on save with the same rules as the CLI. The repository has been formatted with
+these rules.
+
+- Migrate: run `typesec sync` to merge the updated VS Code settings, then run `bun fmt`.
+- Check: `bun fmt --check` passes and saving a file uses Bun's import grouping.
+
 ## 2026-11-21 — Short sync command
 
 Use `typesec sync` instead of `typesec bootstrap sync`. Both forms run the same handler and accept

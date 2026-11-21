@@ -1,5 +1,6 @@
 import {async} from "@typesec/the/async";
 import type {Fn} from "@typesec/the/type";
+
 import type {
     CompatiblePattern,
     NarrowByPattern,

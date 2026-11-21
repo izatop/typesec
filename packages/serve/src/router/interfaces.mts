@@ -1,6 +1,7 @@
 import type {Fn, Rec} from "@typesec/the";
 import type {Application, Meta, ProtoAbstract} from "@typesec/unit";
 import type {z, ZodType} from "zod";
+
 import type {Router, ServeInput} from "../index.mjs";
 
 /**

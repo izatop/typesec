@@ -1,5 +1,7 @@
-import {isXEqualToY} from "@typesec/the/test";
 import {describe, expect, mock, test} from "bun:test";
+
+import {isXEqualToY} from "@typesec/the/test";
+
 import {RuntimeClosedException, RuntimeController} from "../../index.mjs";
 
 describe("RuntimeController tracked work", () => {

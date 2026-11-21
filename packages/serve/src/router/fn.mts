@@ -1,8 +1,8 @@
 import type {Fn} from "@typesec/the";
 import type {Meta, ProtoAbstract} from "@typesec/unit";
 import {z, type ZodObject, type ZodType} from "zod";
+
 import type {ServeInput} from "../index.mjs";
-import {Router} from "./Router.mjs";
 import type {
     RestArgs,
     RestHandle,
@@ -12,6 +12,7 @@ import type {
     UseTransform,
     UseTransformAsync,
 } from "./interfaces.mjs";
+import {Router} from "./Router.mjs";
 
 /**
  * Starts a typed route for an application.

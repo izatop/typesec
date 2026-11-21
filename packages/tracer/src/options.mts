@@ -1,6 +1,8 @@
+import {hostname} from "node:os";
+
 import {detectRuntime} from "@typesec/the/env";
 import type {Rec} from "@typesec/the/type";
-import {hostname} from "node:os";
+
 import {type TracerOptions} from "./interfaces.mjs";
 
 /**

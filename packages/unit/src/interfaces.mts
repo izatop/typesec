@@ -1,5 +1,6 @@
 import type {EnvModeType} from "@typesec/core";
 import type {Fn, Fnify, Promisify} from "@typesec/the";
+
 import type {ProtoAbstract} from "./ProtoAbstract.mjs";
 
 /**

@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {isXEqualToY, isXExtendsOfY, isXHasNull, isXHasUndefined} from "../../test.mjs";
 
 describe("test", () => {

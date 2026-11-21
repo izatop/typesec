@@ -1,4 +1,5 @@
 import z from "zod";
+
 import {Contract} from "./class/Contract.mjs";
 
 /**

@@ -1,9 +1,11 @@
+import {Console} from "console";
+import {formatWithOptions} from "util";
+
 import type {Rec} from "@typesec/the";
 import {is} from "@typesec/the/fn";
 import {fromEntries, toEntries} from "@typesec/the/object";
 import chalk, {type ChalkInstance} from "chalk";
-import {Console} from "console";
-import {formatWithOptions} from "util";
+
 import {getCallStack} from "./helpers.mjs";
 import type {
     Tracer,

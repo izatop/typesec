@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {isDocComment, parseDoc} from "../../jsdoc.mjs";
 
 describe("jsdoc", () => {

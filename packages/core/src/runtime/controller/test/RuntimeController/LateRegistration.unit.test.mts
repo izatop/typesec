@@ -1,5 +1,7 @@
-import {ApplicationException} from "@typesec/the/errors";
 import {describe, expect, mock, test} from "bun:test";
+
+import {ApplicationException} from "@typesec/the/errors";
+
 import {toAsyncDisposable, toDisposable} from "../../../../lib/dispostable.mjs";
 import {RuntimeClosedException, RuntimeController} from "../../index.mjs";
 

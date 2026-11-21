@@ -1,5 +1,6 @@
 import type {KeyOf} from "@typesec/the";
-import {ServeProto, type ServeInput} from "../index.mjs";
+
+import {type ServeInput, ServeProto} from "../index.mjs";
 import type {RestTransforms} from "./interfaces.mjs";
 
 /**

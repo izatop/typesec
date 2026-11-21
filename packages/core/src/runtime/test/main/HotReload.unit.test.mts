@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {fixture, prelude} from "../fixture.mjs";
 
 const entry = `${prelude}

@@ -1,4 +1,5 @@
 import {ApplicationException} from "@typesec/the/errors";
+
 import type {RuntimeController} from "./RuntimeController.mjs";
 
 /**

@@ -1,9 +1,11 @@
+import {scheduler} from "node:timers/promises";
+
 import {assert} from "@typesec/the/assert";
 import {identify} from "@typesec/the/object";
 import {task} from "@typesec/the/task";
 import type {Fn, Promisify} from "@typesec/the/type";
 import {type Tracer, wrap} from "@typesec/tracer";
-import {scheduler} from "node:timers/promises";
+
 import {ExitSignals} from "../../const.mjs";
 import type {EnvModeType} from "../../env.mjs";
 import {AsyncLock} from "../../lib/AsyncLock.mjs";
@@ -12,12 +14,12 @@ import {toAsyncDisposable} from "../../lib/dispostable.mjs";
 import {Ref} from "../../lib/Ref.mjs";
 import {WeakSequence} from "../../lib/WeakSequence.mts";
 import {ResourceStack} from "../../resource/ResourceStack.mjs";
-import {registration} from "../../service/registration.mjs";
 import type {Service, ServiceCtor, ServiceFactory, ServicePrivateCtor} from "../../service/interfaces.mjs";
+import {registration} from "../../service/registration.mjs";
 import type {ServiceRef} from "../../service/ServiceRef.mjs";
 import {heartbeat} from "../heartbeat.mjs";
 import {store} from "./hmr.mjs";
-import {ReloadController, relayed} from "./ReloadController.mjs";
+import {relayed, ReloadController} from "./ReloadController.mjs";
 import {RuntimeClosedException} from "./RuntimeClosedException.mjs";
 
 /** Cleanup batches, by their error list, whose failure has already terminated a later generation. */

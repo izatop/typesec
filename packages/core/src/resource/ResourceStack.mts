@@ -1,6 +1,7 @@
 import {assert, AssertionException} from "@typesec/the/assert";
 import {identify} from "@typesec/the/object";
 import type {Tracer} from "@typesec/tracer";
+
 import {DisposalEntry} from "./DisposalEntry.mjs";
 
 /** The id of the stack that holds each resource, so no resource is adopted by two stacks. */

@@ -3,6 +3,7 @@ import {fn} from "@typesec/the/fn";
 import {object} from "@typesec/the/object";
 import type {Fn, Promisify, Rec} from "@typesec/the/type";
 import {construct, crush} from "radash";
+
 import type {ClientQuery, ClientResult} from "../index.mjs";
 import type {Domain, Implementation, StaticResolvers} from "../interfaces.mjs";
 import {ProcedureAbstract} from "./ProcedureAbstract.mjs";

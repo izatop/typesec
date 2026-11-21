@@ -1,6 +1,7 @@
 import {assert} from "@typesec/the/assert";
 import {is} from "@typesec/the/fn";
 import {object} from "@typesec/the/object";
+
 import type {IClientProtocol, ProtocolRequest, ProtocolResponse} from "../interfaces.mjs";
 import {ClientURLStore} from "./ClientURLStore.mjs";
 

@@ -1,5 +1,7 @@
-import {deepEquals} from "bun";
 import {describe, expect, it} from "bun:test";
+
+import {deepEquals} from "bun";
+
 import {defnify, fn, fnify, invoke, is, isInstance, isNullable, isNullish, when} from "../../fn.mjs";
 
 describe("fn utils", () => {

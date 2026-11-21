@@ -1,5 +1,7 @@
-import object from "@typesec/the/object";
 import {describe, expect, test} from "bun:test";
+
+import object from "@typesec/the/object";
+
 import {wrap} from "../../tracer.mjs";
 
 describe("tracer", () => {

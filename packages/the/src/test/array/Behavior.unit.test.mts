@@ -1,4 +1,5 @@
 import {describe, expect, it} from "bun:test";
+
 import {array} from "../../array.mjs";
 
 describe("array", () => {

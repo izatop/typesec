@@ -70,6 +70,7 @@ Each entrypoint is a function (closure-style): define a protocol (HTTP, CLI, etc
 
     ```ts
     import {describe, expect, test} from "bun:test";
+
     import {fn} from "../../fn.mjs";
 
     describe("fn", () => {

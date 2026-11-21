@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {contract} from "../../contract.mjs";
 import {domain} from "../../domain.mjs";
 

@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {fixture, prelude} from "../../../runtime/test/fixture.mjs";
 
 const fn = JSON.stringify(`${import.meta.dir}/../../fn.mts`);

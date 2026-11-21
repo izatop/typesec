@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {lifecycle, RuntimeClosedException, RuntimeController} from "../../../runtime/controller/index.mjs";
 import {runtime} from "../../../runtime/runtime.mjs";
 import {resolve, service, state, unload} from "../../fn.mjs";

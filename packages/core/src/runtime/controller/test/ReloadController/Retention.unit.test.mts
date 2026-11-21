@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {fixture, prelude} from "../../../test/fixture.mjs";
 
 const controller = `${import.meta.dir}/../..`;

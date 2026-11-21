@@ -1,6 +1,7 @@
 import {describe, expect, mock, test} from "bun:test";
-import {RuntimeController} from "../../index.mjs";
+
 import {runtime} from "../../../runtime.mjs";
+import {RuntimeController} from "../../index.mjs";
 
 describe("RuntimeController run()", () => {
     test("should run several tasks in its context and stay open", async () => {

@@ -1,5 +1,6 @@
 import type {KeyOf, Rec} from "@typesec/the/type";
 import z from "zod";
+
 import type {Domain} from "../../interfaces.mjs";
 import type {Contract} from "../Contract.mjs";
 

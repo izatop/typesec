@@ -1,5 +1,7 @@
-import {isXEqualToY} from "@typesec/the/test";
 import {describe, expect, test} from "bun:test";
+
+import {isXEqualToY} from "@typesec/the/test";
+
 import {MyBackend} from "../../test/backend.mjs";
 
 describe("Backend", () => {

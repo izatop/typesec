@@ -1,4 +1,5 @@
 import {dispose, resolve, runtime, service} from "@typesec/core";
+
 import {ContextResolver} from "./ContextResolver.mjs";
 import type {Application, Factory, SetupOptions} from "./interfaces.mjs";
 import type {ProtoAbstract} from "./ProtoAbstract.mjs";

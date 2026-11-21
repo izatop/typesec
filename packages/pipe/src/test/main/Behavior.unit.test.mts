@@ -1,6 +1,8 @@
-import {isXEqualToY, isXExtendsOfY} from "@typesec/the";
 import {describe, expect, it} from "bun:test";
+
+import {isXEqualToY, isXExtendsOfY} from "@typesec/the";
 import z from "zod";
+
 import {RefinementError, TransitionError} from "../../errors.mjs";
 import * as sam from "../../index.mjs";
 import type {StateChange} from "../../interfaces.mjs";

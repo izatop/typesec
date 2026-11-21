@@ -1,5 +1,6 @@
 import type {Promisify} from "@typesec/the";
 import {log} from "@typesec/tracer";
+
 import {PendingError} from "./PendingError.mjs";
 import type {PendingService} from "./PendingService.mjs";
 

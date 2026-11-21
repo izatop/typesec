@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import type {ProjectIndex, SymbolEntry} from "../../interfaces.mjs";
 import {lookup, search} from "../../search.mjs";
 

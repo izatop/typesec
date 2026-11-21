@@ -1,5 +1,6 @@
 import {assert} from "@typesec/the/assert";
 import type {Prop} from "@typesec/the/type";
+
 import {toAsyncDisposable} from "../lib/dispostable.mjs";
 import {WeakSequence} from "../lib/WeakSequence.mts";
 import {registration} from "../service/registration.mjs";

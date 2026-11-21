@@ -2,6 +2,7 @@ import {async} from "@typesec/the/async";
 import {fnify} from "@typesec/the/fn";
 import type {Fn} from "@typesec/the/type";
 import z from "zod";
+
 import {ParsedPipeline, Pipeline} from "./class/Pipeline.mjs";
 import {Transitions} from "./class/Transitions.mjs";
 import {RefinementError} from "./errors.mjs";

@@ -1,9 +1,11 @@
+import type Module from "node:module";
+import path from "node:path";
+
 import type {Rec} from "@typesec/the";
 import {assert} from "@typesec/the/assert";
 import {is, isNullish} from "@typesec/the/fn";
 import {resolveSync} from "bun";
-import type Module from "node:module";
-import path from "node:path";
+
 import type {Application, HandleEntry, Proto} from "./interfaces.mjs";
 import type {ProtoAbstract} from "./ProtoAbstract.mjs";
 import {tracer} from "./tracer.mjs";

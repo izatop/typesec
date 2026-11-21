@@ -1,5 +1,7 @@
-import type {Promisify} from "@typesec/the";
 import {AsyncLocalStorage} from "node:async_hooks";
+
+import type {Promisify} from "@typesec/the";
+
 import type {RuntimeController} from "./RuntimeController.mts";
 
 export const ReloaderStoreKey = Symbol.for("@typesec/core?reload-store-key");

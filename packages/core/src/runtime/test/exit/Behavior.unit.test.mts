@@ -1,5 +1,6 @@
 import {afterEach, beforeEach, describe, expect, spyOn, test} from "bun:test";
 import {scheduler} from "timers/promises";
+
 import {exit} from "../../exit.mjs";
 
 describe("exit(code, reason)", () => {

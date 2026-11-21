@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {procedure} from "../../procedure.mjs";
 import {StringCountContract} from "../../test/contracts.mjs";
 

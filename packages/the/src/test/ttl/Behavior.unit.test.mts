@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {ttl, type TTLString} from "../../ttl.mjs";
 
 describe("ttl", () => {

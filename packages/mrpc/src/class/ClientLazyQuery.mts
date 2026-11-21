@@ -1,4 +1,5 @@
 import type {Rec} from "@typesec/the/type";
+
 import type {ClientQuery, ClientResult} from "../index.mjs";
 import type {Domain} from "../interfaces.mjs";
 import type {Client} from "./Client.mjs";

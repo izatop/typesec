@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {store} from "../../hmr.mjs";
 
 type HmrModule = {store: typeof store};

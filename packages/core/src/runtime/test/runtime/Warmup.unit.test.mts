@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {fixture, prelude} from "../fixture.mjs";
 
 // Each scenario runs in its own process: a failed eager build stays until `unload`, so it would reject the

@@ -1,6 +1,8 @@
-import {getApplication} from "@typesec/unit";
 import {expect, test} from "bun:test";
 import {resolve} from "node:path";
+
+import {getApplication} from "@typesec/unit";
+
 import {testContext} from "../../test/index.mjs";
 
 test("cli", async () => {

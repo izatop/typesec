@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {extract, type RawSymbol} from "../../extract.mjs";
 
 const read = (source: string) => extract("/project/src/module.mts", source);

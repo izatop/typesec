@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {ApplicationException, AssertionException, NotFoundException, ValidationException} from "../../errors.mjs";
 
 describe("framework exceptions", () => {

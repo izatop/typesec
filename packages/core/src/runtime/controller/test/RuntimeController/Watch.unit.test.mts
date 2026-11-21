@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {fixture, prelude} from "../../../test/fixture.mjs";
 
 // Bun's --watch calls the SIGTERM listeners synchronously and replaces the process image at once, so a restart runs no

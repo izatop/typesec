@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {fixture, prelude} from "../../../test/fixture.mjs";
 
 // Every generation registers a service and a cleanup, and reports its revision and signal listeners when ready.

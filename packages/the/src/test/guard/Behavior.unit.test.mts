@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {guard, make} from "../../guard.mjs";
 
 describe("guard", () => {

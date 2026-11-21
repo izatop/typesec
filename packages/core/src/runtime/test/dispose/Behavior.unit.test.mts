@@ -1,4 +1,5 @@
 import {describe, expect, mock, test} from "bun:test";
+
 import {dispose} from "../../../index.mjs";
 import {toAsyncDisposable, toDisposable} from "../../../lib/dispostable.mjs";
 

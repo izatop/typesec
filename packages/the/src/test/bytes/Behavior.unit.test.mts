@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import type {ByteUnit} from "../../bytes.mjs";
 import {bytes} from "../../bytes.mjs";
 

@@ -1,4 +1,5 @@
 import type {Fn, Rec} from "@typesec/the";
+
 import * as fn from "./fn.mjs";
 
 /**

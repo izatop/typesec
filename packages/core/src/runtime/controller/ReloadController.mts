@@ -1,5 +1,6 @@
 import {assert} from "@typesec/the";
-import {store, type IReloadController} from "./hmr.mjs";
+
+import {type IReloadController, store} from "./hmr.mjs";
 import type {RuntimeController} from "./RuntimeController.mjs";
 
 /**

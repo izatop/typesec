@@ -1,12 +1,14 @@
+import path from "node:path";
+
 import {dispose} from "@typesec/core";
 import type {Rec, StringKeyOf} from "@typesec/the";
 import {assert} from "@typesec/the/assert";
 import {wrap} from "@typesec/tracer";
-import {getHandle, ProtoAbstract, type MainArgs} from "@typesec/unit";
+import {getHandle, type MainArgs, ProtoAbstract} from "@typesec/unit";
 import {FileSystemRouter, type MatchedRoute} from "bun";
-import path from "node:path";
 import {crush} from "radash";
-import {ArgvParser, type ArgvOption, type OptionPattern} from "../index.mjs";
+
+import {type ArgvOption, ArgvParser, type OptionPattern} from "../index.mjs";
 
 /**
  * What a CLI entrypoint receives: the raw argv and the route that matched.

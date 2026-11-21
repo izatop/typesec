@@ -1,4 +1,5 @@
 import {parseSync} from "oxc-parser";
+
 import type {SymbolDoc, SymbolKind} from "./interfaces.mjs";
 import {isDocComment, parseDoc} from "./jsdoc.mjs";
 

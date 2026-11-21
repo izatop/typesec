@@ -1,4 +1,4 @@
-import {fn, type Fn, type Promisify} from "@typesec/the";
+import {type Fn, fn, type Promisify} from "@typesec/the";
 
 /**
  * Keeps the unique values, comparing the values themselves or the result of `map`.

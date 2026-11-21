@@ -1,4 +1,5 @@
 import type {Rec} from "@typesec/the";
+
 import {tracer} from "../tracer.mjs";
 import {store} from "./controller/hmr.mjs";
 

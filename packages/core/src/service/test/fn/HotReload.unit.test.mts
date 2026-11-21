@@ -1,4 +1,5 @@
 import {describe, expect, test} from "bun:test";
+
 import {fixture, prelude} from "../../../runtime/test/fixture.mjs";
 
 // An eager service whose factory, in the first two generations, finishes only once a save has replaced its

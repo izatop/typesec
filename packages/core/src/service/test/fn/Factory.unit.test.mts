@@ -1,4 +1,5 @@
 import {describe, expect, mock, test} from "bun:test";
+
 import {lifecycle} from "../../../runtime/controller/index.mjs";
 import {define, resolve, service, state, sync, unload} from "../../fn.mjs";
 import {PendingService} from "../../PendingService.mjs";

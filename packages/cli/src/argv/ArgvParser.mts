@@ -1,4 +1,5 @@
 import type {Expand, Rec} from "@typesec/the";
+
 import {ArgvOption} from "./ArgvOption.mjs";
 import type {OptionPattern, ParseOptions} from "./interfaces.mjs";
 

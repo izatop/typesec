@@ -1,4 +1,5 @@
 import type {Fn} from "@typesec/the";
+
 import {Ref, type RefReturn} from "./Ref.mjs";
 
 /**

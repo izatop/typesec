@@ -1,4 +1,5 @@
 import type {Rec} from "@typesec/the";
+
 import type {ArgvOption} from "./ArgvOption.mjs";
 
 /**

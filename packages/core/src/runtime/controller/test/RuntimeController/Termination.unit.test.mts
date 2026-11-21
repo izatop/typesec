@@ -1,5 +1,6 @@
 import {describe, expect, test} from "bun:test";
-import {fixture, prelude, type Fixture} from "../../../test/fixture.mjs";
+
+import {type Fixture, fixture, prelude} from "../../../test/fixture.mjs";
 
 /** Waits until the process has ended and reports how, with the events it printed. */
 const ended = async (app: Fixture) => ({...(await app.exited), events: app.events()});

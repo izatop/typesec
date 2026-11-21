@@ -1,4 +1,5 @@
 import {expect, expectTypeOf, test} from "bun:test";
+
 import {Ref, type RefState} from "../../Ref.mjs";
 
 test("ensure()", async () => {

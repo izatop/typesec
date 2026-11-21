@@ -1,5 +1,6 @@
 import {assert} from "@typesec/the/assert";
 import {is} from "@typesec/the/fn";
+
 import type {OptionPattern} from "./interfaces.mjs";
 
 /**

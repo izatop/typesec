@@ -40,6 +40,8 @@ sorting. Options explicitly set in `[fmt]` override `.editorconfig`.
 The VS Code formatter passes `--stdin-filepath`, so Bun applies the same file-specific settings
 as the CLI. Use `bun fmt --doctor` to inspect configuration discovery and `bun fmt --check` to
 check formatting without writing. Import sorting can produce a broad diff on first adoption.
+VS Code removes unused imports on explicit save, but its sort and organize import actions are
+disabled so that Bun alone controls import ordering.
 
 ## Tests
 
