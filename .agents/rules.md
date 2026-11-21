@@ -93,6 +93,9 @@ one of these is the most common mistake in a TypeSec codebase.
 
 ## Imports
 
+- Let `bun fmt` sort imports. VS Code removes unused imports on explicit save; keep its
+  `source.sortImports` and `source.organizeImports` actions disabled so it does not reorder them too.
+
 - Sources are `.mts` and import each other through `.mjs` specifiers: `import {fn} from "./fn.mjs"`.
 - Import helpers from their subpath, not the package root: `@typesec/the/fn`, `@typesec/the/assert`,
   `@typesec/the/object`. `typesec api show <name>` prints the specifier to use.
@@ -309,6 +312,30 @@ describe("fn", () => {
 - Allow by name, one line per file or directory the image needs, as the template does for `src`,
   `bin` and the manifests of the packages. Never allow a whole tree such as `packages/**` or
   `vendor/**`.
+
+## Shared editor and formatter configuration
+
+- Keep indentation, line width and line endings in `.editorconfig`; `[fmt]` in `bunfig.toml`
+  owns the other formatter options. Explicit `[fmt]` values override EditorConfig, so do not
+  duplicate its settings there. Tailwind formatting options belong to projects that need them.
+- Use `bun fmt --stdin-filepath ${file}` for the custom VS Code formatter. Do not add a `fmt`
+  package script: it shadows Bun's built-in formatter. Use `bun fmt --doctor` to inspect discovery.
+- Update shared VS Code settings in `packages/bootstrap/src/files/.vscode/settings.json` inside
+  TypeSec. `typesec sync` merges them automatically, with template values winning, recursive object
+  merging and array replacement. Project-only settings survive; changed files are backed up.
+- To retire a top-level setting, append its literal name to the adjacent `settings-deletions.json`.
+  Keep historical entries so projects can skip releases. Dots are part of the setting name, not
+  nested paths; removing a key from the template alone does not remove it from consuming projects.
+- Sync accepts JSONC but drops comments when rewriting changed settings. It leaves unchanged files
+  untouched and does not copy the deletion list. Except for file migrations below, other differing configuration files require
+  confirmation; non-interactive sync keeps them. See the [bootstrap guide](../packages/bootstrap/README.md).
+- Keep `.vscode/launch.json` project-specific; bootstrap does not distribute or delete it.
+- Retire obsolete line-based configuration through `packages/bootstrap/src/bootstrap/migrations.json`.
+  Keep historical entries, specify exact obsolete lines and the format's full-line comment prefix.
+  Sync matches whole lines with normalized whitespace, preserves custom instructions and backs up
+  changes automatically. A file is deleted only after removing a matching line leaves no instructions.
+  Do not use this mechanism for formats where whitespace normalization changes meaning; use the
+  dedicated VS Code merger for settings. Do not add a migration for a file still shipped by templates.
 
 ## Package cache
 

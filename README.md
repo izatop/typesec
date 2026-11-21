@@ -47,9 +47,17 @@ The command adds what the project is missing: the configuration files, the packa
 submodule in `vendor/` to `workspaces`, the entries of TypeSec's catalog, the dev dependencies and the shared
 scripts (`check`, `test`, `lint`, `audit`, `fmt:check`, `sync`, `typesec:api` and their variants),
 then runs `bun install`. It never changes a catalog entry or dependency the
-project already pins. A file or script the project has in a different form is shown as a diff and
+project already pins. Except for VS Code settings and obsolete file-line migrations, a file or script
+the project has in a different form is shown as a diff and
 replaced only if you agree; a replaced file moves to `.backup/<time>/`, which is added to
-`.gitignore`. Without a terminal it keeps everything that differs. `--no-install` skips the install.
+`.gitignore`. Without a terminal it keeps these differing files and scripts. `--no-install` skips the install.
+
+VS Code settings merge automatically, including without a terminal: template values win, project-only
+settings survive, and listed obsolete keys are removed. Changed settings are backed up; JSONC comments
+are not preserved when rewriting. See the [bootstrap guide](packages/bootstrap/README.md) for migration
+semantics, project-owned debug configurations and shared formatting defaults. Separate file migrations
+remove known obsolete lines automatically, backing up originals and deleting files left with only
+comments or whitespace. Custom instructions survive; the first migration retires old Yarn attributes.
 
 ### Package cache
 

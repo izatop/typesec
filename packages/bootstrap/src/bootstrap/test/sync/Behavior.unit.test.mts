@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, test} from "bun:test";
-import {mkdtemp, readdir, rm} from "node:fs/promises";
+import {lstat, mkdtemp, readdir, rm, symlink} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import path from "node:path";
 
@@ -115,7 +115,7 @@ describe("sync", () => {
         expect(workspaces.catalogs.build["@typescript/native-preview"]).toBe("^7.0.0-dev.20260707.2");
     });
 
-    test("removes nothing without a prompt", async () => {
+    test("keeps obsolete scripts and dependencies without a prompt", async () => {
         await legacy();
         const logs: string[] = [];
 
@@ -149,6 +149,48 @@ describe("sync", () => {
         expect(installed).toEqual([target]);
     });
 
+    test.each([
+        [
+            "only obsolete instructions",
+            "# Yarn\n/.yarn/**  linguist-vendored\n/.yarn/releases/* binary\n/.yarn/plugins/**/* binary\n/.pnp.* binary linguist-generated\n",
+            null,
+        ],
+        [
+            "custom rules and CRLF",
+            "# custom\r\n*.txt text eol=lf\r\n/.pnp.*\tbinary linguist-generated\r\n",
+            "# custom\r\n*.txt text eol=lf\r\n",
+        ],
+        ["modified obsolete rule", "/.yarn/** linguist-vendored -diff\n", "/.yarn/** linguist-vendored -diff\n"],
+        ["unrelated comment-only file", "# owned by project\n", "# owned by project\n"],
+        ["no final newline", "/.pnp.* binary linguist-generated\n*.txt text", "*.txt text"],
+    ])("migrates obsolete file lines: %s", async (_name, current, expected) => {
+        await writeManifest({name: "app"});
+        await Bun.write(path.join(target, ".gitattributes"), current!);
+
+        await sync({target, source, now});
+
+        const file = Bun.file(path.join(target, ".gitattributes"));
+        const backup = Bun.file(path.join(target, `.backup/${stamp}/.gitattributes`));
+
+        if (expected === null) {
+            expect(await file.exists()).toBeFalse();
+        } else {
+            expect(await file.text()).toBe(expected!);
+        }
+
+        if (current !== expected) {
+            expect(await backup.text()).toBe(current!);
+            expect(await read(".gitignore")).toContain("/.backup/");
+        } else {
+            expect(await backup.exists()).toBeFalse();
+        }
+
+        await sync({target, source, now});
+
+        if (current !== expected) expect(await backup.text()).toBe(current!);
+        expect(await file.exists()).toBe(expected !== null);
+    });
+
     test("writes a package.json that passes the project's own format check", async () => {
         await writeManifest({name: "app"});
 
@@ -156,6 +198,31 @@ describe("sync", () => {
 
         const check = Bun.spawn(["bun", "fmt", "--check", "--no-script", "package.json"], {cwd: target});
         expect(await check.exited).toBe(0);
+    });
+
+    test("leaves symbolic links and their targets untouched during file migrations", async () => {
+        await writeManifest({name: "app"});
+        const original = "/.pnp.* binary linguist-generated\n";
+        await Bun.write(path.join(target, "custom-attributes"), original);
+        await symlink("custom-attributes", path.join(target, ".gitattributes"));
+
+        await sync({target, source, now});
+
+        expect((await lstat(path.join(target, ".gitattributes"))).isSymbolicLink()).toBeTrue();
+        expect(await read("custom-attributes")).toBe(original);
+        expect(await Bun.file(path.join(target, `.backup/${stamp}/.gitattributes`)).exists()).toBeFalse();
+    });
+
+    test("refuses to overwrite an existing migration backup before changing the original", async () => {
+        await writeManifest({name: "app"});
+        const original = "/.pnp.* binary linguist-generated\n";
+        await Bun.write(path.join(target, ".gitattributes"), original);
+        await Bun.write(path.join(target, `.backup/${stamp}/.gitattributes`), "earlier backup\n");
+
+        await expect(sync({target, source, now})).rejects.toThrow("EEXIST");
+
+        expect(await read(".gitattributes")).toBe(original);
+        expect(await read(`.backup/${stamp}/.gitattributes`)).toBe("earlier backup\n");
     });
 
     test("merges VS Code settings without a prompt and backs up the original JSONC", async () => {

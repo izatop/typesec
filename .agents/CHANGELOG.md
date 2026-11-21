@@ -11,8 +11,22 @@ git -C vendor/typesec diff <old>..<new> -- .agents/CHANGELOG.md   # the entries 
 ```
 
 Most entries are applied by `bun vendor/typesec/packages/bootstrap/bin/typesec sync`, which
-adds what is missing and asks before replacing anything that differs. Run it first, then go through
-the entries for what it does not cover.
+adds what is missing and asks before replacing differing files and scripts, except VS Code settings
+and obsolete file-line migrations. Those run automatically with a backup, including without a terminal. Run sync first, then go through
+the entries for what it does not cover. See the [bootstrap guide](../packages/bootstrap/README.md).
+
+## 2026-11-21 — Obsolete file-line migrations
+
+`typesec sync` now applies the separate `packages/bootstrap/src/bootstrap/migrations.json` registry.
+The initial migration removes the old Yarn-only rules from `.gitattributes`, preserving custom rules.
+Matching ignores whitespace around lines and repeated spaces/tabs. After a match is removed, a file
+with only blanks or full-line comments is deleted; unchanged files and symbolic links are left alone.
+Changed and deleted files are backed up before migration, without confirmation, including in CI.
+
+- Migrate: run `typesec sync`; inspect `.gitattributes` and its backup under `.backup/<time>/`.
+- Check: custom attributes survive, a Yarn-only file is removed, and a second sync changes nothing.
+- Keep historical migration entries so projects can skip releases. See the
+  [bootstrap guide](../packages/bootstrap/README.md#obsolete-file-instructions) for the registry format.
 
 ## 2026-11-21 — Bun owns import sorting
 

@@ -31,6 +31,23 @@ If the merged values are unchanged, the original file is left untouched.
 Debug configurations in `.vscode/launch.json` belong to each project and are not shipped by bootstrap.
 Existing launch configurations are left untouched.
 
+### Obsolete file instructions
+
+`src/bootstrap/migrations.json` lists files and obsolete lines to remove during sync, separately
+from the templates. These migrations run automatically, including without a terminal. The first
+migration removes TypeSec's old Yarn rules from `.gitattributes`.
+
+Each entry names a project-relative `file`, `removeLines`, and the file format's `commentPrefix`.
+Matching ignores leading/trailing whitespace and runs of spaces or tabs; it otherwise requires
+the whole line to match. Keep entries for older releases. Use this mechanism only for line-based
+formats where this whitespace normalization is safe, not structured JSON settings.
+
+Unmatched lines retain their original bytes and line endings. If at least one obsolete line was
+removed and only blank lines or full-line comments remain, sync deletes the file. Files with no
+matching lines, missing files and symbolic links are left alone. Original files are backed up under
+`.backup/<time>/` before editing or deletion; an existing backup is never overwritten by a migration.
+Repeating sync is a no-op for already migrated files. Migration metadata is not copied to projects.
+
 ## Formatting
 
 `bun fmt` reads indentation, line width and line endings from `.editorconfig`. Keep these shared

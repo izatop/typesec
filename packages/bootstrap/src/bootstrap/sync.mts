@@ -3,6 +3,7 @@ import path from "node:path";
 
 import {findRoot} from "../api/workspace.mjs";
 import {unifiedDiff} from "./diff.mjs";
+import {migrateFiles} from "./migrations.mjs";
 import {mergeVscodeSettings} from "./vscode.mjs";
 
 /**
@@ -15,7 +16,7 @@ export type ScriptChoice = "keep" | "replace" | "all";
 /**
  * The questions `sync` asks before it overwrites anything the project already has.
  *
- * Without one, `sync` keeps differing files and scripts, except VS Code settings, which are merged.
+ * Without one, `sync` keeps differing files and scripts, except automatic settings and file migrations.
  * @category tooling
  */
 export type SyncPrompt = {
@@ -106,6 +107,7 @@ const OBSOLETE_DEPENDENCIES: Record<string, string> = {
  * dependency that TypeSec stopped shipping is removed only when the prompt agrees. Catalog entries
  * and dependencies the project already pins are never changed otherwise.
  * VS Code settings are merged automatically, with template values winning and obsolete keys removed.
+ * File migrations automatically remove known obsolete lines, backing up changed or deleted files.
  * @category tooling
  */
 export async function sync(options: SyncOptions): Promise<void> {
@@ -194,7 +196,9 @@ async function syncFiles(target: string, now: Date, prompt: SyncPrompt | undefin
         );
     }
 
-    if (backedUp) await ignoreBackups(target, log);
+    const migrated = await migrateFiles(target, backup, log);
+
+    if (backedUp || migrated) await ignoreBackups(target, log);
 }
 
 /** Keeps `.backup/` out of Git even when the project kept its own `.gitignore`. */
