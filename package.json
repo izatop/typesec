@@ -3,7 +3,8 @@
   "private": true,
   "workspaces": {
     "packages": [
-      "packages/*"
+      "packages/*",
+      "vendor/*/packages/**"
     ],
     "catalog": {
       "@types/bun": "1.4.5",
