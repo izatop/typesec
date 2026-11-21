@@ -10,9 +10,47 @@ git diff -- vendor/typesec                                        # prints the o
 git -C vendor/typesec diff <old>..<new> -- .agents/CHANGELOG.md   # the entries between them
 ```
 
-Most entries are applied by `bun vendor/typesec/packages/bootstrap/bin/typesec bootstrap sync`, which
+Most entries are applied by `bun vendor/typesec/packages/bootstrap/bin/typesec sync`, which
 adds what is missing and asks before replacing anything that differs. Run it first, then go through
 the entries for what it does not cover.
+
+## 2026-11-21 — Short sync command
+
+Use `typesec sync` instead of `typesec bootstrap sync`. Both forms run the same handler and accept
+`--target` and `--no-install`. The old command remains available for existing project scripts.
+
+- Migrate: change the project's `sync` script to `bun typesec sync`, or accept the script update
+  offered by sync. Custom script commands still require confirmation before replacement.
+- Check: `typesec sync --help` lists the same options as `typesec bootstrap sync --help`.
+
+## 2026-11-21 — Bun 1.4.5 and shared formatting defaults
+
+The root `packageManager` now selects Bun 1.4.5, a security release. GitHub Actions reads this
+field through `oven-sh/setup-bun`. The formatter takes line width and line endings from
+`.editorconfig`; the duplicate `printWidth` and `endOfLine` options are no longer needed in
+`bunfig.toml`. Both root and bootstrap configurations enable `sortImports`.
+
+- Migrate: use Bun 1.4.5, take the updated `bunfig.toml`, and retain `.editorconfig`. Review the
+  import sorting diff when running `bun fmt` in a consuming project.
+- Check: `bun --version`, `bun fmt --doctor`, `bun fmt --check`, and `bun run check`.
+- The `@types/bun` pin is 1.4.5. Exact-version age-gate exceptions allow `@types/bun@1.4.5`
+  and `bun-types@1.4.5` immediately. `undici-types@8.13.1` is also exempt and selected by a root
+  override because `@types/node` still requests `~8.9.0`. All other versions retain the three-day gate.
+
+## 2026-11-21 — VS Code settings merge automatically during bootstrap sync
+
+Bootstrap no longer ships `.vscode/launch.json`. Existing project debug configurations are kept;
+new projects define their own launch configurations when needed.
+
+`bootstrap sync` now merges `.vscode/settings.json` without prompting. Template values win,
+nested objects merge, arrays are replaced, and project-only settings survive. Literal top-level
+keys listed in the template's adjacent `settings-deletions.json` are removed after merging.
+The deletion list is migration metadata and is not copied into consuming projects.
+
+- Migrate: run `typesec bootstrap sync`. A changed settings file is backed up before writing;
+  JSONC is accepted, but comments are not retained in changed files.
+- Check: inspect the resulting `.vscode/settings.json` and its backup; running sync again with
+  unchanged settings leaves the file untouched.
 
 ## 2026-11-17 — A service is registered with a value or a factory, never a promise
 

@@ -1,7 +1,9 @@
 import {mkdir, rename} from "node:fs/promises";
 import path from "node:path";
+
 import {findRoot} from "../api/workspace.mjs";
 import {unifiedDiff} from "./diff.mjs";
+import {mergeVscodeSettings} from "./vscode.mjs";
 
 /**
  * Answer to a script that the project defines differently: keep it, replace it, or replace it and
@@ -13,7 +15,7 @@ export type ScriptChoice = "keep" | "replace" | "all";
 /**
  * The questions `sync` asks before it overwrites anything the project already has.
  *
- * Without one, `sync` runs non-interactively and keeps every file and script that differs.
+ * Without one, `sync` keeps differing files and scripts, except VS Code settings, which are merged.
  * @category tooling
  */
 export type SyncPrompt = {
@@ -74,7 +76,7 @@ const SCRIPTS: Record<string, string> = {
     audit: "bun audit --audit-level=high",
     lint: "oxlint --quiet",
     "fmt:check": "bun fmt --check",
-    sync: "bun typesec bootstrap sync",
+    sync: "bun typesec sync",
     up: "bun update -ri --latest",
 };
 
@@ -103,6 +105,7 @@ const OBSOLETE_DEPENDENCIES: Record<string, string> = {
  * when the prompt agrees, and a replaced file is moved to `.backup/<time>/` first. A script or dev
  * dependency that TypeSec stopped shipping is removed only when the prompt agrees. Catalog entries
  * and dependencies the project already pins are never changed otherwise.
+ * VS Code settings are merged automatically, with template values winning and obsolete keys removed.
  * @category tooling
  */
 export async function sync(options: SyncOptions): Promise<void> {
@@ -151,29 +154,44 @@ async function syncFiles(target: string, now: Date, prompt: SyncPrompt | undefin
     let backedUp = false;
 
     for await (const file of new Bun.Glob("**/*").scan({cwd: TEMPLATE, dot: true})) {
-        const template = await Bun.file(path.join(TEMPLATE, file)).text();
-        const existing = Bun.file(path.join(target, file));
+        if (file === ".vscode/settings-deletions.json") continue;
 
-        if (!(await existing.exists())) {
+        let template = await Bun.file(path.join(TEMPLATE, file)).text();
+        const existing = Bun.file(path.join(target, file));
+        const exists = await existing.exists();
+        const current = exists ? await existing.text() : "";
+        const settings = file === ".vscode/settings.json";
+
+        if (settings) {
+            const deletions = await Bun.file(path.join(TEMPLATE, ".vscode/settings-deletions.json")).text();
+
+            template = mergeVscodeSettings(exists ? current : "{}", template, deletions);
+        }
+
+        if (!exists) {
             await Bun.write(existing, template);
             log(`${file}: created`);
             continue;
         }
 
-        const current = await existing.text();
         if (current === template) continue;
 
-        const diff = unifiedDiff(current, template, [`project/${file}`, `typesec/${file}`]);
-        if (!(await prompt?.replaceFile(file, diff))) {
-            log(`${file}: differs from the template, kept`);
-            continue;
+        if (!settings) {
+            const diff = unifiedDiff(current, template, [`project/${file}`, `typesec/${file}`]);
+
+            if (!(await prompt?.replaceFile(file, diff))) {
+                log(`${file}: differs from the template, kept`);
+                continue;
+            }
         }
 
         await mkdir(path.dirname(path.join(backup, file)), {recursive: true});
         await rename(path.join(target, file), path.join(backup, file));
         await Bun.write(path.join(target, file), template);
         backedUp = true;
-        log(`${file}: replaced, previous version in ${path.relative(target, path.join(backup, file))}`);
+        log(
+            `${file}: ${settings ? "merged" : "replaced"}, previous version in ${path.relative(target, path.join(backup, file))}`,
+        );
     }
 
     if (backedUp) await ignoreBackups(target, log);

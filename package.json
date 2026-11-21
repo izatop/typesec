@@ -6,7 +6,7 @@
       "packages/*"
     ],
     "catalog": {
-      "@types/bun": "1.4.4",
+      "@types/bun": "1.4.5",
       "radash": "12.1.1",
       "chalk": "6.0.1",
       "zod": "4.6.7",
@@ -15,7 +15,7 @@
     },
     "catalogs": {
       "build": {
-        "oxlint": "^1.93.0",
+        "oxlint": "^1.94.0",
         "typescript": "^7.0.2"
       }
     }
@@ -29,7 +29,7 @@
     "test:watch": "bun --watch test",
     "audit": "bun audit --audit-level=high",
     "lint": "oxlint --quiet",
-    "sync": "bun typesec bootstrap sync",
+    "sync": "bun typesec sync",
     "up": "bun update -ri --latest",
     "fmt:check": "bun fmt --check"
   },
@@ -39,5 +39,8 @@
     "oxlint": "catalog:build",
     "typescript": "catalog:build"
   },
-  "packageManager": "bun@1.4.4"
+  "overrides": {
+    "undici-types": "8.13.1"
+  },
+  "packageManager": "bun@1.4.5"
 }

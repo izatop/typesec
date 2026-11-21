@@ -1,6 +1,8 @@
-import {Command} from "@commander-js/extra-typings";
 import {createInterface, type Interface} from "node:readline/promises";
-import {sync, type ScriptChoice, type SyncPrompt} from "./sync.mjs";
+
+import {Command} from "@commander-js/extra-typings";
+
+import {type ScriptChoice, sync, type SyncPrompt} from "./sync.mjs";
 
 const write = (value: string): void => void process.stdout.write(`${value}\n`);
 
@@ -41,12 +43,10 @@ async function install(target: string): Promise<void> {
 }
 
 /**
- * `bootstrap sync`: scaffolds and updates the TypeSec configuration of a project.
+ * `sync`: scaffolds and updates the TypeSec configuration of a project.
  */
-export function bootstrapCommand(): Command {
-    const cli = new Command("bootstrap").description("Set up a project that consumes TypeSec");
-
-    cli.command("sync")
+export function syncCommand(): Command {
+    return new Command("sync")
         .description("Add TypeSec's configuration files, catalog, dependencies and scripts to the project")
         .option("-t, --target <path>", "Project root; the working directory when omitted")
         .option("--no-install", "Skip bun install after updating package.json")
@@ -69,6 +69,9 @@ export function bootstrapCommand(): Command {
                 terminal?.close();
             }
         });
+}
 
-    return cli;
+/** Keeps the original `bootstrap sync` command available to existing project scripts. */
+export function bootstrapCommand(): Command {
+    return new Command("bootstrap").description("Set up a project that consumes TypeSec").addCommand(syncCommand());
 }

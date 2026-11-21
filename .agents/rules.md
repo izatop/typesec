@@ -18,7 +18,7 @@ checkout itself.
 ## Updating TypeSec
 
 - After updating the TypeSec submodule, read the new entries of `<typesec>/.agents/CHANGELOG.md` and
-  apply their migrations. Run `typesec bootstrap sync` first; it covers most of them.
+  apply their migrations. Run `typesec sync` first; it covers most of them.
 - A change to TypeSec that a consuming project has to act on gets a changelog entry in the same
   commit: what changed, how to migrate, how to check.
 
@@ -54,7 +54,7 @@ directory at or above it with a `packages/tsconfig.json` listing the packages as
 each with an `exports` map and `.mts` or `.tsx` sources under `src/`. Nothing about the index is
 TypeSec-specific. Inside the TypeSec checkout that project is TypeSec. A consuming project of the
 same shape gets its own packages, so there TypeSec's API takes `--root <typesec>`, which is what the
-`typesec:api` script added by `typesec bootstrap sync` runs:
+`typesec:api` script added by `typesec sync` runs:
 
 ```sh
 bun run typesec:api search <keywords>                                 # what TypeSec provides
@@ -258,7 +258,9 @@ to runtime/API or build configuration require separate agreement from a document
 
 ```ts
 import {describe, expect, test} from "bun:test";
+
 import {isXEqualToY} from "@typesec/the/test";
+
 import {fn} from "../../fn.mjs";
 
 describe("fn", () => {
@@ -292,8 +294,8 @@ describe("fn", () => {
   `.oxlintrc.json`). Keep it that way: do not add a submodule outside `vendor/`, and do not point a
   check, a script or a CI job at `vendor/`.
 - TypeSec itself always sits there, at `vendor/typesec`, never at the project root:
-  `typesec bootstrap sync` refuses to run from a checkout outside `vendor/`.
-- `typesec bootstrap sync` lists `vendor/*/packages/**` in `workspaces`, so the packages of every
+  `typesec sync` refuses to run from a checkout outside `vendor/`.
+- `typesec sync` lists `vendor/*/packages/**` in `workspaces`, so the packages of every
   submodule, at any depth under its `packages/`, resolve as workspace packages of the project.
   Every directory there that holds a `package.json` counts as one. Their `catalog:` dependencies resolve
   against the project's catalog, which therefore has to carry the entries they name.

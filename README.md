@@ -35,12 +35,12 @@ missing one fails `bun install` with `<name>@catalog: is not in the catalog`.
 only, so the shared configuration leaves `vendor/` out of `bun test`, `bun fmt` and oxlint: a
 submodule changes independently and is checked by its own pipeline, and re-running its tests and lint
 in every project that pins it slows the development loop and adds CI/CD overhead. TypeSec always sits
-there, never at the project root: `bootstrap sync` refuses to run from a checkout outside `vendor/`.
+there, never at the project root: `typesec sync` refuses to run from a checkout outside `vendor/`.
 Paths below assume `vendor/typesec/`. Scaffolding the shared lint, format and TypeScript
 configuration into an existing project:
 
 ```sh
-bun vendor/typesec/packages/bootstrap/bin/typesec bootstrap sync
+bun vendor/typesec/packages/bootstrap/bin/typesec sync
 ```
 
 The command adds what the project is missing: the configuration files, the packages of every
@@ -116,6 +116,7 @@ method call.
 // src/app/user/[id].mts
 import {response, route, useParams} from "@typesec/serve";
 import z from "zod";
+
 import app from "../../index.mjs";
 
 const Params = z.object({id: z.coerce.number()});
@@ -370,7 +371,7 @@ bun vendor/typesec/packages/bootstrap/bin/typesec api packages                  
 bun vendor/typesec/packages/bootstrap/bin/typesec api --root vendor/typesec packages   # TypeSec
 ```
 
-`typesec bootstrap sync` gives the project a `typesec:api` script for the second form, so looking up
+`typesec sync` gives the project a `typesec:api` script for the second form, so looking up
 what TypeSec provides is `bun run typesec:api search unique`. The script calls the short `typesec`
 binary, which resolves only where `@typesec/bootstrap` is a dependency of the project: listing the
 submodule in `workspaces` is not enough, because Bun links a binary only for a package something

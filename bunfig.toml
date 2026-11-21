@@ -3,15 +3,17 @@ linker = "isolated"
 globalStore = true
 
 minimumReleaseAge = 259200
+minimumReleaseAgeExcludes = ["@types/bun@1.4.5", "bun-types@1.4.5", "undici-types@8.13.1"]
 
 [fmt]
 flavor = "oxfmt"
 bracketSpacing = false
 arrowParens = "always"
 bracketSameLine = true
-endOfLine = "lf"
 semi = true
+sortImports = true
 sortPackageJson = true
+
 # vendor/ at the project root holds git submodules. Each is formatted, linted and tested in its own
 # repository, so this project skips them here, in [test] below and in .oxlintrc.json. The patterns
 # are anchored to the root: a directory named vendor deeper in the tree is checked like any other.

@@ -2,7 +2,8 @@ import {afterEach, beforeEach, describe, expect, test} from "bun:test";
 import {mkdtemp, readdir, rm} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import path from "node:path";
-import {sync, type ScriptChoice, type SyncPrompt} from "../../sync.mjs";
+
+import {type ScriptChoice, sync, type SyncPrompt} from "../../sync.mjs";
 
 const checkout = path.resolve(import.meta.dir, "../../../../../..");
 const template = path.resolve(import.meta.dir, "../../../files");
@@ -68,6 +69,8 @@ describe("sync", () => {
         const files = await Array.fromAsync(new Bun.Glob("**/*").scan({cwd: template, dot: true}));
 
         for (const file of files) {
+            if (file === ".vscode/settings-deletions.json") continue;
+
             const own = await Bun.file(path.join(checkout, file)).text();
             expect(own, file).toBe(await Bun.file(path.join(template, file)).text());
         }
@@ -153,6 +156,30 @@ describe("sync", () => {
 
         const check = Bun.spawn(["bun", "fmt", "--check", "--no-script", "package.json"], {cwd: target});
         expect(await check.exited).toBe(0);
+    });
+
+    test("merges VS Code settings without a prompt and backs up the original JSONC", async () => {
+        await writeManifest({name: "app"});
+        const current =
+            '{ // project settings\n "editor.formatOnSave": false, "custom.setting": true, "[sql]": {"editor.tabSize": 4},\n}\n';
+        await Bun.write(path.join(target, ".vscode/settings.json"), current);
+
+        await sync({target, source, now});
+
+        const settings = JSON.parse(await read(".vscode/settings.json"));
+
+        expect(settings["editor.formatOnSave"]).toBeTrue();
+        expect(settings["custom.setting"]).toBeTrue();
+        expect(settings["[sql]"]).toEqual({"editor.tabSize": 4, "editor.defaultFormatter": "sqlfluff.vscode-sqlfluff"});
+        expect(await read(`.backup/${stamp}/.vscode/settings.json`)).toBe(current);
+        expect(await Bun.file(path.join(target, ".vscode/settings-deletions.json")).exists()).toBeFalse();
+
+        const first = await read(".vscode/settings.json");
+
+        await sync({target, source, now});
+
+        expect(await read(".vscode/settings.json")).toBe(first);
+        expect(await read(`.backup/${stamp}/.vscode/settings.json`)).toBe(current);
     });
 
     test("refuses a TypeSec checkout outside vendor/ before changing anything", async () => {

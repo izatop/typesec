@@ -27,11 +27,15 @@ test("routes api to the index of its own checkout", async () => {
     expect(await run("api", "search", "array.uniq")).toContain("@typesec/the/array");
 }, 20_000);
 
-test("routes bootstrap sync, which refuses a TypeSec checkout outside vendor/", async () => {
-    await Bun.write(path.join(outside, "package.json"), JSON.stringify({name: "app"}));
+test.each([{command: ["sync"]}, {command: ["bootstrap", "sync"]}])(
+    "routes %j and refuses a TypeSec checkout outside vendor/",
+    async ({command}) => {
+        await Bun.write(path.join(outside, "package.json"), JSON.stringify({name: "app"}));
 
-    const output = await run("bootstrap", "sync", "--no-install");
+        const output = await run(...command, "--no-install");
 
-    expect(output).toContain("TypeSec has to sit in vendor/");
-    expect(await Bun.file(path.join(outside, "tsconfig.json")).exists()).toBeFalse();
-}, 20_000);
+        expect(output).toContain("TypeSec has to sit in vendor/");
+        expect(await Bun.file(path.join(outside, "tsconfig.json")).exists()).toBeFalse();
+    },
+    20_000,
+);
